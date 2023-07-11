@@ -33,7 +33,7 @@ import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/T
 
 address constant CURVE_REGISTRY = 0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5;
 
-contract LivePriceFeedDeployer is Test, PriceFeedDataLive {
+contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
     mapping(address => address) public priceFeeds;
     PriceFeedConfig[] priceFeedConfig;
