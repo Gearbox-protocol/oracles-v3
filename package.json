@@ -1,0 +1,81 @@
+{
+  "name": "@gearbox-protocol/oracles-v3",
+  "description": "Integration contracts for Gearbox V3",
+  "version": "1.0.0",
+  "homepage": "https://gearbox.fi",
+  "keywords": [
+    "gearbox"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gearbox-protocol/oracles-v3"
+  },
+  "files": [
+    "contracts"
+  ],
+  "license": "BUSL-1.1",
+  "scripts": {
+    "build": "yarn clean && yarn compile",
+    "charge": "npx hardhat run scripts/charge.ts --network localhost",
+    "clean": "npx hardhat clean",
+    "fork": "scripts/fork.sh",
+    "fork-goerli": "scripts/fork-goerli.sh",
+    "abigen": "scripts/abigen.sh",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "update_abi": "scripts/abiCopy.sh",
+    "coverage": "yarn build && npx hardhat coverage --temp artifacts",
+    "verify": "npx hardhat run node_modules/@gearbox-protocol/devops/lib/verifier/verify.js",
+    "deploy-fork": "npx hardhat run deploy/cmV2deploy.ts --network localhost",
+    "prepare": "husky install",
+    "prettier": "forge fmt",
+    "prettier:ci": "forge fmt",
+    "lint": "eslint \"**/*.ts\" --fix",
+    "lint:ci": "eslint \"**/*.ts\"",
+    "typecheck:ci": "tsc --noEmit",
+    "bindings": "yarn ts-node ./bindings/generate.ts",
+    "forge-install": "forge install --no-commit foundry-rs/forge-std"
+  },
+  "dependencies": {
+    "@gearbox-protocol/core-v2": "1.19.0-base.5",
+    "@gearbox-protocol/core-v3": "^1.27.4",
+    "@gearbox-protocol/sdk": "^1.24.3"
+  },
+  "devDependencies": {
+    "@chainlink/contracts": "^0.4.0",
+    "@commitlint/cli": "^17.1.2",
+    "@commitlint/config-conventional": "^17.1.0",
+    "@gearbox-protocol/eslint-config": "^1.6.1",
+    "@gearbox-protocol/prettier-config": "^1.5.0",
+    "@nomiclabs/hardhat-ethers": "^2.1.1",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@openzeppelin/contracts": "^4.4.2",
+    "@typechain/ethers-v5": "^10.1.0",
+    "@typechain/hardhat": "^6.1.3",
+    "dotenv": "^16.0.3",
+    "eslint": "^8.25.0",
+    "ethers": "5.4.4",
+    "hardhat": "^2.11.2",
+    "hardhat-abi-exporter": "^2.10.0",
+    "hardhat-contract-sizer": "^2.6.1",
+    "hardhat-gas-reporter": "^1.0.9",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "prettier": "^2.7.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.24",
+    "solidity-coverage": "^0.7.16",
+    "ts-node": "^10.9.1",
+    "typechain": "^8.1.0",
+    "typescript": "^4.8.2"
+  },
+  "prettier": "@gearbox-protocol/prettier-config",
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.sol": "forge fmt",
+    "*.{json,md}": "prettier --write"
+  }
+}
