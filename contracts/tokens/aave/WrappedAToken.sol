@@ -11,8 +11,8 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
-import {IAToken} from "../../integrations/aave/IAToken.sol";
-import {ILendingPool} from "../../integrations/aave/ILendingPool.sol";
+import {IAToken} from "../../interfaces/aave/IAToken.sol";
+import {ILendingPool} from "../../interfaces/aave/ILendingPool.sol";
 import {IWrappedAToken} from "../../interfaces/aave/IWrappedAToken.sol";
 
 /// @title Wrapped aToken

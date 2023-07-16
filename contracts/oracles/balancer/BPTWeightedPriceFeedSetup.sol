@@ -10,9 +10,9 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
-import {IBalancerV2VaultGetters} from "../../integrations/balancer/IBalancerV2Vault.sol";
-import {IBalancerWeightedPool} from "../../integrations/balancer/IBalancerWeightedPool.sol";
-import {FixedPoint} from "../../integrations/balancer/FixedPoint.sol";
+import {IBalancerV2VaultGetters} from "../../interfaces/balancer/IBalancerV2Vault.sol";
+import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
+import {FixedPoint} from "../../libraries/FixedPoint.sol";
 
 // EXCEPTIONS
 import {

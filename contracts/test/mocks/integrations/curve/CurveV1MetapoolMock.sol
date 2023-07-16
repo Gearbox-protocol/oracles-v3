@@ -7,9 +7,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {WAD, RAY} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
-import {ICurvePool} from "../../../integrations/curve/ICurvePool.sol";
-import {N_COINS, ICurvePool2Assets} from "../../../integrations/curve/ICurvePool_2.sol";
-import {ICRVToken} from "../../../integrations/curve/ICRVToken.sol";
+import {ICurvePool} from "../../../../interfaces/curve/ICurvePool.sol";
+import {N_COINS, ICurvePool2Assets} from "../../../../interfaces/curve/ICurvePool_2.sol";
+import {ICRVToken} from "../../../../interfaces/curve/ICRVToken.sol";
 
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
 

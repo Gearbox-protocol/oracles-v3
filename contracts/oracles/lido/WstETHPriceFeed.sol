@@ -9,7 +9,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
-import {IwstETH} from "../../integrations/lido/IwstETH.sol";
+import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
 // EXCEPTIONS
 import {
     ZeroAddressException, NotImplementedException

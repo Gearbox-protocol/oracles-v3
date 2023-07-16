@@ -27,9 +27,8 @@ import {CurveLP2PriceFeed} from "../../oracles/curve/CurveLP2PriceFeed.sol";
 import {CurveLP3PriceFeed} from "../../oracles/curve/CurveLP3PriceFeed.sol";
 import {CurveLP4PriceFeed} from "../../oracles/curve/CurveLP4PriceFeed.sol";
 
-import {IYVault} from "../../integrations/yearn/IYVault.sol";
-import {IwstETH} from "../../integrations/lido/IwstETH.sol";
-
+import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
+import {IYVault} from "../../interfaces/yearn/IYVault.sol";
 import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 
 contract PriceFeedDeployer is Test, PriceFeedDataLive {

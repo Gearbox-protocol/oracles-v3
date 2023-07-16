@@ -9,7 +9,7 @@ import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
-import {ICToken} from "../../integrations/compound/ICToken.sol";
+import {ICToken} from "../../interfaces/compound/ICToken.sol";
 
 // EXCEPTIONS
 import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";

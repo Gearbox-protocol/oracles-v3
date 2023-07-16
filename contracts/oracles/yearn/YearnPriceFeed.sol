@@ -8,7 +8,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {IYVault} from "../../integrations/yearn/IYVault.sol";
+import {IYVault} from "../../interfaces/yearn/IYVault.sol";
 
 // EXCEPTIONS
 import {

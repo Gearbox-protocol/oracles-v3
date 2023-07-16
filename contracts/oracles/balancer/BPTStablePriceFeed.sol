@@ -9,7 +9,7 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/Ag
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
-import {IBalancerStablePool} from "../../integrations/balancer/IBalancerStablePool.sol";
+import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
 
 // EXCEPTIONS
 import {

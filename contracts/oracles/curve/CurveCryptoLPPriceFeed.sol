@@ -8,7 +8,7 @@ import {AbstractCurveLPPriceFeed} from "./AbstractCurveLPPriceFeed.sol";
 
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
-import {FixedPoint} from "../../integrations/balancer/FixedPoint.sol";
+import {FixedPoint} from "../../libraries/FixedPoint.sol";
 
 // EXCEPTIONS
 import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";

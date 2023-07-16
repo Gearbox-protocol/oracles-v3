@@ -4,7 +4,7 @@
 pragma solidity ^0.8.17;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {ICurvePool} from "../../integrations/curve/ICurvePool.sol";
+import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 
 // EXCEPTIONS
 import {

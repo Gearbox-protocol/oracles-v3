@@ -11,7 +11,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {IwstETH} from "../../../integrations/lido/IwstETH.sol";
+import {IwstETH} from "../../../../interfaces/lido/IwstETH.sol";
 
 contract WstETHV1Mock is IwstETH, ERC20, Ownable {
     using SafeERC20 for IERC20;

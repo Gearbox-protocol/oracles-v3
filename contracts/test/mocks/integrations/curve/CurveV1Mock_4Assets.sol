@@ -5,13 +5,13 @@ pragma solidity ^0.8.10;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ICRVToken} from "../../../integrations/curve/ICRVToken.sol";
+import {ICRVToken} from "../../../../interfaces/curve/ICRVToken.sol";
 import {RAY} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 import {CurveV1Mock} from "./CurveV1Mock.sol";
-import {N_COINS, ICurvePool3Assets} from "../../../integrations/curve/ICurvePool_3.sol";
+import {N_COINS, ICurvePool4Assets} from "../../../../interfaces/curve/ICurvePool_4.sol";
 
-contract CurveV1Mock_3Assets is CurveV1Mock, ICurvePool3Assets {
+contract CurveV1Mock_4Assets is CurveV1Mock, ICurvePool4Assets {
     using SafeERC20 for IERC20;
 
     constructor(address[] memory _coins, address[] memory _underlying_coins) CurveV1Mock(_coins, _underlying_coins) {}
@@ -81,14 +81,14 @@ contract CurveV1Mock_3Assets is CurveV1Mock, ICurvePool3Assets {
     }
 
     function get_balances() external pure returns (uint256[N_COINS] memory) {
-        return [uint256(0), uint256(0), uint256(0)];
+        return [uint256(0), uint256(0), uint256(0), uint256(0)];
     }
 
     function get_previous_balances() external pure returns (uint256[N_COINS] memory) {
-        return [uint256(0), uint256(0), uint256(0)];
+        return [uint256(0), uint256(0), uint256(0), uint256(0)];
     }
 
     function get_price_cumulative_last() external pure returns (uint256[N_COINS] memory) {
-        return [uint256(0), uint256(0), uint256(0)];
+        return [uint256(0), uint256(0), uint256(0), uint256(0)];
     }
 }

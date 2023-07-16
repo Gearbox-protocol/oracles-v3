@@ -9,10 +9,10 @@ import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/P
 // LIBRARIES
 
 // TEST
-import "../lib/constants.sol";
+import "@gearbox-protocol/core-v3/contracts/test/lib/constants.sol";
 
 // MOCKS
-import {YearnV2Mock} from "../mocks/integrations/YearnV2Mock.sol";
+import {YearnV2Mock} from "../mocks/integrations/yearn/YearnV2Mock.sol";
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
