@@ -39,7 +39,8 @@
   "dependencies": {
     "@gearbox-protocol/core-v2": "1.19.0-base.5",
     "@gearbox-protocol/core-v3": "^1.27.4",
-    "@gearbox-protocol/sdk": "^1.24.3"
+    "@gearbox-protocol/sdk": "^1.25.0",
+    "@redstone-finance/evm-connector": "^0.2.2"
   },
   "devDependencies": {
     "@chainlink/contracts": "^0.4.0",
