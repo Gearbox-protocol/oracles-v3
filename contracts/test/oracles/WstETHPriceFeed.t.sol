@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Holdings, 2022
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
 import {WstETHPriceFeed, RANGE_WIDTH} from "../../oracles/lido/WstETHPriceFeed.sol";
@@ -9,10 +9,10 @@ import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/P
 // LIBRARIES
 
 // TEST
-import "../lib/constants.sol";
+import "@gearbox-protocol/core-v3/contracts/test/lib/constants.sol";
 
 // MOCKS
-import {WstETHV1Mock} from "../mocks/integrations/WstETHV1Mock.sol";
+import {WstETHV1Mock} from "../mocks/integrations/lido/WstETHV1Mock.sol";
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Holdings, 2023
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IAToken} from "../../integrations/aave/IAToken.sol";
-import {ILendingPool} from "../../integrations/aave/ILendingPool.sol";
+import {IAToken} from "./IAToken.sol";
+import {ILendingPool} from "./ILendingPool.sol";
 
 /// @title Wrapped aToken interface
 interface IWrappedAToken is IERC20Metadata {

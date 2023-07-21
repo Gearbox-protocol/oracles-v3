@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Holdings, 2023
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {ICurvePool} from "../../integrations/curve/ICurvePool.sol";
+import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 
 // EXCEPTIONS
 import {

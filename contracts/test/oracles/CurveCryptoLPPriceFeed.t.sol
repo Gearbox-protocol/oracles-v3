@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Holdings, 2022
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
 import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
@@ -8,10 +8,10 @@ import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed
 // LIBRARIES
 
 // TEST
-import "../lib/constants.sol";
+import "@gearbox-protocol/core-v3/contracts/test/lib/constants.sol";
 
 // MOCKS
-import {CurveV1Mock} from "../mocks/integrations/CurveV1Mock.sol";
+import {CurveV1Mock} from "../mocks/integrations/curve/CurveV1Mock.sol";
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Holdings, 2022
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
 import {
@@ -12,7 +12,7 @@ import {
     SwapKind,
     JoinPoolRequest,
     ExitPoolRequest
-} from "../../integrations/balancer/IBalancerV2Vault.sol";
+} from "../../interfaces/balancer/IBalancerV2Vault.sol";
 import {BPTWeightedPriceFeed} from "../../oracles/balancer/BPTWeightedPriceFeed.sol";
 import {
     ZeroAddressException,
@@ -21,9 +21,9 @@ import {
 } from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 // TEST
-import "../lib/constants.sol";
+import "@gearbox-protocol/core-v3/contracts/test/lib/constants.sol";
 
-import {BalancerVaultMock} from "../mocks/integrations/BalancerVaultMock.sol";
+import {BalancerVaultMock} from "../mocks/integrations/balancer/BalancerVaultMock.sol";
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";

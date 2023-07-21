@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Holdings, 2023
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-import {ICEther} from "../../../../integrations/compound/ICEther.sol";
+import {ICEther} from "../../../../interfaces/compound/ICEther.sol";
 
 import {CTokenMockBase, REDEEM_ERROR, REDEEM_UNDERLYING_ERROR} from "./CTokenMockBase.sol";
 

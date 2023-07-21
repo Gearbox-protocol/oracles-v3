@@ -1,37 +1,35 @@
 // SPDX-License-Identifier: UNLICENSED
-// Gearbox. Generalized leverage protocol that allows to take leverage and then use it across other DeFi protocols and platforms in a composable way.
-// (c) Gearbox Holdings, 2022
+// Gearbox Protocol. Generalized leverage for DeFi protocols
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
-import {Tokens} from "@gearbox-protocol/sdk/contracts/Tokens.sol";
+import {Test} from "forge-std/Test.sol";
 
+import {Tokens} from "@gearbox-protocol/sdk/contracts/Tokens.sol";
+import {ISupportedContracts, Contracts} from "@gearbox-protocol/sdk/contracts/SupportedContracts.sol";
 import {
     PriceFeedDataLive,
     ChainlinkPriceFeedData,
     BoundedPriceFeedData,
     CompositePriceFeedData
 } from "@gearbox-protocol/sdk/contracts/PriceFeedDataLive.sol";
+
 import {PriceFeedConfig} from "@gearbox-protocol/core-v2/contracts/oracles/PriceOracleV2.sol";
+import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
+
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 import {YearnPriceFeed} from "../../oracles/yearn/YearnPriceFeed.sol";
 import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
 import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
-import {CurveV1StETHPoolGateway} from "../../gateways/curve/CurveV1_stETHGateway.sol";
-
-import {ISupportedContracts, Contracts} from "@gearbox-protocol/sdk/contracts/SupportedContracts.sol";
 
 import {CurveLP2PriceFeed} from "../../oracles/curve/CurveLP2PriceFeed.sol";
 import {CurveLP3PriceFeed} from "../../oracles/curve/CurveLP3PriceFeed.sol";
 import {CurveLP4PriceFeed} from "../../oracles/curve/CurveLP4PriceFeed.sol";
 
-import {IYVault} from "../../integrations/yearn/IYVault.sol";
-import {IwstETH} from "../../integrations/lido/IwstETH.sol";
-import {Test} from "forge-std/Test.sol";
-
-import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
-
-address constant CURVE_REGISTRY = 0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5;
+import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
+import {IYVault} from "../../interfaces/yearn/IYVault.sol";
+import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 
 contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
@@ -130,7 +128,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pool = supportedContracts.addressOf(curvePriceFeeds[i].pool);
                 if (curvePriceFeeds[i].pool == Contracts.CURVE_STETH_GATEWAY) {
-                    pool = CurveV1StETHPoolGateway(payable(pool)).pool();
+                    pool = IstETHPoolGateway(pool).pool();
                 }
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken)));

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Holdings, 2023
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -9,8 +9,8 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {RAY} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
-import {IAToken} from "../../../../integrations/aave/IAToken.sol";
-import {ILendingPool} from "../../../../integrations/aave/ILendingPool.sol";
+import {IAToken} from "../../../../interfaces/aave/IAToken.sol";
+import {ILendingPool} from "../../../../interfaces/aave/ILendingPool.sol";
 
 /// @title AToken mock
 contract ATokenMock is IAToken, ERC20 {
