@@ -1,87 +1,89 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Holdings, 2023
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {PriceFeedType} from "../../interfaces/IPriceFeedType.sol";
 
+import {PriceFeedType} from "../../interfaces/IPriceFeedType.sol";
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 
 // EXCEPTIONS
-import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
+import {ZeroAddressException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
-uint256 constant RANGE_WIDTH = 200; // 2%
+uint256 constant RANGE_WIDTH = 200;
 
 /// @title ERC4626 vault shares price feed
 contract ERC4626PriceFeed is LPPriceFeed {
-    /// @dev Chainlink price feed for the vault's underlying
-    AggregatorV3Interface public immutable priceFeed;
-
-    /// @dev Address of the vault to compute prices for
-    IERC4626 public immutable vault;
-
-    /// @dev Amount of shares comprising a single unit (accounting for decimals)
-    uint256 public immutable vaultShareUnit;
-
-    /// @dev Amount of underlying comprising a single unit (accounting for decimals)
-    uint256 public immutable underlyingUnit;
-
     PriceFeedType public constant override priceFeedType = PriceFeedType.ERC4626_VAULT_ORACLE;
     uint256 public constant override version = 1;
 
-    /// @dev Whether to skip price sanity checks.
-    /// @notice Always set to true for LP price feeds,
-    ///         since they perform their own sanity checks
+    /// @notice Vault to compute prices for
+    address public immutable vault;
+
+    /// @notice Vault's underlying asset price feed
+    address public immutable assetPriceFeed;
+
+    /// @notice Amount of shares comprising a single unit (accounting for decimals)
+    uint256 public immutable vaultShareUnit;
+
+    /// @notice Amount of underlying comprising a single unit (accounting for decimals)
+    uint256 public immutable underlyingUnit;
+
+    /// @notice Whether to skip price sanity checks (always true for LP price feeds which perform their own checks)
     bool public constant override skipPriceCheck = true;
 
-    constructor(address addressProvider, address _vault, address _priceFeed)
+    /// @notice Constructor
+    /// @param addressProvider Address provider contract
+    /// @param _vault Vault to compute prices for
+    /// @param _assetPriceFeed Vault's underlying asset price feed
+    constructor(address addressProvider, address _vault, address _assetPriceFeed)
         LPPriceFeed(
             addressProvider,
             RANGE_WIDTH,
-            _vault != address(0) ? string(abi.encodePacked(IERC20Metadata(_vault).name(), " priceFeed")) : ""
-        )
+            _vault != address(0) ? string(abi.encodePacked(ERC20(_vault).name(), " priceFeed")) : ""
+        ) // U:[TVPF-2]
+        nonZeroAddress(_vault) // U:[TVPF-1]
+        nonZeroAddress(_assetPriceFeed) // U:[TVPF-1]
     {
-        if (_vault == address(0) || _priceFeed == address(0)) {
-            revert ZeroAddressException();
-        }
+        vault = _vault; // U:[TVPF-2]
+        assetPriceFeed = _assetPriceFeed; // U:[TVPF-2]
 
-        vault = IERC4626(_vault);
-        priceFeed = AggregatorV3Interface(_priceFeed);
+        vaultShareUnit = 10 ** IERC4626(_vault).decimals(); // U:[TVPF-2]
+        underlyingUnit = 10 ** ERC20(IERC4626(_vault).asset()).decimals(); // U:[TVPF-2]
 
-        vaultShareUnit = 10 ** vault.decimals();
-        underlyingUnit = 10 ** IERC20Metadata(vault.asset()).decimals();
-
-        uint256 assetsPerShare = vault.convertToAssets(vaultShareUnit);
-        _setLimiter(assetsPerShare);
+        _setLimiter(IERC4626(_vault).convertToAssets(vaultShareUnit)); // U:[TVPF-2]
     }
 
-    /// @dev Returns the USD price of the pool's share
+    /// @notice Returns the USD price of a single pool share
     function latestRoundData()
         external
         view
         override
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed.latestRoundData();
+        (roundId, answer, startedAt, updatedAt, answeredInRound) =
+            AggregatorV3Interface(assetPriceFeed).latestRoundData(); // U:[TVPF-3,4]
 
-        // Sanity check for chainlink pricefeed
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound);
+        _checkAnswer(roundId, answer, updatedAt, answeredInRound); // U:[TVPF-3]
 
-        uint256 assetsPerShare = vault.convertToAssets(vaultShareUnit);
+        uint256 assetsPerShare = IERC4626(vault).convertToAssets(vaultShareUnit); // U:[TVPF-4]
 
-        assetsPerShare = _checkAndUpperBoundValue(assetsPerShare);
+        assetsPerShare = _checkAndUpperBoundValue(assetsPerShare); // U:[TVPF-4]
 
-        answer = int256((assetsPerShare * uint256(answer)) / underlyingUnit);
+        answer = int256((assetsPerShare * uint256(answer)) / underlyingUnit); // U:[TVPF-4]
     }
 
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view override returns (bool) {
-        uint256 assetsPerShare = vault.convertToAssets(vaultShareUnit);
-        if (assetsPerShare < _lowerBound || assetsPerShare > _uBound) {
-            return false;
-        }
-        return true;
+    /// @dev Returns true if assets per share falls within bounds and false otherwise
+    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _upperBound)
+        internal
+        view
+        override
+        returns (bool)
+    {
+        uint256 assetsPerShare = IERC4626(vault).convertToAssets(vaultShareUnit); // U:[TVPF-5]
+        return assetsPerShare >= _lowerBound && assetsPerShare <= _upperBound; // U:[TVPF-5]
     }
 }
