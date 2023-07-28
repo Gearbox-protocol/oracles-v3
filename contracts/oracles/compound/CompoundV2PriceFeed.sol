@@ -17,7 +17,7 @@ import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfac
 uint256 constant RANGE_WIDTH = 200; // 2%
 
 /// @title Compound V2 cToken price feed
-contract CompoundPriceFeed is LPPriceFeed {
+contract CompoundV2PriceFeed is LPPriceFeed {
     /// @dev Chainlink price feed for the underlying token
     AggregatorV3Interface public immutable priceFeed;
 
@@ -27,7 +27,7 @@ contract CompoundPriceFeed is LPPriceFeed {
     /// @dev Scale of the cToken's exchangeRate
     uint256 public constant decimalsDivider = WAD;
 
-    PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOUND_ORACLE;
+    PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOUND_V2_ORACLE;
     uint256 public constant override version = 1;
 
     /// @dev Whether to skip price sanity checks.

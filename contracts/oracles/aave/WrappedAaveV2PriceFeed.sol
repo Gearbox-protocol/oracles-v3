@@ -18,7 +18,7 @@ import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfac
 uint256 constant RANGE_WIDTH = 200; // 2%
 
 /// @title Aave V2 wrapped aToken price feed
-contract AavePriceFeed is LPPriceFeed {
+contract WrappedAaveV2PriceFeed is LPPriceFeed {
     /// @dev Chainlink price feed for the aToken's underlying token
     AggregatorV3Interface public immutable priceFeed;
 
@@ -28,7 +28,7 @@ contract AavePriceFeed is LPPriceFeed {
     /// @dev Scale of the waToken's exchange rate
     uint256 public constant decimalsDivider = WAD;
 
-    PriceFeedType public constant override priceFeedType = PriceFeedType.AAVE_ORACLE;
+    PriceFeedType public constant override priceFeedType = PriceFeedType.WRAPPED_AAVE_V2_ORACLE;
     uint256 public constant override version = 1;
 
     /// @dev Whether to skip price sanity checks.
