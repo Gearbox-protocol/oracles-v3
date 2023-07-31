@@ -21,15 +21,9 @@ contract PricePrinterTest is Test {
     PriceFeedDeployer public pfd;
 
     function setUp() public {
-        uint16 networkId;
-
-        try vm.envInt("ETH_FORK_NETWORK_ID") returns (int256 val) {
-            networkId = uint16(uint256(val));
-        } catch {
-            networkId = 1;
-        }
-
         TokensTestSuite tokenTestSuite = new TokensTestSuite();
+
+        uint16 networkId = tokenTestSuite.networkId();
 
         AddressProviderV3ACLMock addressProvider = new AddressProviderV3ACLMock();
         SupportedContracts sc = new SupportedContracts(networkId);
@@ -48,6 +42,8 @@ contract PricePrinterTest is Test {
 
     function test_print_all_prices() public {
         uint256 len = pfd.priceFeedConfigLength();
+
+        console.log("Found: ", len, " tokens");
         for (uint256 i; i < len; ++i) {
             (address token, address priceFeed) = pfd.priceFeedConfig(i);
 
