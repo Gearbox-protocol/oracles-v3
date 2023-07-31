@@ -20,21 +20,26 @@ import "forge-std/console.sol";
 
 contract PricePrinterTest is Test {
     PriceFeedDeployer public pfd;
+    uint256 chainId;
+
+    modifier liveTestOnly() {
+        if (chainId != 1337 && chainId != 31337) {
+            _;
+        }
+    }
 
     function setUp() public {
         NetworkDetector nd = new NetworkDetector();
-        uint256 chainid = nd.chainId();
+        chainId = nd.chainId();
 
-        if (chainid == 1337 || chainid == 31337) {
-            revert("Local testnet not supported");
+        if (chainId != 1337 && chainId != 31337) {
+            TokensTestSuite tokenTestSuite = new TokensTestSuite();
+
+            AddressProviderV3ACLMock addressProvider = new AddressProviderV3ACLMock();
+            SupportedContracts sc = new SupportedContracts(chainId);
+
+            pfd = new PriceFeedDeployer(chainId, address(addressProvider), tokenTestSuite, sc);
         }
-
-        TokensTestSuite tokenTestSuite = new TokensTestSuite();
-
-        AddressProviderV3ACLMock addressProvider = new AddressProviderV3ACLMock();
-        SupportedContracts sc = new SupportedContracts(chainid);
-
-        pfd = new PriceFeedDeployer(chainid, address( addressProvider),tokenTestSuite,sc);
     }
 
     function printUsdPrice(address token, uint256 price) public view {
@@ -46,7 +51,7 @@ contract PricePrinterTest is Test {
         console.log(result);
     }
 
-    function test_print_all_prices() public {
+    function test_print_all_prices() public liveTestOnly {
         uint256 len = pfd.priceFeedConfigLength();
 
         console.log("Found: ", len, " tokens");
