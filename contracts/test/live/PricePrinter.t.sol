@@ -11,6 +11,7 @@ import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 import {SupportedContracts} from "@gearbox-protocol/sdk/contracts/SupportedContracts.sol";
 import {Tokens, TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
+import {NetworkDetector} from "@gearbox-protocol/sdk/contracts/NetworkDetector.sol";
 
 import {PriceFeedConfig, PriceFeedDeployer} from "../suites/PriceFeedDeployer.sol";
 
@@ -21,14 +22,19 @@ contract PricePrinterTest is Test {
     PriceFeedDeployer public pfd;
 
     function setUp() public {
+        NetworkDetector nd = new NetworkDetector();
+        uint256 chainid = nd.chainId();
+
+        if (chainid == 1337 || chainid == 31337) {
+            revert("Local testnet not supported");
+        }
+
         TokensTestSuite tokenTestSuite = new TokensTestSuite();
 
-        uint16 networkId = tokenTestSuite.networkId();
-
         AddressProviderV3ACLMock addressProvider = new AddressProviderV3ACLMock();
-        SupportedContracts sc = new SupportedContracts(networkId);
+        SupportedContracts sc = new SupportedContracts(chainid);
 
-        pfd = new PriceFeedDeployer(networkId, address( addressProvider),tokenTestSuite,sc);
+        pfd = new PriceFeedDeployer(chainid, address( addressProvider),tokenTestSuite,sc);
     }
 
     function printUsdPrice(address token, uint256 price) public view {

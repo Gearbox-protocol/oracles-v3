@@ -30,8 +30,6 @@ import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
 import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
 
-import {CurveLP2PriceFeed} from "../../oracles/curve/CurveLP2PriceFeed.sol";
-import {CurveLP3PriceFeed} from "../../oracles/curve/CurveLP3PriceFeed.sol";
 import {CurveLP4PriceFeed} from "../../oracles/curve/CurveLP4PriceFeed.sol";
 import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
 
@@ -53,14 +51,14 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     uint256 public priceFeedConfigLength;
 
     constructor(
-        uint16 networkId,
+        uint256 chainId,
         address addressProvider,
         TokensTestSuite _tokenTestSuite,
         ISupportedContracts supportedContracts
-    ) PriceFeedDataLive(networkId) {
+    ) PriceFeedDataLive() {
         tokenTestSuite = _tokenTestSuite;
         // CHAINLINK PRICE FEEDS
-        ChainlinkPriceFeedData[] memory chainlinkPriceFeeds = chainlinkPriceFeedsByNetwork[networkId];
+        ChainlinkPriceFeedData[] memory chainlinkPriceFeeds = chainlinkPriceFeedsByNetwork[chainId];
         uint256 len = chainlinkPriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
@@ -79,7 +77,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
         {
             // BOUNDED_PRICE_FEEDS
-            BoundedPriceFeedData[] memory boundedPriceFeeds = boundedPriceFeedsByNetwork[networkId];
+            BoundedPriceFeedData[] memory boundedPriceFeeds = boundedPriceFeedsByNetwork[chainId];
             len = boundedPriceFeeds.length;
             unchecked {
                 for (uint256 i = 0; i < len; ++i) {
@@ -105,7 +103,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
         {
             // COMPOSITE_PRICE_FEEDS
-            CompositePriceFeedData[] memory compositePriceFeeds = compositePriceFeedsByNetwork[networkId];
+            CompositePriceFeedData[] memory compositePriceFeeds = compositePriceFeedsByNetwork[chainId];
             len = compositePriceFeeds.length;
             unchecked {
                 for (uint256 i = 0; i < len; ++i) {
@@ -134,7 +132,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
         // ZERO PRICE FEEDS
         {
-            SingeTokenPriceFeedData[] memory zeroPriceFeeds = zeroPriceFeedsByNetwork[networkId];
+            SingeTokenPriceFeedData[] memory zeroPriceFeeds = zeroPriceFeedsByNetwork[chainId];
             len = zeroPriceFeeds.length;
             if (len > 0) {
                 address zeroPF = address(new ZeroPriceFeed());
@@ -153,7 +151,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
         // CURVE PRICE FEEDS
         {
-            CurvePriceFeedData[] memory curvePriceFeeds = curvePriceFeedsByNetwork[networkId];
+            CurvePriceFeedData[] memory curvePriceFeeds = curvePriceFeedsByNetwork[chainId];
             len = curvePriceFeeds.length;
 
             unchecked {
@@ -167,8 +165,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                     address asset0 = tokenTestSuite.addressOf(curvePriceFeeds[i].assets[0]);
                     address asset1 = tokenTestSuite.addressOf(curvePriceFeeds[i].assets[1]);
-                    address asset2 = nCoins > 2 ? tokenTestSuite.addressOf(curvePriceFeeds[i].assets[2]) : address(0);
-                    address asset3 = nCoins > 3 ? tokenTestSuite.addressOf(curvePriceFeeds[i].assets[3]) : address(0);
+
+                    address asset2 = (nCoins > 2) ? tokenTestSuite.addressOf(curvePriceFeeds[i].assets[2]) : address(0);
+                    if (nCoins > 2 && asset2 == address(0)) revert("Asset 2 is not defined");
+
+                    address asset3 = (nCoins > 3) ? tokenTestSuite.addressOf(curvePriceFeeds[i].assets[3]) : address(0);
+                    if (nCoins > 3 && asset3 == address(0)) revert("Asset 3 is not defined");
 
                     if (
                         pool != address(0) && tokenTestSuite.addressOf(lpToken) != address(0) && asset0 != address(0)
@@ -181,9 +183,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         string memory description =
                             string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken)));
 
-                        if (nCoins == 2) {
-                            pf = address(
-                                new CurveLP2PriceFeed(
+                        pf = address(
+                            new CurveLP4PriceFeed(
                                 addressProvider,
                                 pool,
                                 priceFeeds[
@@ -192,47 +193,15 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                                 priceFeeds[
                                 asset1
                                 ],
-                                description
-                                )
-                            );
-                        } else if (nCoins == 3 && asset2 != address(0)) {
-                            pf = address(
-                                new CurveLP3PriceFeed(
-                                addressProvider,
-                                pool,
-                                priceFeeds[
-                                asset0
-                                ],
-                                priceFeeds[
-                                asset1
-                                ],
-                                priceFeeds[
+                               (nCoins >2) ? priceFeeds[
                                 asset2
-                                ],
-                                description
-                                )
-                            );
-                        } else if (nCoins == 4 && asset2 != address(0) && asset3 != address(0)) {
-                            pf = address(
-                                new CurveLP4PriceFeed(
-                                addressProvider,
-                                pool,
-                                priceFeeds[
-                                asset0
-                                ],
-                                priceFeeds[
-                                asset1
-                                ],
-                                priceFeeds[
-                                asset2
-                                ],
-                                priceFeeds[
+                                ] : address(0),
+                               (nCoins >3) ? priceFeeds[
                                 asset3
-                                ],
+                                ] : address(0),
                                 description
                                 )
-                            );
-                        }
+                        );
 
                         setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
                         vm.label(pf, description);
@@ -242,7 +211,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
 
         // CURVE CRYPTO PRICE FEEDS
-        CurvePriceFeedData[] memory curveCryptoPriceFeeds = curveCryptoPriceFeedsByNetwork[networkId];
+        CurvePriceFeedData[] memory curveCryptoPriceFeeds = curveCryptoPriceFeedsByNetwork[chainId];
         len = curveCryptoPriceFeeds.length;
 
         unchecked {
@@ -286,7 +255,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
 
         // CURVE LIKE PRICEFEEDS
-        TheSamePriceFeedData[] memory theSamePriceFeeds = theSamePriceFeedsByNetwork[networkId];
+        TheSamePriceFeedData[] memory theSamePriceFeeds = theSamePriceFeedsByNetwork[chainId];
         len = theSamePriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
@@ -305,7 +274,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
 
         // YEARN PRICE FEEDS
-        SingeTokenPriceFeedData[] memory yearnPriceFeeds = yearnPriceFeedsByNetwork[networkId];
+        SingeTokenPriceFeedData[] memory yearnPriceFeeds = yearnPriceFeedsByNetwork[chainId];
         len = yearnPriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
@@ -334,7 +303,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
         // WSTETH_PRICE_FEED
         unchecked {
-            Tokens t = wstethPriceFeedByNetwork[networkId].token;
+            Tokens t = wstethPriceFeedByNetwork[chainId].token;
             if (t != Tokens.NO_TOKEN) {
                 address wsteth = tokenTestSuite.addressOf(t);
 
@@ -352,7 +321,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
 
         // // WRAPPED AAVE V2 PRICE FEEDS
-        GenericLPPriceFeedData[] memory wrappedAaveV2PriceFeeds = wrappedAaveV2PriceFeedsByNetwork[networkId];
+        GenericLPPriceFeedData[] memory wrappedAaveV2PriceFeeds = wrappedAaveV2PriceFeedsByNetwork[chainId];
         len = wrappedAaveV2PriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
@@ -378,7 +347,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
         // COMPOUND V2 PRICE FEEDS
-        GenericLPPriceFeedData[] memory compoundV2PriceFeeds = compoundV2PriceFeedsByNetwork[networkId];
+        GenericLPPriceFeedData[] memory compoundV2PriceFeeds = compoundV2PriceFeedsByNetwork[chainId];
         len = compoundV2PriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
@@ -407,7 +376,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
 
         // ERC4626 PRICE FEEDS
-        GenericLPPriceFeedData[] memory erc4626PriceFeeds = erc4626PriceFeedsByNetwork[networkId];
+        GenericLPPriceFeedData[] memory erc4626PriceFeeds = erc4626PriceFeedsByNetwork[chainId];
         len = erc4626PriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
@@ -436,7 +405,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
 
         // REDSTONE PRICE FEEDS
-        RedStonePriceFeedData[] memory redStonePriceFeeds = redStonePriceFeedsByNetwork[networkId];
+        RedStonePriceFeedData[] memory redStonePriceFeeds = redStonePriceFeedsByNetwork[chainId];
         len = redStonePriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
