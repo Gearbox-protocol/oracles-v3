@@ -20,10 +20,13 @@ import {
     TheSamePriceFeedData,
     RedStonePriceFeedData
 } from "@gearbox-protocol/sdk/contracts/PriceFeedDataLive.sol";
+import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
+import {PriceOracleV3} from "@gearbox-protocol/core-v3/contracts/core/PriceOracleV3.sol";
+import {IAddressProviderV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IAddressProviderV3.sol";
+import {IACL} from "@gearbox-protocol/core-v2/contracts/interfaces/IACL.sol";
 
-import {PriceFeedConfig} from "@gearbox-protocol/core-v2/contracts/oracles/PriceOracleV2.sol";
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
-
+import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 import {YearnPriceFeed} from "../../oracles/yearn/YearnPriceFeed.sol";
 import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
@@ -49,13 +52,15 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     mapping(address => address) public priceFeeds;
     PriceFeedConfig[] public priceFeedConfig;
     uint256 public priceFeedConfigLength;
+    uint256 public immutable chainId;
 
     constructor(
-        uint256 chainId,
+        uint256 _chainId,
         address addressProvider,
         TokensTestSuite _tokenTestSuite,
         ISupportedContracts supportedContracts
     ) PriceFeedDataLive() {
+        chainId = _chainId;
         tokenTestSuite = _tokenTestSuite;
         // CHAINLINK PRICE FEEDS
         ChainlinkPriceFeedData[] memory chainlinkPriceFeeds = chainlinkPriceFeedsByNetwork[chainId];
@@ -68,7 +73,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address token = tokenTestSuite.addressOf(t);
 
                 if (token != address(0) && pf != address(0)) {
-                    setPriceFeed(token, pf);
+                    setPriceFeed(token, pf, chainlinkPriceFeeds[i].stalenessPeriod);
 
                     string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                     vm.label(pf, description);
@@ -434,10 +439,29 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
     function setPriceFeed(address token, address priceFeed) internal {
         priceFeeds[token] = priceFeed;
-        priceFeedConfig.push(PriceFeedConfig({token: token, priceFeed: priceFeed}));
+        priceFeedConfig.push(PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: 0}));
+    }
+
+    function setPriceFeed(address token, address priceFeed, uint32 stalenessPeriod) internal {
+        priceFeeds[token] = priceFeed;
+        priceFeedConfig.push(PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod}));
     }
 
     function getPriceFeeds() external view returns (PriceFeedConfig[] memory) {
         return priceFeedConfig;
+    }
+
+    function addPriceFeeds(address priceOracle) external {
+        uint256 len = priceFeedConfig.length;
+
+        address acl = PriceOracleV3(priceOracle).acl();
+        address root = IACL(acl).owner();
+
+        for (uint256 i; i < len; ++i) {
+            PriceFeedConfig memory pfc = priceFeedConfig[i];
+            address token = pfc.token;
+            vm.prank(root);
+            PriceOracleV3(priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
+        }
     }
 }

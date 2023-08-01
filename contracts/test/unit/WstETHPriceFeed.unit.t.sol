@@ -4,7 +4,7 @@
 pragma solidity ^0.8.10;
 
 import {WstETHPriceFeed, RANGE_WIDTH} from "../../oracles/lido/WstETHPriceFeed.sol";
-import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/PercentageMath.sol";
+import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 // LIBRARIES
 

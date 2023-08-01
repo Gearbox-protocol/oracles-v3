@@ -1026,20 +1026,20 @@
     "@ethersproject/properties" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
 
-"@gearbox-protocol/core-v2@1.19.0-base.5":
-  version "1.19.0-base.5"
-  resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v2/-/core-v2-1.19.0-base.5.tgz#8bda749bd43f3b52d1d98e84a52c7902a449cbfd"
-  integrity sha512-Q/pzlDVPIxT25aNf4Gmo0i04jWvBtdnqj6cSr4IVOHDP4KydIahoqSbCNAj2EJzzlHI1vrG8bprCLS4rpeJMLw==
+"@gearbox-protocol/core-v2@^1.19.0-base.7":
+  version "1.19.0-base.7"
+  resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v2/-/core-v2-1.19.0-base.7.tgz#547cbf15f4ebc4dc13941998890ba041b6e108f0"
+  integrity sha512-UcwkIUwWKTz7ocC+UXSNYXc9zrOhSwhDgGKGb0cQRqP8yYHiwwudFt7nzPAHI1elS8YyuzcXarqaSLH5nZU2XA==
   dependencies:
     "@typechain/ethers-v5" "^10.2.1"
 
-"@gearbox-protocol/core-v3@^1.29.5":
-  version "1.29.5"
-  resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v3/-/core-v3-1.29.5.tgz#69d4731ad26292d15357b9a0a4cfd51302b58bfe"
-  integrity sha512-8rqC2md3t4KcJBcOHYaNTjWdyH5hza9Ff/9buZ1BuFjC6b2LrM3KZr4qC+lsaVtCGOEU64/spVHCHAVNVCfJYw==
+"@gearbox-protocol/core-v3@^1.30.0":
+  version "1.30.0"
+  resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v3/-/core-v3-1.30.0.tgz#90eeea58ca9f13ac2bff4d3f583838c70a058a02"
+  integrity sha512-NjVEi0HMLjSgBsm4quNH+wqcEV1ZYINeYwoexr7MNT5m24MY+fEolK4rvO/oDD5L7O5RcfDYHSyd13ERb3rhdw==
   dependencies:
     "@1inch/solidity-utils" "^2.2.27"
-    "@gearbox-protocol/core-v2" "1.19.0-base.5"
+    "@gearbox-protocol/core-v2" "^1.19.0-base.7"
     "@gearbox-protocol/sdk" "^2.1.7"
 
 "@gearbox-protocol/eslint-config@^1.6.1":
@@ -1062,10 +1062,10 @@
   resolved "https://registry.yarnpkg.com/@gearbox-protocol/prettier-config/-/prettier-config-1.5.0.tgz#4df8e9fd2305fee6ab8c1417a02e31343836932a"
   integrity sha512-FUoprSsBdZyBjgxXCKL6mTkbeUJytaLzPJqIOoQpDmBRTX0seCc2o5I9PI9tySoRIlNnd/XXnKCXq1xHDEGbxw==
 
-"@gearbox-protocol/sdk@^2.1.7":
-  version "2.1.7"
-  resolved "https://registry.yarnpkg.com/@gearbox-protocol/sdk/-/sdk-2.1.7.tgz#0ec35a1b4a014c1994a433c46163868f63c96991"
-  integrity sha512-AGg5JvNVAi7G0GNazQomGaZNA6Z9FXk7ponanhL5h8sQHy0qUDme4WJMpJpkhEZznKQFKiHEd3s5LUxbvsyDOQ==
+"@gearbox-protocol/sdk@^2.1.10":
+  version "2.1.10"
+  resolved "https://registry.yarnpkg.com/@gearbox-protocol/sdk/-/sdk-2.1.10.tgz#50b0a8d592d5eeb7d55422189366aa7465824c59"
+  integrity sha512-5UejfCHEx3H49UoEDEwD0GXZxYPh/Rn700zRoonox8eLp5+unS8L5jskOM6jFiheTP152nF6Pn1IxDoXTTo+3g==
   dependencies:
     "@types/deep-eql" "^4.0.0"
     axios "^1.2.6"
@@ -1073,10 +1073,10 @@
     deep-eql "^4.1.0"
     moment "^2.29.4"
 
-"@gearbox-protocol/sdk@^2.1.8":
-  version "2.1.8"
-  resolved "https://registry.yarnpkg.com/@gearbox-protocol/sdk/-/sdk-2.1.8.tgz#27b291bb07af6622a8fae707a795d8d0b38835fd"
-  integrity sha512-6pkkKFc+D+0QBlncMJcgfsVvYAQG6QFxUTIABLdMx6yaomcjCSzTVH2QVXMDOAlUdD2rrXXumScsnoKlii5E2g==
+"@gearbox-protocol/sdk@^2.1.7":
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/@gearbox-protocol/sdk/-/sdk-2.1.7.tgz#0ec35a1b4a014c1994a433c46163868f63c96991"
+  integrity sha512-AGg5JvNVAi7G0GNazQomGaZNA6Z9FXk7ponanhL5h8sQHy0qUDme4WJMpJpkhEZznKQFKiHEd3s5LUxbvsyDOQ==
   dependencies:
     "@types/deep-eql" "^4.0.0"
     axios "^1.2.6"

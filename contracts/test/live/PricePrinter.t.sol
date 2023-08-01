@@ -12,8 +12,8 @@ import {AddressProviderV3ACLMock} from
 import {SupportedContracts} from "@gearbox-protocol/sdk/contracts/SupportedContracts.sol";
 import {Tokens, TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 import {NetworkDetector} from "@gearbox-protocol/sdk/contracts/NetworkDetector.sol";
-
-import {PriceFeedConfig, PriceFeedDeployer} from "../suites/PriceFeedDeployer.sol";
+import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
+import {PriceFeedDeployer} from "../suites/PriceFeedDeployer.sol";
 
 import {Test} from "forge-std/Test.sol";
 import "forge-std/console.sol";
@@ -56,7 +56,7 @@ contract PricePrinterTest is Test {
 
         console.log("Found: ", len, " tokens");
         for (uint256 i; i < len; ++i) {
-            (address token, address priceFeed) = pfd.priceFeedConfig(i);
+            (address token, address priceFeed,) = pfd.priceFeedConfig(i);
 
             (, int256 price,,,) = AggregatorV3Interface(priceFeed).latestRoundData();
 
