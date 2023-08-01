@@ -35,7 +35,7 @@ contract BoundedPriceFeed is ChainlinkReadableAggregator, AggregatorV3Interface,
     /// @dev Price feed description
     string public override description;
 
-    uint256 public constant override version = 1;
+    uint256 public constant override version = 3_00;
 
     PriceFeedType public constant override priceFeedType = PriceFeedType.BOUNDED_ORACLE;
 

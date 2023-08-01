@@ -67,7 +67,7 @@ contract ERC4626PriceFeed is LPPriceFeed {
         (roundId, answer, startedAt, updatedAt, answeredInRound) =
             AggregatorV3Interface(assetPriceFeed).latestRoundData(); // U:[TVPF-3,4]
 
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound); // U:[TVPF-3]
+        _checkAnswer(answer, updatedAt, 2 hours); // U:[TVPF-3]
 
         uint256 assetsPerShare = IERC4626(vault).convertToAssets(vaultShareUnit); // U:[TVPF-4]
 

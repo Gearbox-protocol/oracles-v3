@@ -65,10 +65,10 @@ contract WstETHPriceFeed is LPPriceFeed {
         override
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed.latestRoundData(); // F:[WSTPF-4]
+        (, answer,, updatedAt,) = priceFeed.latestRoundData(); // F:[WSTPF-4]
 
         // Sanity check for chainlink pricefeed
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound); // F:[WSTPF-5]
+        _checkAnswer(answer, updatedAt, 2 hours); // F:[WSTPF-5]
 
         uint256 stEthPerToken = wstETH.stEthPerToken(); // F:[WSTPF-4]
 
@@ -78,11 +78,11 @@ contract WstETHPriceFeed is LPPriceFeed {
         answer = int256((stEthPerToken * uint256(answer)) / decimalsDivider); // F:[WSTPF-4]
     }
 
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view override returns (bool) {
-        uint256 pps = wstETH.stEthPerToken();
-        if (pps < _lowerBound || pps > _uBound) {
-            return false;
-        }
-        return true;
-    }
+    // function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view override returns (bool) {
+    //     uint256 pps = wstETH.stEthPerToken();
+    //     if (pps < _lowerBound || pps > _uBound) {
+    //         return false;
+    //     }
+    //     return true;
+    // }
 }

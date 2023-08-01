@@ -100,67 +100,52 @@ contract BPTStablePriceFeed is LPPriceFeed {
         override
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed0.latestRoundData(); // F: [OBSLP-3]
+        (, answer,, updatedAt,) = priceFeed0.latestRoundData(); // F: [OBSLP-3]
 
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound);
+        _checkAnswer(answer, updatedAt, 2 hours);
 
-        uint80 roundIdNext;
         int256 answerNext;
-        uint256 startedAtNext;
         uint256 updatedAtNext;
-        uint80 answeredInRoundNext;
 
-        (roundIdNext, answerNext, startedAtNext, updatedAtNext, answeredInRoundNext) = priceFeed1.latestRoundData(); // F: [OBSLP-3]
+        (, answerNext,, updatedAtNext,) = priceFeed1.latestRoundData(); // F: [OBSLP-3]
 
-        _checkAnswer(roundIdNext, answerNext, updatedAtNext, answeredInRoundNext);
+        _checkAnswer(answerNext, updatedAtNext, 2 hours);
 
         if (answerNext < answer) {
-            roundId = roundIdNext;
             answer = answerNext;
-            startedAt = startedAtNext;
             updatedAt = updatedAtNext;
-            answeredInRound = answeredInRoundNext;
         }
 
         if (numAssets >= 3) {
-            (roundIdNext, answerNext, startedAtNext, updatedAtNext, answeredInRoundNext) = priceFeed2.latestRoundData(); // F: [OBSLP-3]
+            (, answerNext,, updatedAtNext,) = priceFeed1.latestRoundData(); // F: [OBSLP-3]
 
-            _checkAnswer(roundIdNext, answerNext, updatedAtNext, answeredInRoundNext);
+            _checkAnswer(answerNext, updatedAtNext, 2 hours);
 
             if (answerNext < answer) {
-                roundId = roundIdNext;
                 answer = answerNext;
-                startedAt = startedAtNext;
                 updatedAt = updatedAtNext;
-                answeredInRound = answeredInRoundNext;
             }
         }
 
         if (numAssets >= 4) {
-            (roundIdNext, answerNext, startedAtNext, updatedAtNext, answeredInRoundNext) = priceFeed3.latestRoundData(); // F: [OBSLP-3]
+            (, answerNext,, updatedAtNext,) = priceFeed1.latestRoundData(); // F: [OBSLP-3]
 
-            _checkAnswer(roundIdNext, answerNext, updatedAtNext, answeredInRoundNext);
+            _checkAnswer(answerNext, updatedAtNext, 2 hours);
 
             if (answerNext < answer) {
-                roundId = roundIdNext;
                 answer = answerNext;
-                startedAt = startedAtNext;
                 updatedAt = updatedAtNext;
-                answeredInRound = answeredInRoundNext;
             }
         }
 
         if (numAssets == 5) {
-            (roundIdNext, answerNext, startedAtNext, updatedAtNext, answeredInRoundNext) = priceFeed4.latestRoundData(); // F: [OBSLP-3]
+            (, answerNext,, updatedAtNext,) = priceFeed1.latestRoundData(); // F: [OBSLP-3]
 
-            _checkAnswer(roundIdNext, answerNext, updatedAtNext, answeredInRoundNext);
+            _checkAnswer(answerNext, updatedAtNext, 2 hours);
 
             if (answerNext < answer) {
-                roundId = roundIdNext;
                 answer = answerNext;
-                startedAt = startedAtNext;
                 updatedAt = updatedAtNext;
-                answeredInRound = answeredInRoundNext;
             }
         }
 

@@ -20,10 +20,12 @@ uint256 constant RANGE_WIDTH = 200; // 2%
 /// @title Yearn price feed
 contract YearnPriceFeed is LPPriceFeed {
     /// @dev Chainlink price feed for the Vault's underlying
-    AggregatorV3Interface public immutable priceFeed;
+    address public immutable priceFeed;
+
+    uint32 public immutable stalenessPeriod;
 
     /// @dev Address of the vault to compute prices for
-    IYVault public immutable yVault;
+    address public immutable yVault;
 
     /// @dev Format of the vault's pricePerShare()
     uint256 public immutable decimalsDivider;
@@ -36,7 +38,7 @@ contract YearnPriceFeed is LPPriceFeed {
     ///         since they perform their own sanity checks
     bool public constant override skipPriceCheck = true;
 
-    constructor(address addressProvider, address _yVault, address _priceFeed)
+    constructor(address addressProvider, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
         LPPriceFeed(
             addressProvider,
             RANGE_WIDTH, // F:[YPF-1]
@@ -51,8 +53,9 @@ contract YearnPriceFeed is LPPriceFeed {
             revert ZeroAddressException();
         } // F:[OYPF-2]
 
-        yVault = IYVault(_yVault); // F:[OYPF-1]
-        priceFeed = AggregatorV3Interface(_priceFeed); // F:[OYPF-1]
+        yVault = _yVault; // F:[OYPF-1]
+        priceFeed = _priceFeed; // F:[OYPF-1]
+        stalenessPeriod = _stalenessPeriod;
 
         decimalsDivider = 10 ** IYVault(_yVault).decimals(); // F:[OYPF-1]
         uint256 pricePerShare = IYVault(_yVault).pricePerShare(); // F:[OYPF-1]
@@ -68,24 +71,16 @@ contract YearnPriceFeed is LPPriceFeed {
         override
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed.latestRoundData(); // F:[OYPF-4]
+        (, answer,, updatedAt,) = AggregatorV3Interface(priceFeed).latestRoundData(); // F:[OYPF-4]
 
         // Sanity check for chainlink pricefeed
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound); // F:[OYPF-5]
+        _checkAnswer(answer, updatedAt, stalenessPeriod); // F:[OYPF-5]
 
-        uint256 pricePerShare = yVault.pricePerShare(); // F:[OYPF-4]
+        uint256 pricePerShare = IYVault(yVault).pricePerShare(); // F:[OYPF-4]
 
         // Checks that pricePerShare is within bounds
         pricePerShare = _checkAndUpperBoundValue(pricePerShare); // F:[OYPF-5]
 
         answer = int256((pricePerShare * uint256(answer)) / decimalsDivider); // F:[OYPF-4]
-    }
-
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view override returns (bool) {
-        uint256 pps = yVault.pricePerShare();
-        if (pps < _lowerBound || pps > _uBound) {
-            return false;
-        }
-        return true;
     }
 }

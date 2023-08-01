@@ -21,13 +21,18 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
     using FixedPoint for uint256;
 
     /// @dev Price feed of coin 0 in the pool
-    AggregatorV3Interface public immutable priceFeed1;
+    address public immutable priceFeed1;
+
+    uint32 public immutable stalenessPeriod1;
 
     /// @dev Price feed of coin 1 in the pool
-    AggregatorV3Interface public immutable priceFeed2;
+    address public immutable priceFeed2;
+
+    uint32 public immutable stalenessPeriod2;
 
     /// @dev Price feed of coin 2 in the pool
-    AggregatorV3Interface public immutable priceFeed3;
+    address public immutable priceFeed3;
+    uint32 public immutable stalenessPeriod3;
 
     /// @dev Number of coins in the pool (2 or 3)
     uint16 public immutable nCoins;
@@ -40,15 +45,20 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
         address _priceFeed1,
         address _priceFeed2,
         address _priceFeed3,
+        uint32 _stalenessPeriod1,
+        uint32 _stalenessPeriod2,
+        uint32 _stalenessPeriod3,
         string memory _description
     ) AbstractCurveLPPriceFeed(addressProvider, _curvePool, _description) {
-        if (_priceFeed1 == address(0) || _priceFeed2 == address(0)) {
-            revert ZeroAddressException();
-        }
+        if (_priceFeed1 == address(0) || _priceFeed2 == address(0)) revert ZeroAddressException();
 
-        priceFeed1 = AggregatorV3Interface(_priceFeed1);
-        priceFeed2 = AggregatorV3Interface(_priceFeed2);
-        priceFeed3 = AggregatorV3Interface(_priceFeed3);
+        priceFeed1 = _priceFeed1; // F:[OCLP-1]
+        priceFeed2 = _priceFeed2; // F:[OCLP-1]
+        priceFeed3 = _priceFeed3; // F:[OCLP-1]
+
+        stalenessPeriod1 = _stalenessPeriod1;
+        stalenessPeriod2 = _stalenessPeriod2;
+        stalenessPeriod3 = _stalenessPeriod3;
 
         nCoins = _priceFeed3 == address(0) ? 2 : 3;
     }
@@ -62,30 +72,28 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
         override
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        uint80 roundIdCurrent;
         int256 answerCurrent;
         uint256 updatedAtCurrent;
-        uint80 answeredInRoundCurrent;
 
-        (roundId, answerCurrent, startedAt, updatedAt, answeredInRound) = priceFeed1.latestRoundData();
+        (, answerCurrent,, updatedAtCurrent,) = AggregatorV3Interface(priceFeed1).latestRoundData(); // F:[OCLP-6]
 
-        // Sanity check for the Chainlink pricefeed
-        _checkAnswer(roundId, answerCurrent, updatedAt, answeredInRound);
+        // Sanity check for chainlink pricefeed
+        _checkAnswer(answer, updatedAt, stalenessPeriod1);
 
         uint256 product = uint256(answerCurrent) * DECIMALS / USD_FEED_DECIMALS;
 
-        (roundIdCurrent, answerCurrent,, updatedAtCurrent, answeredInRoundCurrent) = priceFeed2.latestRoundData();
+        (, answerCurrent,, updatedAtCurrent,) = AggregatorV3Interface(priceFeed2).latestRoundData(); // F:[OCLP-6]
 
-        // Sanity check for the Chainlink pricefeed
-        _checkAnswer(roundIdCurrent, answerCurrent, updatedAtCurrent, answeredInRoundCurrent);
+        // Sanity check for chainlink pricefeed
+        _checkAnswer(answer, updatedAt, stalenessPeriod2);
 
         product = product.mulDown(uint256(answerCurrent) * DECIMALS / USD_FEED_DECIMALS);
 
         if (nCoins == 3) {
-            (roundIdCurrent, answerCurrent,, updatedAtCurrent, answeredInRoundCurrent) = priceFeed3.latestRoundData();
+            (, answerCurrent,, updatedAtCurrent,) = AggregatorV3Interface(priceFeed2).latestRoundData(); // F:[OCLP-6]
 
-            // Sanity check for the Chainlink pricefeed
-            _checkAnswer(roundIdCurrent, answerCurrent, updatedAtCurrent, answeredInRoundCurrent);
+            // Sanity check for chainlink pricefeed
+            _checkAnswer(answer, updatedAt, stalenessPeriod3);
 
             product = product.mulDown(uint256(answerCurrent) * DECIMALS / USD_FEED_DECIMALS);
         }
@@ -98,5 +106,39 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
         answer = int256(product.powDown(DECIMALS / nCoins).mulDown(nCoins * virtualPrice));
 
         answer = answer * int256(USD_FEED_DECIMALS) / int256(DECIMALS);
+    }
+
+    function getAnswer()
+        internal
+        view
+        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+    {
+        int256 answerA;
+
+        uint256 updatedAtA;
+
+        (, answerA,, updatedAtA,) = AggregatorV3Interface(priceFeed2).latestRoundData(); // F:[OCLP-6]
+
+        // Sanity check for chainlink pricefeed
+        _checkAnswer(answerA, updatedAtA, 2 hours);
+
+        if (answerA < answer) {
+            answer = answerA;
+            updatedAt = updatedAtA;
+        } // F:[OCLP-6]
+
+        if (priceFeed3 == address(0)) {
+            return (roundId, answer, startedAt, updatedAt, answeredInRound);
+        }
+
+        (, answerA,, updatedAtA,) = AggregatorV3Interface(priceFeed3).latestRoundData(); // F:[OCLP-6]
+
+        // Sanity check for chainlink pricefeed
+        _checkAnswer(answerA, updatedAtA, 2 hours);
+
+        if (answerA < answer) {
+            answer = answerA;
+            updatedAt = updatedAtA;
+        } // F:[OCLP-6]
     }
 }

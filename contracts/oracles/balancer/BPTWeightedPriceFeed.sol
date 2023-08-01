@@ -155,9 +155,9 @@ contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
         uint256 currentBase = FixedPoint.ONE;
 
         for (uint256 i = 0; i < numAssets;) {
-            (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeeds[i].latestRoundData(); // F: [OBWLP-3,4]
+            (, answer,, updatedAt,) = priceFeeds[i].latestRoundData(); // F: [OBWLP-3,4]
 
-            _checkAnswer(roundId, answer, updatedAt, answeredInRound);
+            _checkAnswer(answer, updatedAt, 2 hours);
 
             answer = (answer * int256(DECIMALS)) / int256(USD_FEED_DECIMALS);
 

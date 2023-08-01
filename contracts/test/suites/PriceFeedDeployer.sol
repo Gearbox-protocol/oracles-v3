@@ -51,6 +51,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
     mapping(address => address) public priceFeeds;
     PriceFeedConfig[] public priceFeedConfig;
+    mapping(address => uint32) public stalenessPeriods;
     uint256 public priceFeedConfigLength;
     uint256 public immutable chainId;
 
@@ -204,6 +205,11 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                                (nCoins >3) ? priceFeeds[
                                 asset3
                                 ] : address(0),
+                                stalenessPeriods[asset0],
+                                stalenessPeriods[asset1],
+                                stalenessPeriods[asset2],
+                                stalenessPeriods[asset3],
+                                
                                 description
                                 )
                         );
@@ -227,6 +233,13 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pool = supportedContracts.addressOf(curveCryptoPriceFeeds[i].pool);
 
+                address asset0 = tokenTestSuite.addressOf(curveCryptoPriceFeeds[i].assets[0]);
+                address asset1 = tokenTestSuite.addressOf(curveCryptoPriceFeeds[i].assets[1]);
+
+                address asset2 =
+                    (nCoins > 2) ? tokenTestSuite.addressOf(curveCryptoPriceFeeds[i].assets[2]) : address(0);
+                if (nCoins > 2 && asset2 == address(0)) revert("Asset 2 is not defined");
+
                 if (pool != address(0) && tokenTestSuite.addressOf(lpToken) != address(0)) {
                     string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken)));
 
@@ -234,21 +247,18 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         new CurveCryptoLPPriceFeed(
                             addressProvider,
                             pool,
-                            priceFeeds[
-                                tokenTestSuite.addressOf(
-                                    curveCryptoPriceFeeds[i].assets[0]
-                                )
-                            ],
-                            priceFeeds[
-                                tokenTestSuite.addressOf(
-                                    curveCryptoPriceFeeds[i].assets[1]
-                                )
-                            ],
-                            nCoins == 3 ? priceFeeds[
-                                tokenTestSuite.addressOf(
-                                    curveCryptoPriceFeeds[i].assets[2]
-                                )
-                            ] : address(0),
+                             priceFeeds[
+                                asset0
+                                ],
+                                priceFeeds[
+                                asset1
+                                ],
+                               (nCoins >2) ? priceFeeds[
+                                asset2
+                                ] : address(0),
+                             stalenessPeriods[asset0],
+                                stalenessPeriods[asset1],
+                                stalenessPeriods[asset2],
                             description
                         )
                     );
@@ -295,7 +305,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     new YearnPriceFeed(
                         addressProvider,
                         yVault,
-                        priceFeeds[underlying]
+                        priceFeeds[underlying],
+                        2 hours
                     )
                 );
 

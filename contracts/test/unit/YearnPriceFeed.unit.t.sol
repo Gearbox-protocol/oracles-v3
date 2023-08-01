@@ -60,7 +60,8 @@ contract YearnFeedTest is Test, IPriceOracleV2Exceptions {
         pf = new YearnPriceFeed(
             address(addressProvider),
             address(yearnMock),
-            address(underlyingPf)
+            address(underlyingPf),
+            2 hours
         );
 
         vm.label(address(underlyingPf), "DAI_PRICEFEED");
@@ -106,13 +107,14 @@ contract YearnFeedTest is Test, IPriceOracleV2Exceptions {
     function test_OYPF_02_constructor_reverts_for_zero_addresses() public {
         vm.expectRevert(ZeroAddressException.selector);
 
-        new YearnPriceFeed(address(addressProvider), address(0), address(0));
+        new YearnPriceFeed(address(addressProvider), address(0), address(0), 2 hours);
 
         vm.expectRevert(ZeroAddressException.selector);
         new YearnPriceFeed(
             address(addressProvider),
             address(yearnMock),
-            address(0)
+            address(0),
+            2 hours
         );
     }
 

@@ -61,6 +61,9 @@ contract CurveLPPriceFeedTest is Test {
             address(pfm1),
             address(pfm2),
             address(0),
+             2 hours,
+            2 hours,
+            2 hours,
             "LP2"
         );
 
@@ -70,6 +73,9 @@ contract CurveLPPriceFeedTest is Test {
             address(pfm1),
             address(pfm2),
             address(pfm3),
+             2 hours,
+            2 hours,
+            2 hours,
             "LP3"
         );
     }
@@ -121,6 +127,10 @@ contract CurveLPPriceFeedTest is Test {
             address(pfm1),
             address(pfm2),
             address(0),
+            2 hours,
+            2 hours,
+            2 hours,
+            
             "LP2"
         );
 
@@ -131,6 +141,9 @@ contract CurveLPPriceFeedTest is Test {
             address(0),
             address(pfm2),
             address(0),
+             2 hours,
+            2 hours,
+            2 hours,
             "LP2"
         );
 
@@ -141,6 +154,9 @@ contract CurveLPPriceFeedTest is Test {
             address(pfm1),
             address(0),
             address(0),
+             2 hours,
+            2 hours,
+            2 hours,
             "LP2"
         );
     }

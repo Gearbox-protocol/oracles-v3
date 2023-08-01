@@ -4,7 +4,7 @@
 pragma solidity ^0.8.10;
 
 import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
-import {PriceFeedChecker} from "./PriceFeedChecker.sol";
+import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {ACLNonReentrantTrait} from "@gearbox-protocol/core-v3/contracts/traits/ACLNonReentrantTrait.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
@@ -18,7 +18,7 @@ import {
 /// @title Abstract PriceFeed for an LP token
 /// @notice For most pools/vaults, the LP token price depends on Chainlink prices of pool assets and the pool's
 /// internal exchange rate.
-abstract contract LPPriceFeed is ILPPriceFeed, PriceFeedChecker, ACLNonReentrantTrait {
+abstract contract LPPriceFeed is ILPPriceFeed, PriceFeedValidationTrait, ACLNonReentrantTrait {
     /// @dev The lower bound for the contract's token-to-underlying exchange rate.
     /// @notice Used to protect against LP token / share price manipulation.
     uint256 public lowerBound;

@@ -40,17 +40,4 @@ abstract contract AbstractCurveLPPriceFeed is LPPriceFeed {
         uint256 virtualPrice = ICurvePool(_curvePool).get_virtual_price();
         _setLimiter(virtualPrice);
     }
-
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _upperBound)
-        internal
-        view
-        override
-        returns (bool)
-    {
-        uint256 virtualPrice = curvePool.get_virtual_price();
-        if (virtualPrice < _lowerBound || virtualPrice > _upperBound) {
-            return false;
-        }
-        return true;
-    }
 }

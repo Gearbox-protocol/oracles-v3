@@ -61,10 +61,10 @@ contract CompoundV2PriceFeed is LPPriceFeed {
         override
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed.latestRoundData(); // F: [OCPF-3]
+        (, answer,, updatedAt,) = priceFeed.latestRoundData(); // F: [OCPF-3]
 
         // Sanity check for chainlink pricefeed
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound);
+        _checkAnswer(answer, updatedAt, 2 hours);
 
         uint256 exchangeRate = cToken.exchangeRateStored();
 
@@ -74,11 +74,11 @@ contract CompoundV2PriceFeed is LPPriceFeed {
         answer = int256((exchangeRate * uint256(answer)) / decimalsDivider); // F: [OCPF-3]
     }
 
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view override returns (bool) {
-        uint256 rate = cToken.exchangeRateStored();
-        if (rate < _lowerBound || rate > _uBound) {
-            return false; // F: [OCPF-5]
-        }
-        return true;
-    }
+    // function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view override returns (bool) {
+    //     uint256 rate = cToken.exchangeRateStored();
+    //     if (rate < _lowerBound || rate > _uBound) {
+    //         return false; // F: [OCPF-5]
+    //     }
+    //     return true;
+    // }
 }

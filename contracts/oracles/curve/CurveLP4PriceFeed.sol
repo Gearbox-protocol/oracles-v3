@@ -19,14 +19,21 @@ contract CurveLP4PriceFeed is AbstractCurveLPPriceFeed {
     /// @dev Price feed of coin 0 in the pool
     address public immutable priceFeed1;
 
+    uint32 public immutable stalenessPeriod1;
+
     /// @dev Price feed of coin 1 in the pool
     address public immutable priceFeed2;
 
+    uint32 public immutable stalenessPeriod2;
+
     /// @dev Price feed of coin 2 in the pool
     address public immutable priceFeed3;
+    uint32 public immutable stalenessPeriod3;
 
     /// @dev Price feed of coin 3 in the pool
     address public immutable priceFeed4;
+
+    uint32 public immutable stalenessPeriod4;
 
     PriceFeedType public constant override priceFeedType = PriceFeedType.CURVE_4LP_ORACLE;
 
@@ -37,6 +44,10 @@ contract CurveLP4PriceFeed is AbstractCurveLPPriceFeed {
         address _priceFeed2,
         address _priceFeed3,
         address _priceFeed4,
+        uint32 _stalenessPeriod1,
+        uint32 _stalenessPeriod2,
+        uint32 _stalenessPeriod3,
+        uint32 _stalenessPeriod4,
         string memory _description
     ) AbstractCurveLPPriceFeed(addressProvider, _curvePool, _description) {
         if (_priceFeed1 == address(0) || _priceFeed2 == address(0)) revert ZeroAddressException();
@@ -45,6 +56,11 @@ contract CurveLP4PriceFeed is AbstractCurveLPPriceFeed {
         priceFeed2 = _priceFeed2; // F:[OCLP-1]
         priceFeed3 = _priceFeed3; // F:[OCLP-1]
         priceFeed4 = _priceFeed4; // F:[OCLP-1]
+
+        stalenessPeriod1 = _stalenessPeriod1;
+        stalenessPeriod2 = _stalenessPeriod2;
+        stalenessPeriod3 = _stalenessPeriod3;
+        stalenessPeriod4 = _stalenessPeriod4;
     }
 
     /// @dev Returns the USD price of the pool's LP token
@@ -71,65 +87,51 @@ contract CurveLP4PriceFeed is AbstractCurveLPPriceFeed {
         view
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        uint80 roundIdA;
         int256 answerA;
-        uint256 startedAtA;
+
         uint256 updatedAtA;
-        uint80 answeredInRoundA;
 
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = AggregatorV3Interface(priceFeed1).latestRoundData(); // F:[OCLP-6]
-
-        // Sanity check for chainlink pricefeed
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound);
-
-        (roundIdA, answerA, startedAtA, updatedAtA, answeredInRoundA) =
-            AggregatorV3Interface(priceFeed2).latestRoundData(); // F:[OCLP-6]
+        (, answer,, updatedAt,) = AggregatorV3Interface(priceFeed1).latestRoundData(); // F:[OCLP-6]
 
         // Sanity check for chainlink pricefeed
-        _checkAnswer(roundIdA, answerA, updatedAtA, answeredInRoundA);
+        _checkAnswer(answer, updatedAt, 2 hours);
+
+        (, answerA,, updatedAtA,) = AggregatorV3Interface(priceFeed2).latestRoundData(); // F:[OCLP-6]
+
+        // Sanity check for chainlink pricefeed
+        _checkAnswer(answerA, updatedAtA, 2 hours);
 
         if (answerA < answer) {
-            roundId = roundIdA;
             answer = answerA;
-            startedAt = startedAtA;
             updatedAt = updatedAtA;
-            answeredInRound = answeredInRoundA;
         } // F:[OCLP-6]
 
         if (priceFeed3 == address(0)) {
             return (roundId, answer, startedAt, updatedAt, answeredInRound);
         }
 
-        (roundIdA, answerA, startedAtA, updatedAtA, answeredInRoundA) =
-            AggregatorV3Interface(priceFeed3).latestRoundData(); // F:[OCLP-6]
+        (, answerA,, updatedAtA,) = AggregatorV3Interface(priceFeed3).latestRoundData(); // F:[OCLP-6]
 
         // Sanity check for chainlink pricefeed
-        _checkAnswer(roundIdA, answerA, updatedAtA, answeredInRoundA);
+        _checkAnswer(answerA, updatedAtA, 2 hours);
 
         if (answerA < answer) {
-            roundId = roundIdA;
             answer = answerA;
-            startedAt = startedAtA;
             updatedAt = updatedAtA;
-            answeredInRound = answeredInRoundA;
         } // F:[OCLP-6]
 
         if (priceFeed4 == address(0)) {
             return (roundId, answer, startedAt, updatedAt, answeredInRound);
         }
 
-        (roundIdA, answerA, startedAtA, updatedAtA, answeredInRoundA) =
-            AggregatorV3Interface(priceFeed4).latestRoundData(); // F:[OCLP-6]
+        (, answerA,, updatedAtA,) = AggregatorV3Interface(priceFeed3).latestRoundData(); // F:[OCLP-6]
 
         // Sanity check for chainlink pricefeed
-        _checkAnswer(roundIdA, answerA, updatedAtA, answeredInRoundA);
+        _checkAnswer(answerA, updatedAtA, 2 hours);
 
         if (answerA < answer) {
-            roundId = roundIdA;
             answer = answerA;
-            startedAt = startedAtA;
             updatedAt = updatedAtA;
-            answeredInRound = answeredInRoundA;
         } // F:[OCLP-6]
     }
 }
