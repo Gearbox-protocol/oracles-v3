@@ -4,7 +4,7 @@
 pragma solidity ^0.8.17;
 
 import {RAY, WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
-import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/PercentageMath.sol";
+import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
@@ -13,7 +13,7 @@ import "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 import {WrappedAToken} from "../../tokens/aave/WrappedAToken.sol";
 
-import {AavePriceFeed, RANGE_WIDTH} from "../../oracles/aave/AavePriceFeed.sol";
+import {WrappedAaveV2PriceFeed, RANGE_WIDTH} from "../../oracles/aave/WrappedAaveV2PriceFeed.sol";
 
 import {ATokenMock} from "../mocks/integrations/aave/ATokenMock.sol";
 import {LendingPoolMock} from "../mocks/integrations/aave/LendingPoolMock.sol";
@@ -22,7 +22,7 @@ import {Test} from "forge-std/Test.sol";
 
 /// @title Aave V2 wrapped aToken price feed test
 /// @notice [OAPF]: Unit tests for Aave V2 wrapped aToken price feed
-contract AavePriceFeedTest is Test {
+contract WrappedAaveV2PriceFeedTest is Test {
     TokensTestSuite tokensTestSuite;
     AddressProviderV3ACLMock addressProvider;
 
@@ -32,7 +32,7 @@ contract AavePriceFeedTest is Test {
     LendingPoolMock lendingPool;
 
     PriceFeedMock daiPriceFeed;
-    AavePriceFeed public waDaiPriceFeed;
+    WrappedAaveV2PriceFeed public waDaiPriceFeed;
 
     int256 constant DAI_PRICE = 1.1e8;
 
@@ -50,7 +50,7 @@ contract AavePriceFeedTest is Test {
 
         daiPriceFeed = new PriceFeedMock(DAI_PRICE, 8);
         daiPriceFeed.setParams(11, 1111, 1112, 11);
-        waDaiPriceFeed = new AavePriceFeed(address(addressProvider), address(waDai), address(daiPriceFeed));
+        waDaiPriceFeed = new WrappedAaveV2PriceFeed(address(addressProvider), address(waDai), address(daiPriceFeed));
 
         vm.label(address(lendingPool), "LENDING_POOL_MOCK");
         vm.label(address(aDai), "aDAI");
@@ -62,10 +62,10 @@ contract AavePriceFeedTest is Test {
     /// @notice [OAPF-1]: Constructor reverts on zero address
     function test_OAPF_01_constructor_reverts_on_zero_address() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new AavePriceFeed(address(addressProvider), address(0), address(daiPriceFeed));
+        new WrappedAaveV2PriceFeed(address(addressProvider), address(0), address(daiPriceFeed));
 
         vm.expectRevert(ZeroAddressException.selector);
-        new AavePriceFeed(address(addressProvider), address(waDai), address(0));
+        new WrappedAaveV2PriceFeed(address(addressProvider), address(waDai), address(0));
     }
 
     /// @notice [OAPF-2]: Constructor sets correct values

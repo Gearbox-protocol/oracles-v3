@@ -72,7 +72,7 @@ contract CompositePriceFeed is PriceFeedChecker, AggregatorV3Interface, IPriceFe
         override
         returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
     {
-        (uint80 roundId0, int256 answer0, uint256 startedAt0, uint256 updatedAt0, uint80 answeredInRound0) =
+        (uint80 roundId0, int256 answer0,, uint256 updatedAt0, uint80 answeredInRound0) =
             targetToBasePriceFeed.latestRoundData();
 
         _checkAnswer(roundId0, answer0, updatedAt0, answeredInRound0);

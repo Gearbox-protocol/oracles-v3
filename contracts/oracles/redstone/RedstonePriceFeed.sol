@@ -195,7 +195,7 @@ contract RedstonePriceFeed is
     ///             - A timestamp expected to be in all Redstone data packages
     ///             - Redstone payload with price update
     function updatePrice(bytes calldata data) external {
-        (uint256 expectedPayloadTimestamp, bytes memory payload) = abi.decode(data, (uint256, bytes));
+        (uint256 expectedPayloadTimestamp,) = abi.decode(data, (uint256, bytes));
 
         // We want to minimize price update execution, in case, e.g., when several users submit
         // the same price update in a short span of time. So only updates with a larger payload timestamp

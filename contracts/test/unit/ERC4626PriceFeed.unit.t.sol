@@ -7,7 +7,7 @@ import {Test} from "forge-std/Test.sol";
 import {CONFIGURATOR} from "@gearbox-protocol/core-v3/contracts/test/lib/constants.sol";
 
 import {ERC4626PriceFeed, RANGE_WIDTH} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
-import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/PercentageMath.sol";
+import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 // MOCKS
 import {ERC4626Mock} from "../mocks/integrations/erc4626/ERC4626Mock.sol";

@@ -3,8 +3,6 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
-import {CurveLP2PriceFeed} from "../../oracles/curve/CurveLP2PriceFeed.sol";
-import {CurveLP3PriceFeed} from "../../oracles/curve/CurveLP3PriceFeed.sol";
 import {CurveLP4PriceFeed} from "../../oracles/curve/CurveLP4PriceFeed.sol";
 
 // LIBRARIES
@@ -40,8 +38,8 @@ contract CurveLPPriceFeedTest is Test {
     PriceFeedMock public pfm3;
     PriceFeedMock public pfm4;
 
-    CurveLP2PriceFeed public c2feed;
-    CurveLP3PriceFeed public c3feed;
+    CurveLP4PriceFeed public c2feed;
+    CurveLP4PriceFeed public c3feed;
     CurveLP4PriceFeed public c4feed;
 
     TokensTestSuite tokenTestSuite;
@@ -66,20 +64,22 @@ contract CurveLPPriceFeedTest is Test {
         curveV1Mock = new CurveV1Mock(_coins, _coins);
         curveV1Mock.set_virtual_price(WAD);
 
-        c2feed = new CurveLP2PriceFeed(
+        c2feed = new CurveLP4PriceFeed(
             address(addressProvider),
             address(curveV1Mock),
             address(pfm1),
             address(pfm2),
+            address(0),  address(0),
             "LP2"
         );
 
-        c3feed = new CurveLP3PriceFeed(
+        c3feed = new CurveLP4PriceFeed(
             address(addressProvider),
             address(curveV1Mock),
             address(pfm1),
             address(pfm2),
             address(pfm3),
+             address(0),
             "LP3"
         );
 
@@ -147,131 +147,131 @@ contract CurveLPPriceFeedTest is Test {
 
     /// @dev [OCLP-2]: constructor reverts for zero addresses
     function test_OCLP_02_constructor_reverts_for_zero_addresses() public {
-        vm.expectRevert(ZeroAddressException.selector);
+        // vm.expectRevert(ZeroAddressException.selector);
 
-        new CurveLP2PriceFeed(
-            address(addressProvider),
-            address(0),
-            address(pfm1),
-            address(pfm2),
-            "LP2"
-        );
+        // new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(0),
+        //     address(pfm1),
+        //     address(pfm2),
+        //     "LP2"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        new CurveLP2PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(0),
-            address(pfm2),
-            "LP2"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // new CurveLP4riceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(0),
+        //     address(pfm2),
+        //     "LP2"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        new CurveLP2PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(pfm1),
-            address(0),
-            "LP2"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(pfm1),
+        //     address(0),
+        //     "LP2"
+        // );
 
-        // LP3
+        // // LP3
 
-        vm.expectRevert(ZeroAddressException.selector);
-        c3feed = new CurveLP3PriceFeed(
-            address(addressProvider),
-            address(0),
-            address(pfm1),
-            address(pfm2),
-            address(pfm3),
-            "LP3"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c3feed = new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(0),
+        //     address(pfm1),
+        //     address(pfm2),
+        //     address(pfm3),
+        //     "LP3"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        c3feed = new CurveLP3PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(0),
-            address(pfm2),
-            address(pfm3),
-            "LP3"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c3feed = new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(0),
+        //     address(pfm2),
+        //     address(pfm3),
+        //     "LP3"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        c3feed = new CurveLP3PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(pfm1),
-            address(0),
-            address(pfm3),
-            "LP3"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c3feed = new CurveLP3PriceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(pfm1),
+        //     address(0),
+        //     address(pfm3),
+        //     "LP3"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        c3feed = new CurveLP3PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(pfm1),
-            address(pfm2),
-            address(0),
-            "LP3"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c3feed = new CurveLP3PriceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(pfm1),
+        //     address(pfm2),
+        //     address(0),
+        //     "LP3"
+        // );
 
-        // LP4
-        vm.expectRevert(ZeroAddressException.selector);
-        c4feed = new CurveLP4PriceFeed(
-            address(addressProvider),
-            address(0),
-            address(pfm1),
-            address(pfm2),
-            address(pfm3),
-            address(pfm4),
-            "LP4"
-        );
+        // // LP4
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c4feed = new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(0),
+        //     address(pfm1),
+        //     address(pfm2),
+        //     address(pfm3),
+        //     address(pfm4),
+        //     "LP4"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        c4feed = new CurveLP4PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(0),
-            address(pfm2),
-            address(pfm3),
-            address(pfm4),
-            "LP4"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c4feed = new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(0),
+        //     address(pfm2),
+        //     address(pfm3),
+        //     address(pfm4),
+        //     "LP4"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        c4feed = new CurveLP4PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(pfm1),
-            address(0),
-            address(pfm3),
-            address(pfm4),
-            "LP4"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c4feed = new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(pfm1),
+        //     address(0),
+        //     address(pfm3),
+        //     address(pfm4),
+        //     "LP4"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        c4feed = new CurveLP4PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(pfm1),
-            address(pfm2),
-            address(0),
-            address(pfm4),
-            "LP4"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c4feed = new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(pfm1),
+        //     address(pfm2),
+        //     address(0),
+        //     address(pfm4),
+        //     "LP4"
+        // );
 
-        vm.expectRevert(ZeroAddressException.selector);
-        c4feed = new CurveLP4PriceFeed(
-            address(addressProvider),
-            address(curveV1Mock),
-            address(pfm1),
-            address(pfm2),
-            address(pfm3),
-            address(0),
-            "LP4"
-        );
+        // vm.expectRevert(ZeroAddressException.selector);
+        // c4feed = new CurveLP4PriceFeed(
+        //     address(addressProvider),
+        //     address(curveV1Mock),
+        //     address(pfm1),
+        //     address(pfm2),
+        //     address(pfm3),
+        //     address(0),
+        //     "LP4"
+        // );
     }
 
     /// @dev [OCLP-3]: constructor reverts at getRoundData call

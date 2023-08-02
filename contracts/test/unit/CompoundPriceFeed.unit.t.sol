@@ -6,21 +6,21 @@ pragma solidity ^0.8.17;
 import {Test} from "forge-std/Test.sol";
 
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
-import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/PercentageMath.sol";
+import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 
 import "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
-import {CompoundPriceFeed, RANGE_WIDTH} from "../../oracles/compound/CompoundPriceFeed.sol";
+import {CompoundV2PriceFeed, RANGE_WIDTH} from "../../oracles/compound/CompoundV2PriceFeed.sol";
 
 import {CErc20Mock} from "../mocks/integrations/compound/CErc20Mock.sol";
 import {TokensTestSuite, Tokens} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 
 /// @title Compound V2 cToken price feed test
 /// @notice [OCPF]: Unit tests for Compound V2 cToken price feed
-contract CompoundPriceFeedTest is Test {
+contract CompoundV2PriceFeedTest is Test {
     TokensTestSuite tokensTestSuite;
     AddressProviderV3ACLMock addressProvider;
 
@@ -28,7 +28,7 @@ contract CompoundPriceFeedTest is Test {
     CErc20Mock cdai;
 
     PriceFeedMock daiPriceFeed;
-    CompoundPriceFeed public cdaiPriceFeed;
+    CompoundV2PriceFeed public cdaiPriceFeed;
 
     int256 constant DAI_PRICE = 1.1e8;
 
@@ -44,7 +44,7 @@ contract CompoundPriceFeedTest is Test {
 
         daiPriceFeed = new PriceFeedMock(DAI_PRICE, 8);
         daiPriceFeed.setParams(11, 1111, 1112, 11);
-        cdaiPriceFeed = new CompoundPriceFeed(address(addressProvider), address(cdai), address(daiPriceFeed));
+        cdaiPriceFeed = new CompoundV2PriceFeed(address(addressProvider), address(cdai), address(daiPriceFeed));
 
         vm.label(address(cdai), "cDAI");
         vm.label(address(daiPriceFeed), "DAI_PRICE_FEED");
@@ -54,10 +54,10 @@ contract CompoundPriceFeedTest is Test {
     /// @notice [OCPF-1]: Constructor reverts on zero address
     function test_OCPF_01_constructor_reverts_on_zero_address() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new CompoundPriceFeed(address(addressProvider), address(0), address(daiPriceFeed));
+        new CompoundV2PriceFeed(address(addressProvider), address(0), address(daiPriceFeed));
 
         vm.expectRevert(ZeroAddressException.selector);
-        new CompoundPriceFeed(address(addressProvider), address(cdai), address(0));
+        new CompoundV2PriceFeed(address(addressProvider), address(cdai), address(0));
     }
 
     /// @notice [OCPF-2]: Constructor sets correct values
