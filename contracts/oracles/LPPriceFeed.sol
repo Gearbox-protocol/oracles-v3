@@ -4,9 +4,10 @@
 pragma solidity ^0.8.10;
 
 import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
-import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+import {AbstractPriceFeed} from "./AbstractPriceFeed.sol";
 import {ACLNonReentrantTrait} from "@gearbox-protocol/core-v3/contracts/traits/ACLNonReentrantTrait.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 // EXCEPTIONS
 import {
@@ -18,7 +19,7 @@ import {
 /// @title Abstract PriceFeed for an LP token
 /// @notice For most pools/vaults, the LP token price depends on Chainlink prices of pool assets and the pool's
 /// internal exchange rate.
-abstract contract LPPriceFeed is ILPPriceFeed, PriceFeedValidationTrait, ACLNonReentrantTrait {
+abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentrantTrait {
     /// @dev The lower bound for the contract's token-to-underlying exchange rate.
     /// @notice Used to protect against LP token / share price manipulation.
     uint256 public lowerBound;
@@ -43,27 +44,12 @@ abstract contract LPPriceFeed is ILPPriceFeed, PriceFeedValidationTrait, ACLNonR
         delta = _delta; // F:[LPF-1]
     }
 
-    /// @dev Implemented for compatibility, but reverts since Gearbox's price feeds
-    ///      do not store historical data.
-    function getRoundData(uint80)
-        external
-        pure
-        virtual
-        override
-        returns (
-            uint80, // roundId,
-            int256, // answer,
-            uint256, // startedAt,
-            uint256, // updatedAt,
-            uint80 // answeredInRound
-        )
-    {
-        revert NotImplementedException(); // F:[LPF-2]
-    }
-
     /// @dev Checks that value is in range [lowerBound; upperBound],
     /// Reverts if below lowerBound and returns min(value, upperBound)
-    /// @param value Value to be checked and bounded
+    function _getValidatedContractValue() internal view returns (uint256) {
+        return _checkAndUpperBoundValue(_getContractValue());
+    }
+
     function _checkAndUpperBoundValue(uint256 value) internal view returns (uint256) {
         uint256 lb = lowerBound;
         if (value < lb) revert ValueOutOfRangeException(); // F:[LPF-3]
@@ -91,7 +77,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, PriceFeedValidationTrait, ACLNonR
         } // F:[LPF-4]
 
         lowerBound = _lowerBound; // F:[LPF-5]
-        emit NewLimiterParams(lowerBound, _upperBound(_lowerBound)); // F:[LPF-5]
+        emit SetBounds(lowerBound, _upperBound(_lowerBound)); // F:[LPF-5]
     }
 
     function _upperBound(uint256 lb) internal view returns (uint256) {
@@ -103,9 +89,13 @@ abstract contract LPPriceFeed is ILPPriceFeed, PriceFeedValidationTrait, ACLNonR
         return _upperBound(lowerBound); // F:[LPF-5]
     }
 
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _upperBound)
-        internal
-        view
-        virtual
-        returns (bool);
+    function _getContractValue() internal view virtual returns (uint256);
+
+    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view returns (bool) {
+        uint256 value = _getContractValue();
+        if (value < _lowerBound || value > _uBound) {
+            return false; // F: [OAPF-5]
+        }
+        return true;
+    }
 }

@@ -3,6 +3,8 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
+import {AbstractPriceFeed} from "./AbstractPriceFeed.sol";
+
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {AggregatorV2V3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
@@ -22,9 +24,13 @@ interface ChainlinkReadableAggregator {
 /// @title Price feed with an upper bound on price
 /// @notice Used to limit prices on assets that should not rise above
 ///         a certain level, such as stablecoins and other pegged assets
-contract BoundedPriceFeed is ChainlinkReadableAggregator, AggregatorV3Interface, IPriceFeedType {
+contract BoundedPriceFeed is ChainlinkReadableAggregator, AbstractPriceFeed, IPriceFeedType {
+    PriceFeedType public constant override priceFeedType = PriceFeedType.BOUNDED_ORACLE;
+    uint256 public constant override version = 3_00;
+    bool public constant override skipPriceCheck = false;
+
     /// @dev Chainlink price feed for the Vault's underlying
-    AggregatorV3Interface public immutable priceFeed;
+    address public immutable priceFeed;
 
     /// @dev The upper bound on Chainlink price for the asset
     int256 public immutable upperBound;
@@ -35,38 +41,14 @@ contract BoundedPriceFeed is ChainlinkReadableAggregator, AggregatorV3Interface,
     /// @dev Price feed description
     string public override description;
 
-    uint256 public constant override version = 3_00;
-
-    PriceFeedType public constant override priceFeedType = PriceFeedType.BOUNDED_ORACLE;
-
-    bool public constant override skipPriceCheck = false;
-
     /// @dev Constructor
     /// @param _priceFeed Chainlink price feed to receive results from
     /// @param _upperBound Initial upper bound for the Chainlink price
     constructor(address _priceFeed, int256 _upperBound) {
-        priceFeed = AggregatorV3Interface(_priceFeed);
-        description = string(abi.encodePacked(priceFeed.description(), " Bounded"));
-        decimals = priceFeed.decimals();
+        priceFeed = _priceFeed;
+        description = string(abi.encodePacked(AggregatorV3Interface(priceFeed).description(), " Bounded"));
+        decimals = AggregatorV3Interface(priceFeed).decimals();
         upperBound = _upperBound;
-    }
-
-    /// @dev Implemented for compatibility, but reverts since Gearbox's price feeds
-    ///      do not store historical data.
-    function getRoundData(uint80)
-        external
-        pure
-        virtual
-        override
-        returns (
-            uint80, // roundId,
-            int256, // answer,
-            uint256, // startedAt,
-            uint256, // updatedAt,
-            uint80 // answeredInRound
-        )
-    {
-        revert NotImplementedException(); // F:[LPF-2]
     }
 
     /// @dev Returns the value if it is below the upper bound, otherwise returns the upper bound
@@ -80,10 +62,9 @@ contract BoundedPriceFeed is ChainlinkReadableAggregator, AggregatorV3Interface,
         external
         view
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed.latestRoundData(); // F:[OYPF-4]
-
+        (answer, updatedAt) = _getValidatedPrice(priceFeed, 2 hours);
         answer = _upperBoundValue(answer);
     }
 

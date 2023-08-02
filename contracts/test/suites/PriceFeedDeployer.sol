@@ -45,6 +45,8 @@ import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
 import {IYVault} from "../../interfaces/yearn/IYVault.sol";
 import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 
+import {PriceFeedParams} from "../../oracles/AbstractPriceFeed.sol";
+
 import "forge-std/console.sol";
 
 contract PriceFeedDeployer is Test, PriceFeedDataLive {
@@ -193,22 +195,15 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             new CurveLP4PriceFeed(
                                 addressProvider,
                                 pool,
-                                priceFeeds[
-                                asset0
-                                ],
-                                priceFeeds[
-                                asset1
-                                ],
-                               (nCoins >2) ? priceFeeds[
+                                 [PriceFeedParams({priceFeed: priceFeeds[asset0], stalenessPeriod: stalenessPeriods[asset0]}),
+                            PriceFeedParams({priceFeed: priceFeeds[asset1], stalenessPeriod: stalenessPeriods[asset1]}),
+                            PriceFeedParams({priceFeed: (nCoins >2) ? priceFeeds[
                                 asset2
-                                ] : address(0),
-                               (nCoins >3) ? priceFeeds[
+                                ] : address(0), stalenessPeriod: stalenessPeriods[asset2]}),
+                                 PriceFeedParams({priceFeed: (nCoins >3) ? priceFeeds[
                                 asset3
-                                ] : address(0),
-                                stalenessPeriods[asset0],
-                                stalenessPeriods[asset1],
-                                stalenessPeriods[asset2],
-                                stalenessPeriods[asset3],
+                                ] : address(0), stalenessPeriod: stalenessPeriods[asset3]})],
+                                
                                 
                                 description
                                 )
@@ -247,18 +242,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         new CurveCryptoLPPriceFeed(
                             addressProvider,
                             pool,
-                             priceFeeds[
-                                asset0
-                                ],
-                                priceFeeds[
-                                asset1
-                                ],
-                               (nCoins >2) ? priceFeeds[
+                        [PriceFeedParams({priceFeed: priceFeeds[asset0], stalenessPeriod: stalenessPeriods[asset0]}),
+                         PriceFeedParams({priceFeed: priceFeeds[asset1], stalenessPeriod: stalenessPeriods[asset1]}),
+                          PriceFeedParams({priceFeed: (nCoins >2) ? priceFeeds[
                                 asset2
-                                ] : address(0),
-                             stalenessPeriods[asset0],
-                                stalenessPeriods[asset1],
-                                stalenessPeriods[asset2],
+                                ] : address(0), stalenessPeriod: stalenessPeriods[asset2]})],
+
                             description
                         )
                     );
@@ -326,7 +315,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 if (wsteth != address(0)) {
                     address steth = IwstETH(wsteth).stETH();
 
-                    address pf = address(new WstETHPriceFeed(addressProvider, wsteth, priceFeeds[steth]));
+                    address pf = address(
+                        new WstETHPriceFeed(addressProvider, wsteth, priceFeeds[steth],  stalenessPeriods[steth])
+                    );
 
                     setPriceFeed(wsteth, pf);
 
@@ -351,7 +342,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         new WrappedAaveV2PriceFeed(
                         addressProvider,
                         waToken,
-                        priceFeeds[underlying]
+                        priceFeeds[underlying],
+                         stalenessPeriods[underlying]
                         )
                     );
 
@@ -380,7 +372,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     new WrappedAaveV2PriceFeed(
                         addressProvider,
                         cToken,
-                        priceFeeds[underlying]
+                        priceFeeds[underlying],
+                         stalenessPeriods[underlying]
                     )
                 );
 
@@ -409,7 +402,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     new WrappedAaveV2PriceFeed(
                         addressProvider,
                         token,
-                        priceFeeds[underlying]
+                        priceFeeds[underlying],
+                        stalenessPeriods[underlying]
                     )
                 );
 

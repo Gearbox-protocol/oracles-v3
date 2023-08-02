@@ -43,12 +43,22 @@ contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
         )
         BPTWeightedPriceFeedSetup(_balancerVault, _balancerPool, priceFeeds)
     {
+        _setLimiter(_getContractValue());
+    }
+
+    function _getContractValue() internal view override returns (uint256 value) {
+        (value,) = _getInvariantOverSupplyAndWeights();
+    }
+
+    function _getInvariantOverSupplyAndWeights()
+        internal
+        view
+        returns (uint256 invariantOverSupply, uint256[] memory weights)
+    {
         (, uint256[] memory balances,) = balancerVault.getPoolTokens(poolId);
-        uint256[] memory weights = _getWeightsArray();
-
+        weights = _getWeightsArray();
         balances = _alignAndScaleBalanceArray(balances);
-
-        _setLimiter(_computeInvariantOverSupply(balances, weights));
+        invariantOverSupply = _computeInvariantOverSupply(balances, weights);
     }
 
     /// @dev Returns the supply of BPT token
@@ -134,28 +144,17 @@ contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
         external
         view
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        uint256 invariantOverSupply;
-        uint256[] memory weights;
+        (uint256 invariantOverSupply, uint256[] memory weights) = _getInvariantOverSupplyAndWeights();
 
-        {
-            (, uint256[] memory balances,) = balancerVault.getPoolTokens(poolId);
-            weights = _getWeightsArray();
-
-            balances = _alignAndScaleBalanceArray(balances); // F: [OBWLP-3,4]
-
-            invariantOverSupply = _computeInvariantOverSupply(balances, weights);
-            invariantOverSupply = _checkAndUpperBoundValue(invariantOverSupply); // F: [OBWLP-5]
-        }
-
-        AggregatorV3Interface[] memory priceFeeds = _getPriceFeedsArray();
+        address[] memory priceFeeds = _getPriceFeedsArray();
 
         uint256 weightedPrice = FixedPoint.ONE;
         uint256 currentBase = FixedPoint.ONE;
 
         for (uint256 i = 0; i < numAssets;) {
-            (, answer,, updatedAt,) = priceFeeds[i].latestRoundData(); // F: [OBWLP-3,4]
+            (, answer,, updatedAt,) = AggregatorV3Interface(priceFeeds[i]).latestRoundData(); // F: [OBWLP-3,4]
 
             _checkAnswer(answer, updatedAt, 2 hours);
 
@@ -179,24 +178,6 @@ contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
     }
 
     function getInvariantOverSupply() external view returns (uint256) {
-        (, uint256[] memory balances,) = balancerVault.getPoolTokens(poolId);
-        uint256[] memory weights = _getWeightsArray();
-
-        balances = _alignAndScaleBalanceArray(balances);
-
-        return _computeInvariantOverSupply(balances, weights);
-    }
-
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view override returns (bool) {
-        (, uint256[] memory balances,) = balancerVault.getPoolTokens(poolId);
-        uint256[] memory weights = _getWeightsArray();
-
-        balances = _alignAndScaleBalanceArray(balances);
-
-        uint256 ios = _computeInvariantOverSupply(balances, weights);
-        if (ios < _lowerBound || ios > _uBound) {
-            return false; // F: [OBWLP-6]
-        }
-        return true;
+        return _getContractValue();
     }
 }

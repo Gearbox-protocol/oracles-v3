@@ -3,10 +3,10 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {PriceFeedChecker} from "./PriceFeedChecker.sol";
+import {AbstractPriceFeed} from "./AbstractPriceFeed.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {PriceFeedType, IPriceFeedType} from "../interfaces/IPriceFeedType.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 // EXCEPTIONS
 import {NotImplementedException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
@@ -14,12 +14,16 @@ import {NotImplementedException} from "@gearbox-protocol/core-v3/contracts/inter
 /// @title Price feed that composes an base asset-denominated price feed with a USD one
 /// @notice Used for better price tracking for correlated assets (such as stETH or WBTC) or on networks where
 ///         only feeds for the native tokens exist
-contract CompositePriceFeed is PriceFeedChecker, AggregatorV3Interface, IPriceFeedType {
+contract CompositePriceFeed is AbstractPriceFeed, IPriceFeedType {
+    PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOSITE_ORACLE;
+    uint256 public constant override version = 3_00;
+    bool public constant override skipPriceCheck = true;
+
     /// @dev Chainlink base asset price feed for the target asset
-    AggregatorV3Interface public immutable targetToBasePriceFeed;
+    address public immutable targetToBasePriceFeed;
 
     /// @dev Chainlink Base asset / USD price feed
-    AggregatorV3Interface public immutable baseToUsdPriceFeed;
+    address public immutable baseToUsdPriceFeed;
 
     /// @dev Decimals of the returned result.
     uint8 public immutable override decimals;
@@ -30,39 +34,17 @@ contract CompositePriceFeed is PriceFeedChecker, AggregatorV3Interface, IPriceFe
     /// @dev Price feed description
     string public override description;
 
-    uint256 public constant override version = 1;
-
-    PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOSITE_ORACLE;
-
-    bool public constant override skipPriceCheck = true;
-
     /// @dev Constructor
     /// @param _targetToBasePriceFeed Base asset price feed for target asset
     /// @param _baseToUsdPriceFeed USD price feed for base asset
     constructor(address _targetToBasePriceFeed, address _baseToUsdPriceFeed) {
-        targetToBasePriceFeed = AggregatorV3Interface(_targetToBasePriceFeed);
-        baseToUsdPriceFeed = AggregatorV3Interface(_baseToUsdPriceFeed);
-        description = string(abi.encodePacked(targetToBasePriceFeed.description(), " to USD Composite"));
-        decimals = baseToUsdPriceFeed.decimals();
-        answerDenominator = int256(10 ** targetToBasePriceFeed.decimals());
-    }
+        targetToBasePriceFeed = _targetToBasePriceFeed;
+        baseToUsdPriceFeed = _baseToUsdPriceFeed;
 
-    /// @dev Implemented for compatibility, but reverts since Gearbox's price feeds
-    ///      do not store historical data.
-    function getRoundData(uint80)
-        external
-        pure
-        virtual
-        override
-        returns (
-            uint80, // roundId,
-            int256, // answer,
-            uint256, // startedAt,
-            uint256, // updatedAt,
-            uint80 // answeredInRound
-        )
-    {
-        revert NotImplementedException();
+        description =
+            string(abi.encodePacked(AggregatorV3Interface(targetToBasePriceFeed).description(), " to USD Composite"));
+        decimals = AggregatorV3Interface(baseToUsdPriceFeed).decimals();
+        answerDenominator = int256(10 ** AggregatorV3Interface(targetToBasePriceFeed).decimals());
     }
 
     /// @dev Returns the composite USD-denominated price of the asset, computed as (Target / base rate * base / USD rate)
@@ -70,16 +52,10 @@ contract CompositePriceFeed is PriceFeedChecker, AggregatorV3Interface, IPriceFe
         external
         view
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        (uint80 roundId0, int256 answer0,, uint256 updatedAt0, uint80 answeredInRound0) =
-            targetToBasePriceFeed.latestRoundData();
-
-        _checkAnswer(roundId0, answer0, updatedAt0, answeredInRound0);
-
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = baseToUsdPriceFeed.latestRoundData();
-
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound);
+        (int256 answer0, uint256 updatedAt0) = _getValidatedPrice(targetToBasePriceFeed, 2 hours);
+        (answer, updatedAt) = _getValidatedPrice(baseToUsdPriceFeed, 2 hours);
 
         answer = (answer0 * answer) / answerDenominator;
     }

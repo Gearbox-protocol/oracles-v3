@@ -3,11 +3,9 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {PriceFeedParams} from "../AbstractPriceFeed.sol";
 import {AbstractCurveLPPriceFeed} from "./AbstractCurveLPPriceFeed.sol";
-
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
-
 import {FixedPoint} from "../../libraries/FixedPoint.sol";
 
 // EXCEPTIONS
@@ -22,12 +20,10 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
 
     /// @dev Price feed of coin 0 in the pool
     address public immutable priceFeed1;
-
     uint32 public immutable stalenessPeriod1;
 
     /// @dev Price feed of coin 1 in the pool
     address public immutable priceFeed2;
-
     uint32 public immutable stalenessPeriod2;
 
     /// @dev Price feed of coin 2 in the pool
@@ -42,25 +38,22 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
     constructor(
         address addressProvider,
         address _curvePool,
-        address _priceFeed1,
-        address _priceFeed2,
-        address _priceFeed3,
-        uint32 _stalenessPeriod1,
-        uint32 _stalenessPeriod2,
-        uint32 _stalenessPeriod3,
+        PriceFeedParams[3] memory priceFeeds,
         string memory _description
-    ) AbstractCurveLPPriceFeed(addressProvider, _curvePool, _description) {
-        if (_priceFeed1 == address(0) || _priceFeed2 == address(0)) revert ZeroAddressException();
+    )
+        AbstractCurveLPPriceFeed(addressProvider, _curvePool, _description)
+        nonZeroAddress(priceFeeds[0].priceFeed)
+        nonZeroAddress(priceFeeds[1].priceFeed)
+    {
+        priceFeed1 = priceFeeds[0].priceFeed; // F:[OCLP-1]
+        priceFeed2 = priceFeeds[1].priceFeed; // F:[OCLP-1]
+        priceFeed3 = priceFeeds[2].priceFeed; // F:[OCLP-1]
 
-        priceFeed1 = _priceFeed1; // F:[OCLP-1]
-        priceFeed2 = _priceFeed2; // F:[OCLP-1]
-        priceFeed3 = _priceFeed3; // F:[OCLP-1]
+        stalenessPeriod1 = priceFeeds[0].stalenessPeriod;
+        stalenessPeriod2 = priceFeeds[1].stalenessPeriod;
+        stalenessPeriod3 = priceFeeds[2].stalenessPeriod;
 
-        stalenessPeriod1 = _stalenessPeriod1;
-        stalenessPeriod2 = _stalenessPeriod2;
-        stalenessPeriod3 = _stalenessPeriod3;
-
-        nCoins = _priceFeed3 == address(0) ? 2 : 3;
+        nCoins = priceFeed3 == address(0) ? 2 : 3;
     }
 
     /// @dev Returns the USD price of Curve Tricrypto pool's LP token
@@ -70,75 +63,22 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
         view
         virtual
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        int256 answerCurrent;
-        uint256 updatedAtCurrent;
-
-        (, answerCurrent,, updatedAtCurrent,) = AggregatorV3Interface(priceFeed1).latestRoundData(); // F:[OCLP-6]
-
-        // Sanity check for chainlink pricefeed
-        _checkAnswer(answer, updatedAt, stalenessPeriod1);
-
+        (int256 answerCurrent, uint256 updatedAtCurrent) = _getValidatedPrice(priceFeed1, stalenessPeriod1);
         uint256 product = uint256(answerCurrent) * DECIMALS / USD_FEED_DECIMALS;
 
-        (, answerCurrent,, updatedAtCurrent,) = AggregatorV3Interface(priceFeed2).latestRoundData(); // F:[OCLP-6]
-
-        // Sanity check for chainlink pricefeed
-        _checkAnswer(answer, updatedAt, stalenessPeriod2);
-
+        (answerCurrent, updatedAtCurrent) = _getValidatedPrice(priceFeed2, stalenessPeriod2);
         product = product.mulDown(uint256(answerCurrent) * DECIMALS / USD_FEED_DECIMALS);
 
         if (nCoins == 3) {
-            (, answerCurrent,, updatedAtCurrent,) = AggregatorV3Interface(priceFeed2).latestRoundData(); // F:[OCLP-6]
-
-            // Sanity check for chainlink pricefeed
-            _checkAnswer(answer, updatedAt, stalenessPeriod3);
-
+            (answerCurrent, updatedAtCurrent) = _getValidatedPrice(priceFeed2, stalenessPeriod2);
             product = product.mulDown(uint256(answerCurrent) * DECIMALS / USD_FEED_DECIMALS);
         }
 
-        uint256 virtualPrice = curvePool.virtual_price();
-
-        // Checks that virtual_price is within bounds
-        virtualPrice = _checkAndUpperBoundValue(virtualPrice);
-
+        uint256 virtualPrice = _getValidatedContractValue();
         answer = int256(product.powDown(DECIMALS / nCoins).mulDown(nCoins * virtualPrice));
 
         answer = answer * int256(USD_FEED_DECIMALS) / int256(DECIMALS);
-    }
-
-    function getAnswer()
-        internal
-        view
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
-    {
-        int256 answerA;
-
-        uint256 updatedAtA;
-
-        (, answerA,, updatedAtA,) = AggregatorV3Interface(priceFeed2).latestRoundData(); // F:[OCLP-6]
-
-        // Sanity check for chainlink pricefeed
-        _checkAnswer(answerA, updatedAtA, 2 hours);
-
-        if (answerA < answer) {
-            answer = answerA;
-            updatedAt = updatedAtA;
-        } // F:[OCLP-6]
-
-        if (priceFeed3 == address(0)) {
-            return (roundId, answer, startedAt, updatedAt, answeredInRound);
-        }
-
-        (, answerA,, updatedAtA,) = AggregatorV3Interface(priceFeed3).latestRoundData(); // F:[OCLP-6]
-
-        // Sanity check for chainlink pricefeed
-        _checkAnswer(answerA, updatedAtA, 2 hours);
-
-        if (answerA < answer) {
-            answer = answerA;
-            updatedAt = updatedAtA;
-        } // F:[OCLP-6]
     }
 }
