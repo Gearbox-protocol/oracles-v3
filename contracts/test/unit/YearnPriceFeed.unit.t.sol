@@ -3,7 +3,7 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
-import {YearnPriceFeed, RANGE_WIDTH} from "../../oracles/yearn/YearnPriceFeed.sol";
+import {YearnPriceFeed} from "../../oracles/yearn/YearnPriceFeed.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 // LIBRARIES
@@ -21,8 +21,6 @@ import {AddressProviderV3ACLMock} from
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 import {Tokens} from "@gearbox-protocol/sdk/contracts/Tokens.sol";
 
-import {IPriceOracleV2Exceptions} from "../../interfaces/IPriceOracleV2.sol";
-
 import {
     ZeroAddressException,
     ValueOutOfRangeException,
@@ -32,7 +30,7 @@ import {
 
 /// @title YearnFeedTest
 /// @notice Designed for unit test purposes only
-contract YearnFeedTest is Test, IPriceOracleV2Exceptions {
+contract YearnFeedTest is Test {
 // AddressProviderV3ACLMock public addressProvider;
 // YearnV2Mock public yearnMock;
 

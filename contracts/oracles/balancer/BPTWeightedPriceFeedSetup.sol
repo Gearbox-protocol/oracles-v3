@@ -11,7 +11,6 @@ import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
 import {IBalancerV2VaultGetters} from "../../interfaces/balancer/IBalancerV2Vault.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
-import {FixedPoint} from "../../libraries/FixedPoint.sol";
 
 // EXCEPTIONS
 import {

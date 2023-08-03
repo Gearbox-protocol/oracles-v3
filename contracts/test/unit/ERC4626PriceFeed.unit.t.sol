@@ -6,7 +6,7 @@ pragma solidity ^0.8.17;
 import {Test} from "forge-std/Test.sol";
 import {CONFIGURATOR} from "@gearbox-protocol/core-v3/contracts/test/lib/constants.sol";
 
-import {ERC4626PriceFeed, RANGE_WIDTH} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
+import {ERC4626PriceFeed} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 // MOCKS
@@ -20,7 +20,6 @@ import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/T
 import {Tokens} from "@gearbox-protocol/sdk/contracts/Tokens.sol";
 
 // EXCEPTIONS
-import {IPriceOracleV2Exceptions} from "../../interfaces/IPriceOracleV2.sol";
 import {
     ZeroAddressException,
     ValueOutOfRangeException,
@@ -30,7 +29,7 @@ import {
 
 /// @title ERC4626 price feed unit test
 /// @notice U:[TVPF]: Unit tests for ERC4626 tokenized vault price feed
-contract ERC4626PriceFeedUnitTest is Test, IPriceOracleV2Exceptions {
+contract ERC4626PriceFeedUnitTest is Test {
 // ERC4626PriceFeed vaultPriceFeed;
 
 // ERC4626Mock vault;

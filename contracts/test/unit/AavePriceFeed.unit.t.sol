@@ -13,7 +13,7 @@ import "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 import {WrappedAToken} from "../../tokens/aave/WrappedAToken.sol";
 
-import {WrappedAaveV2PriceFeed, RANGE_WIDTH} from "../../oracles/aave/WrappedAaveV2PriceFeed.sol";
+import {WrappedAaveV2PriceFeed} from "../../oracles/aave/WrappedAaveV2PriceFeed.sol";
 
 import {ATokenMock} from "../mocks/integrations/aave/ATokenMock.sol";
 import {LendingPoolMock} from "../mocks/integrations/aave/LendingPoolMock.sol";

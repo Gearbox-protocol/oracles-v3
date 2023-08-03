@@ -51,7 +51,7 @@ contract PricePrinterTest is Test {
         console.log(result);
     }
 
-    function test_print_all_prices() public liveTestOnly {
+    function test_print_all_prices() public view liveTestOnly {
         uint256 len = pfd.priceFeedConfigLength();
 
         console.log("Found: ", len, " tokens");

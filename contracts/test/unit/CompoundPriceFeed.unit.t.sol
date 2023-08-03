@@ -13,7 +13,7 @@ import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/orac
 
 import "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
-import {CompoundV2PriceFeed, RANGE_WIDTH} from "../../oracles/compound/CompoundV2PriceFeed.sol";
+import {CompoundV2PriceFeed} from "../../oracles/compound/CompoundV2PriceFeed.sol";
 
 import {CErc20Mock} from "../mocks/integrations/compound/CErc20Mock.sol";
 import {TokensTestSuite, Tokens} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";

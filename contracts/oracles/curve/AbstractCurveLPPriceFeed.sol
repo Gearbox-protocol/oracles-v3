@@ -5,43 +5,35 @@ pragma solidity ^0.8.17;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
-
-// EXCEPTIONS
-import {
-    ZeroAddressException, NotImplementedException
-} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
+import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 uint256 constant RANGE_WIDTH = 200; // 2%
 
-/// @title Abstract CurveLP pricefeed
+/// @title Abstract Curve LP price feed
+/// @notice Base contract for Curve stable and crypto pool LP token price feeds.
+///         Computes LP token price as LP token exchange rate times pool-specific aggregate of underlying tokens prices.
 abstract contract AbstractCurveLPPriceFeed is LPPriceFeed {
-    /// @dev The Curve pool associated with the evaluated LP token
-    ICurvePool public immutable curvePool;
-
-    /// @dev Format of pool's virtual_price
-    int256 public immutable decimalsDivider;
-
-    /// @dev Contract version
-    uint256 public constant override version = 1;
-
-    /// @dev Whether to skip price sanity checks.
-    /// @notice Always set to true for LP price feeds,
-    ///         since they perform their own sanity checks
-    bool public constant override skipPriceCheck = true;
-
-    constructor(address addressProvider, address _curvePool, string memory _description)
-        LPPriceFeed(addressProvider, RANGE_WIDTH, _description)
-    {
-        if (_curvePool == address(0)) revert ZeroAddressException();
-
-        curvePool = ICurvePool(_curvePool); // F:[OCLP-1]
-        decimalsDivider = 10 ** 18;
-
-        uint256 virtualPrice = ICurvePool(_curvePool).get_virtual_price();
-        _setLimiter(virtualPrice);
+    constructor(address addressProvider, address _curvePool) LPPriceFeed(addressProvider, _curvePool, RANGE_WIDTH) {
+        _initLimiter();
     }
 
-    function _getContractValue() internal view override returns (uint256) {
-        return uint256(curvePool.get_virtual_price());
+    /// @notice Returns USD price of the LP token computed as LP token virtual price times
+    ///         pool-specific aggregate of underlying tokens prices
+    function latestRoundData()
+        external
+        view
+        override
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
+    {
+        (answer, updatedAt) = _getAggregatePrice();
+        answer = int256((_getValidatedLPExchangeRate() * uint256(answer)) / WAD);
+        return (0, answer, 0, updatedAt, 0);
+    }
+
+    /// @dev Returns pool-specific aggregate of underlying tokens prices, must be implemented by derived price feeds
+    function _getAggregatePrice() internal view virtual returns (int256 answer, uint256 updatedAt);
+
+    function _getLPExchangeRate() internal view override returns (uint256) {
+        return uint256(ICurvePool(lpToken).get_virtual_price());
     }
 }

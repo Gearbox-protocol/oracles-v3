@@ -3,32 +3,28 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
-
-import {SingleAssetLPFeed} from "../SingleAssetLPFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
-
 import {IWrappedAToken} from "../../interfaces/aave/IWrappedAToken.sol";
+import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
-// EXCEPTIONS
-import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
-
-uint256 constant RANGE_WIDTH = 200; // 2%
-
-/// @title Aave V2 wrapped aToken price feed
-contract WrappedAaveV2PriceFeed is SingleAssetLPFeed {
-    PriceFeedType public constant override priceFeedType = PriceFeedType.WRAPPED_AAVE_V2_ORACLE;
+/// @title Aave V2 waToken price feed
+contract WrappedAaveV2PriceFeed is SingleAssetLPPriceFeed {
+    /// @notice Contract version
     uint256 public constant override version = 3_00;
+    PriceFeedType public constant override priceFeedType = PriceFeedType.WRAPPED_AAVE_V2_ORACLE;
 
-    constructor(address addressProvider, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPFeed(addressProvider, _yVault, _priceFeed, _stalenessPeriod)
+    constructor(address addressProvider, address _waToken, address _priceFeed, uint32 _stalenessPeriod)
+        SingleAssetLPPriceFeed(addressProvider, _waToken, _priceFeed, _stalenessPeriod)
     {
-        _setLimiter(_getContractValue());
+        _initLimiter();
     }
 
-    function _getContractValue() internal view override returns (uint256) {
+    function _getLPExchangeRate() internal view override returns (uint256) {
         return IWrappedAToken(lpToken).exchangeRate();
+    }
+
+    function _getScale() internal pure override returns (uint256) {
+        return WAD;
     }
 }

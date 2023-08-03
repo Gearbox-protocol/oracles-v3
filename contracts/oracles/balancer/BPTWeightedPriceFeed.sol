@@ -1,52 +1,80 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-
 import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
-
+import {FixedPoint} from "../../libraries/FixedPoint.sol";
 import {BPTWeightedPriceFeedSetup} from "./BPTWeightedPriceFeedSetup.sol";
+import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {IBalancerV2VaultGetters} from "../../interfaces/balancer/IBalancerV2Vault.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
-import {FixedPoint} from "../../libraries/FixedPoint.sol";
-
-// EXCEPTIONS
-import {
-    ZeroAddressException, NotImplementedException
-} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
 
 uint256 constant RANGE_WIDTH = 200; // 2%
-uint256 constant DECIMALS = 10 ** 18;
-uint256 constant USD_FEED_DECIMALS = 10 ** 8;
+uint256 constant USD_FEED_SCALE = 10 ** 8;
 
-/// @title Balancer Weighted pool LP token price feed
+/// @title Balancer weighted pool token price feed
 contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
     using FixedPoint for uint256;
 
+    /// @notice Contract version
+    uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.BALANCER_WEIGHTED_LP_ORACLE;
-    uint256 public constant override version = 1;
-
-    /// @dev Whether to skip price sanity checks.
-    /// @notice Always set to true for LP price feeds,
-    ///         since they perform their own sanity checks
-    bool public constant override skipPriceCheck = true;
 
     constructor(address addressProvider, address _balancerVault, address _balancerPool, address[] memory priceFeeds)
-        LPPriceFeed(
-            addressProvider,
-            RANGE_WIDTH,
-            _balancerPool != address(0) ? string(abi.encodePacked(IERC20Metadata(_balancerPool).name(), " priceFeed")) : ""
-        )
+        LPPriceFeed(addressProvider, _balancerPool, RANGE_WIDTH)
         BPTWeightedPriceFeedSetup(_balancerVault, _balancerPool, priceFeeds)
     {
-        _setLimiter(_getContractValue());
+        _initLimiter();
     }
 
-    function _getContractValue() internal view override returns (uint256 value) {
+    /// @dev Returns the price of a single BPT in USD (with 8 decimals)
+    /// @notice BPT price is computed as k * sum((p_i / w_i) ^ w_i) / S
+    /// @notice Also does limiter checks on k / S, since this value must growing in a stable way from fees
+    function latestRoundData()
+        external
+        view
+        override
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
+    {
+        (uint256 invariantOverSupply, uint256[] memory weights) = _getInvariantOverSupplyAndWeights();
+
+        address[] memory priceFeeds = _getPriceFeedsArray();
+
+        uint256 weightedPrice = FixedPoint.ONE;
+        uint256 currentBase = FixedPoint.ONE;
+
+        for (uint256 i = 0; i < numAssets;) {
+            // TODO: don't skip price check
+            (answer, updatedAt) = _getValidatedPrice(priceFeeds[i], 0, true); // F: [OBWLP-3,4]
+
+            answer = (answer * int256(WAD)) / int256(USD_FEED_SCALE);
+
+            currentBase = currentBase.mulDown(uint256(answer).divDown(weights[i]));
+
+            if (i == numAssets - 1 || weights[i] != weights[i + 1]) {
+                weightedPrice = weightedPrice.mulDown(currentBase.powDown(weights[i])); // F: [OBWLP-3,4]
+                currentBase = FixedPoint.ONE;
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+
+        answer = int256(invariantOverSupply.mulDown(weightedPrice)); // F: [OBWLP-3,4]
+
+        answer = (answer * int256(USD_FEED_SCALE)) / int256(WAD); // F: [OBWLP-3,4]
+
+        return (0, answer, 0, updatedAt, 0);
+    }
+
+    function getInvariantOverSupply() external view returns (uint256) {
+        return _getLPExchangeRate();
+    }
+
+    function _getLPExchangeRate() internal view override returns (uint256 value) {
         (value,) = _getInvariantOverSupplyAndWeights();
     }
 
@@ -115,69 +143,25 @@ contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
 
         sortedBalances = new uint256[](len);
 
-        sortedBalances[0] = (balances[index0] * DECIMALS) / (10 ** decimals0);
-        sortedBalances[1] = (balances[index1] * DECIMALS) / (10 ** decimals1);
+        sortedBalances[0] = (balances[index0] * WAD) / (10 ** decimals0);
+        sortedBalances[1] = (balances[index1] * WAD) / (10 ** decimals1);
         if (len >= 3) {
-            sortedBalances[2] = (balances[index2] * DECIMALS) / (10 ** decimals2);
+            sortedBalances[2] = (balances[index2] * WAD) / (10 ** decimals2);
         }
         if (len >= 4) {
-            sortedBalances[3] = (balances[index3] * DECIMALS) / (10 ** decimals3);
+            sortedBalances[3] = (balances[index3] * WAD) / (10 ** decimals3);
         }
         if (len >= 5) {
-            sortedBalances[4] = (balances[index4] * DECIMALS) / (10 ** decimals4);
+            sortedBalances[4] = (balances[index4] * WAD) / (10 ** decimals4);
         }
         if (len >= 6) {
-            sortedBalances[5] = (balances[index5] * DECIMALS) / (10 ** decimals5);
+            sortedBalances[5] = (balances[index5] * WAD) / (10 ** decimals5);
         }
         if (len >= 7) {
-            sortedBalances[6] = (balances[index6] * DECIMALS) / (10 ** decimals6);
+            sortedBalances[6] = (balances[index6] * WAD) / (10 ** decimals6);
         }
         if (len >= 8) {
-            sortedBalances[7] = (balances[index7] * DECIMALS) / (10 ** decimals7);
+            sortedBalances[7] = (balances[index7] * WAD) / (10 ** decimals7);
         }
-    }
-
-    /// @dev Returns the price of a single BPT in USD (with 8 decimals)
-    /// @notice BPT price is computed as k * sum((p_i / w_i) ^ w_i) / S
-    /// @notice Also does limiter checks on k / S, since this value must growing in a stable way from fees
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
-    {
-        (uint256 invariantOverSupply, uint256[] memory weights) = _getInvariantOverSupplyAndWeights();
-
-        address[] memory priceFeeds = _getPriceFeedsArray();
-
-        uint256 weightedPrice = FixedPoint.ONE;
-        uint256 currentBase = FixedPoint.ONE;
-
-        for (uint256 i = 0; i < numAssets;) {
-            (, answer,, updatedAt,) = AggregatorV3Interface(priceFeeds[i]).latestRoundData(); // F: [OBWLP-3,4]
-
-            _checkAnswer(answer, updatedAt, 2 hours);
-
-            answer = (answer * int256(DECIMALS)) / int256(USD_FEED_DECIMALS);
-
-            currentBase = currentBase.mulDown(uint256(answer).divDown(weights[i]));
-
-            if (i == numAssets - 1 || weights[i] != weights[i + 1]) {
-                weightedPrice = weightedPrice.mulDown(currentBase.powDown(weights[i])); // F: [OBWLP-3,4]
-                currentBase = FixedPoint.ONE;
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
-
-        answer = int256(invariantOverSupply.mulDown(weightedPrice)); // F: [OBWLP-3,4]
-
-        answer = (answer * int256(USD_FEED_DECIMALS)) / int256(DECIMALS); // F: [OBWLP-3,4]
-    }
-
-    function getInvariantOverSupply() external view returns (uint256) {
-        return _getContractValue();
     }
 }

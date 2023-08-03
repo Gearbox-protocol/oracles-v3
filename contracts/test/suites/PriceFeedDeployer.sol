@@ -33,7 +33,7 @@ import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
 import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
 
-import {CurveLP4PriceFeed} from "../../oracles/curve/CurveLP4PriceFeed.sol";
+import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
 import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
 
 import {WrappedAaveV2PriceFeed} from "../../oracles/aave/WrappedAaveV2PriceFeed.sol";
@@ -96,8 +96,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     if (token != address(0)) {
                         address pf = address(
                             new BoundedPriceFeed(
-                            boundedPriceFeeds[i].priceFeed,
-                            int256(boundedPriceFeeds[i].upperBound)
+                                boundedPriceFeeds[i].priceFeed,
+                                2 hours, // TODO: add staleness period to `BoundedPriceFeedData`
+                                int256(boundedPriceFeeds[i].upperBound)
                             )
                         );
 
@@ -125,8 +126,16 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     ) {
                         address pf = address(
                             new CompositePriceFeed(
-                            compositePriceFeeds[i].targetToBaseFeed,
-                            compositePriceFeeds[i].baseToUSDFeed
+                                [
+                                    PriceFeedParams({
+                                        priceFeed: compositePriceFeeds[i].targetToBaseFeed,
+                                        stalenessPeriod: 2 hours // TODO: add staleness period to `CompositePriceFeedData`
+                                    }),
+                                    PriceFeedParams({
+                                        priceFeed: compositePriceFeeds[i].baseToUSDFeed,
+                                        stalenessPeriod: 2 hours // TODO: add staleness period to `CompositePriceFeedData`
+                                    })
+                                ]
                             )
                         );
 
@@ -188,29 +197,33 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             pool = IstETHPoolGateway(pool).pool();
                         }
 
-                        string memory description =
-                            string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken)));
-
                         pf = address(
-                            new CurveLP4PriceFeed(
+                            new CurveStableLPPriceFeed(
                                 addressProvider,
                                 pool,
-                                 [PriceFeedParams({priceFeed: priceFeeds[asset0], stalenessPeriod: stalenessPeriods[asset0]}),
-                            PriceFeedParams({priceFeed: priceFeeds[asset1], stalenessPeriod: stalenessPeriods[asset1]}),
-                            PriceFeedParams({priceFeed: (nCoins >2) ? priceFeeds[
-                                asset2
-                                ] : address(0), stalenessPeriod: stalenessPeriods[asset2]}),
-                                 PriceFeedParams({priceFeed: (nCoins >3) ? priceFeeds[
-                                asset3
-                                ] : address(0), stalenessPeriod: stalenessPeriods[asset3]})],
-                                
-                                
-                                description
-                                )
+                                [
+                                    PriceFeedParams({
+                                        priceFeed: priceFeeds[asset0],
+                                        stalenessPeriod: stalenessPeriods[asset0]
+                                    }),
+                                    PriceFeedParams({
+                                        priceFeed: priceFeeds[asset1],
+                                        stalenessPeriod: stalenessPeriods[asset1]
+                                    }),
+                                    PriceFeedParams({
+                                        priceFeed: (nCoins > 2) ? priceFeeds[asset2] : address(0),
+                                        stalenessPeriod: stalenessPeriods[asset2]
+                                    }),
+                                    PriceFeedParams({
+                                        priceFeed: (nCoins > 3) ? priceFeeds[asset3] : address(0),
+                                        stalenessPeriod: stalenessPeriods[asset3]
+                                    })
+                                ]
+                            )
                         );
 
                         setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
-                        vm.label(pf, description);
+                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
                     }
                 }
             }
@@ -236,24 +249,29 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 if (nCoins > 2 && asset2 == address(0)) revert("Asset 2 is not defined");
 
                 if (pool != address(0) && tokenTestSuite.addressOf(lpToken) != address(0)) {
-                    string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken)));
-
                     pf = address(
                         new CurveCryptoLPPriceFeed(
                             addressProvider,
                             pool,
-                        [PriceFeedParams({priceFeed: priceFeeds[asset0], stalenessPeriod: stalenessPeriods[asset0]}),
-                         PriceFeedParams({priceFeed: priceFeeds[asset1], stalenessPeriod: stalenessPeriods[asset1]}),
-                          PriceFeedParams({priceFeed: (nCoins >2) ? priceFeeds[
-                                asset2
-                                ] : address(0), stalenessPeriod: stalenessPeriods[asset2]})],
-
-                            description
+                            [
+                                PriceFeedParams({
+                                    priceFeed: priceFeeds[asset0],
+                                    stalenessPeriod: stalenessPeriods[asset0]
+                                }),
+                                PriceFeedParams({
+                                    priceFeed: priceFeeds[asset1],
+                                    stalenessPeriod: stalenessPeriods[asset1]
+                                }),
+                                PriceFeedParams({
+                                    priceFeed: (nCoins > 2) ? priceFeeds[asset2] : address(0),
+                                    stalenessPeriod: stalenessPeriods[asset2]
+                                })
+                            ]
                         )
                     );
 
                     setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
-                    vm.label(pf, description);
+                    vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
                 }
             }
         }
@@ -316,7 +334,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address steth = IwstETH(wsteth).stETH();
 
                     address pf = address(
-                        new WstETHPriceFeed(addressProvider, wsteth, priceFeeds[steth],  stalenessPeriods[steth])
+                        new WstETHPriceFeed(
+                            addressProvider,
+                            wsteth,
+                            priceFeeds[steth],
+                            stalenessPeriods[steth]
+                        )
                     );
 
                     setPriceFeed(wsteth, pf);
@@ -327,7 +350,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
-        // // WRAPPED AAVE V2 PRICE FEEDS
+        // WRAPPED AAVE V2 PRICE FEEDS
         GenericLPPriceFeedData[] memory wrappedAaveV2PriceFeeds = wrappedAaveV2PriceFeedsByNetwork[chainId];
         len = wrappedAaveV2PriceFeeds.length;
         unchecked {
@@ -340,10 +363,10 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                     address pf = address(
                         new WrappedAaveV2PriceFeed(
-                        addressProvider,
-                        waToken,
-                        priceFeeds[underlying],
-                         stalenessPeriods[underlying]
+                            addressProvider,
+                            waToken,
+                            priceFeeds[underlying],
+                            stalenessPeriods[underlying]
                         )
                     );
 
@@ -369,11 +392,11 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address underlying = tokenTestSuite.addressOf(compoundV2PriceFeeds[i].underlying);
 
                 address pf = address(
-                    new WrappedAaveV2PriceFeed(
+                    new CompoundV2PriceFeed(
                         addressProvider,
                         cToken,
                         priceFeeds[underlying],
-                         stalenessPeriods[underlying]
+                        stalenessPeriods[underlying]
                     )
                 );
 
@@ -399,7 +422,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address underlying = tokenTestSuite.addressOf(erc4626PriceFeeds[i].underlying);
 
                 address pf = address(
-                    new WrappedAaveV2PriceFeed(
+                    new ERC4626PriceFeed(
                         addressProvider,
                         token,
                         priceFeeds[underlying],
@@ -425,10 +448,10 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pf = address(
                     new RedstonePriceFeed(
-                       redStonePriceFeedData.tokenSymbol,
+                        redStonePriceFeedData.tokenSymbol,
                         redStonePriceFeedData.dataFeedId,
                         redStonePriceFeedData.signers,
-                         redStonePriceFeedData.signersThreshold
+                        redStonePriceFeedData.signersThreshold
                     )
                 );
 

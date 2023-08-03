@@ -3,7 +3,7 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
-import {CurveLP4PriceFeed} from "../../oracles/curve/CurveLP4PriceFeed.sol";
+import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
 
 // LIBRARIES
 

@@ -3,32 +3,31 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
-
-import {SingleAssetLPFeed} from "../SingleAssetLPFeed.sol";
 import {IYVault} from "../../interfaces/yearn/IYVault.sol";
-
-// EXCEPTIONS
-import {
-    ZeroAddressException, NotImplementedException
-} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
-
-uint256 constant RANGE_WIDTH = 200; // 2%
+import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title Yearn price feed
-contract YearnPriceFeed is SingleAssetLPFeed {
-    PriceFeedType public constant override priceFeedType = PriceFeedType.YEARN_ORACLE;
+contract YearnPriceFeed is SingleAssetLPPriceFeed {
+    /// @notice Contract version
     uint256 public constant override version = 3_00;
+    PriceFeedType public constant override priceFeedType = PriceFeedType.YEARN_ORACLE;
+
+    /// @notice Scale of yVault's pricePerShare
+    uint256 public immutable scale;
 
     constructor(address addressProvider, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPFeed(addressProvider, _yVault, _priceFeed, _stalenessPeriod)
+        SingleAssetLPPriceFeed(addressProvider, _yVault, _priceFeed, _stalenessPeriod)
     {
-        _setLimiter(_getContractValue());
+        scale = 10 ** IYVault(_yVault).decimals();
+        _initLimiter();
     }
 
-    function _getContractValue() internal view override returns (uint256) {
+    function _getLPExchangeRate() internal view override returns (uint256) {
         return IYVault(lpToken).pricePerShare();
+    }
+
+    function _getScale() internal view override returns (uint256) {
+        return scale;
     }
 }
