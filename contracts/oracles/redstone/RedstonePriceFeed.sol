@@ -6,7 +6,7 @@ pragma solidity ^0.8.17;
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {RedstoneConsumerNumericBase} from
     "@redstone-finance/evm-connector/contracts/core/RedstoneConsumerNumericBase.sol";
-import {PriceFeedType, IPriceFeedType} from "../../interfaces/IPriceFeedType.sol";
+import {PriceFeedType, IPriceFeed} from "../../interfaces/IPriceFeed.sol";
 import {NotImplementedException} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/ICreditFacadeV3Multicall.sol";
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
@@ -42,8 +42,7 @@ interface IRedstonePriceFeedEvents {
 contract RedstonePriceFeed is
     RedstoneConsumerNumericBase,
     IUpdatablePriceFeed,
-    IPriceFeedType,
-    AggregatorV3Interface,
+    IPriceFeed,
     IRedstonePriceFeedExceptions,
     IRedstonePriceFeedEvents
 {

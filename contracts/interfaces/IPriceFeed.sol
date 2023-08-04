@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: MIT
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.17;
 
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-interface IPriceFeedType {
-    /// @dev Returns the price feed type
+/// @title Price feed interface
+interface IPriceFeed is AggregatorV3Interface {
     function priceFeedType() external view returns (PriceFeedType);
-
-    /// @dev Returns whether sanity checks on price feed result should be skipped
     function skipPriceCheck() external view returns (bool);
 }

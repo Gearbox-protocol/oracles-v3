@@ -1,57 +1,21 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.17;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {IPriceFeedType, PriceFeedType} from "../interfaces/IPriceFeedType.sol";
+import {AbstractPriceFeed} from "./AbstractPriceFeed.sol";
+import {PriceFeedType} from "../interfaces/IPriceFeed.sol";
 
-// EXCEPTIONS
-import {NotImplementedException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
-
-/// @title Pricefeed which always returns 0
-/// @notice Used for collateral tokens that do not have a valid USD price feed
-contract ZeroPriceFeed is AggregatorV3Interface, IPriceFeedType {
-    string public constant override description = "Zero pricefeed"; // F:[ZPF-1]
-
-    uint8 public constant override decimals = 8; // F:[ZPF-1]
-
-    uint256 public constant override version = 1;
-
+/// @title Zero price feed
+/// @notice Always returns zero price as answer
+contract ZeroPriceFeed is AbstractPriceFeed {
+    /// @notice Contract version
+    uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.ZERO_ORACLE;
+    string public constant override description = "Zero price feed";
 
-    bool public constant override skipPriceCheck = true; // F:[ZPF-1]
-
-    /// @dev Not implemented, since Gearbox does not use historical data
-    function getRoundData(
-        uint80 //_roundId)
-    )
-        external
-        pure
-        override
-        returns (
-            uint80, // roundId,
-            int256, //answer,
-            uint256, // startedAt,
-            uint256, // updatedAt,
-            uint80 // answeredInRound
-        )
-    {
-        revert NotImplementedException(); // F:[ZPF-2]
-    }
-
-    /// @dev Returns the latest result according to Chainlink spec
-    /// @notice 'answer' is always 0
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
-    {
-        roundId = 1; // F:[ZPF-3]
-        answer = 0; // F:[ZPF-3]
-        startedAt = block.timestamp; // F:[ZPF-3]
-        updatedAt = block.timestamp; // F:[ZPF-3]
-        answeredInRound = 1; // F:[ZPF-3]
+    /// @notice Returns zero price
+    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
+        return (0, 0, 0, block.timestamp, 0);
     }
 }

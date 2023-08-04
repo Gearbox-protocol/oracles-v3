@@ -3,185 +3,110 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-
 import {LPPriceFeed} from "../LPPriceFeed.sol";
+import {PriceFeedParams} from "../AbstractPriceFeed.sol";
+import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
-
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
 
-// EXCEPTIONS
-import {
-    ZeroAddressException,
-    IncorrectPriceFeedException
-} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
-
 uint256 constant RANGE_WIDTH = 200; // 2%
-uint256 constant DECIMALS = 10 ** 18;
 
-/// @title BPT Stable pool LP price feed
+/// @title Balancer stable pool token price feed
 contract BPTStablePriceFeed is LPPriceFeed {
-    IBalancerStablePool public immutable balancerPool;
-
-    /// @dev Price feed of asset 0 in the pool
-    AggregatorV3Interface public immutable priceFeed0;
-
-    /// @dev Price feed of asset 1 in the pool
-    AggregatorV3Interface public immutable priceFeed1;
-
-    /// @dev Price feed of asset 2 in the pool
-    AggregatorV3Interface public immutable priceFeed2;
-
-    /// @dev Price feed of asset 3 in the pool
-    AggregatorV3Interface public immutable priceFeed3;
-
-    /// @dev Price feed of asset 4 in the pool
-    AggregatorV3Interface public immutable priceFeed4;
-
-    uint8 public immutable numAssets;
-
+    /// @notice Contract version
+    uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.BALANCER_STABLE_LP_ORACLE;
 
-    /// @dev Contract version
-    uint256 public constant override version = 1;
+    /// @notice Number of assets in the pool
+    uint8 public immutable numAssets;
 
-    /// @dev Whether to skip price sanity checks.
-    /// @notice Always set to true for LP price feeds,
-    ///         since they perform their own sanity checks
-    bool public constant override skipPriceCheck = true;
+    /// @notice Asset 0 price feed
+    address public immutable priceFeed0;
+    uint32 public immutable stalenessPeriod0;
+    bool public immutable skipCheck0;
 
-    constructor(address addressProvider, address _balancerPool, uint8 _numAssets, address[] memory priceFeeds)
-        LPPriceFeed(
-            addressProvider,
-            RANGE_WIDTH,
-            _balancerPool != address(0) ? string(abi.encodePacked(IERC20Metadata(_balancerPool).name(), " priceFeed")) : ""
-        )
+    /// @notice Asset 1 price feed
+    address public immutable priceFeed1;
+    uint32 public immutable stalenessPeriod1;
+    bool public immutable skipCheck1;
+
+    /// @notice Asset 2 price feed
+    address public immutable priceFeed2;
+    uint32 public immutable stalenessPeriod2;
+    bool public immutable skipCheck2;
+
+    /// @notice Asset 3 price feed
+    address public immutable priceFeed3;
+    uint32 public immutable stalenessPeriod3;
+    bool public immutable skipCheck3;
+
+    /// @notice Asset 4 price feed
+    address public immutable priceFeed4;
+    uint32 public immutable stalenessPeriod4;
+    bool public immutable skipCheck4;
+
+    constructor(address addressProvider, address _balancerPool, PriceFeedParams[5] memory priceFeeds)
+        LPPriceFeed(addressProvider, _balancerPool, RANGE_WIDTH)
+        nonZeroAddress(_balancerPool)
+        nonZeroAddress(priceFeeds[0].priceFeed)
+        nonZeroAddress(priceFeeds[1].priceFeed)
     {
-        if (_balancerPool == address(0)) revert ZeroAddressException(); // F: [OBSLP-2]
+        priceFeed0 = priceFeeds[0].priceFeed;
+        priceFeed1 = priceFeeds[1].priceFeed;
+        priceFeed2 = priceFeeds[2].priceFeed;
+        priceFeed3 = priceFeeds[3].priceFeed;
+        priceFeed4 = priceFeeds[4].priceFeed;
 
-        uint256 len = priceFeeds.length;
+        stalenessPeriod0 = priceFeeds[0].stalenessPeriod;
+        stalenessPeriod1 = priceFeeds[1].stalenessPeriod;
+        stalenessPeriod2 = priceFeeds[2].stalenessPeriod;
+        stalenessPeriod3 = priceFeeds[3].stalenessPeriod;
+        stalenessPeriod4 = priceFeeds[4].stalenessPeriod;
 
-        if (len != _numAssets) revert IncorrectPriceFeedException(); // F: [OBSLP-2]
+        numAssets = priceFeed2 == address(0) ? 2 : (priceFeed3 == address(0) ? 3 : (priceFeed4 == address(0) ? 4 : 5));
 
-        for (uint256 i = 0; i < len;) {
-            if (priceFeeds[i] == address(0)) {
-                revert ZeroAddressException(); // F: [OBSLP-2]
-            }
+        skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
+        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
+        skipCheck2 = numAssets > 2 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
+        skipCheck3 = numAssets > 3 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
+        skipCheck4 = numAssets > 4 ? _validatePriceFeed(priceFeed4, stalenessPeriod4) : false;
 
-            unchecked {
-                ++i;
-            }
-        }
-
-        numAssets = _numAssets; // F: [OBSLP-1]
-
-        priceFeed0 = AggregatorV3Interface(priceFeeds[0]); // F: [OBSLP-1]
-        priceFeed1 = AggregatorV3Interface(priceFeeds[1]); // F: [OBSLP-1]
-        priceFeed2 = _numAssets >= 3 ? AggregatorV3Interface(priceFeeds[2]) : AggregatorV3Interface(address(0)); // F: [OBSLP-1]
-        priceFeed3 = _numAssets >= 4 ? AggregatorV3Interface(priceFeeds[3]) : AggregatorV3Interface(address(0)); // F: [OBSLP-1]
-        priceFeed4 = _numAssets == 5 ? AggregatorV3Interface(priceFeeds[4]) : AggregatorV3Interface(address(0)); // F: [OBSLP-1]
-
-        balancerPool = IBalancerStablePool(_balancerPool); // F: [OBSLP-1]
-
-        uint256 rate = balancerPool.getRate(); // F: [OBSLP-1]
-
-        _setLimiter(rate); // F: [OBSLP-1]
+        _initLimiter();
     }
 
-    /// @dev Returns the USD price of the pool's LP token
-    /// @notice Computes the LP token price as (min_t(price(asset_t)) * getRate())
-    ///         Same principle as Curve price feed is used since Balancer stable pools are essentially a copy of Curve stable pools
-    ///         See more at https://dev.gearbox.fi/docs/documentation/oracle/curve-pricefeed
+    /// @notice Returns USD price of the LP token computed as LP token rate times minimum of underlying tokens prices
     function latestRoundData()
         external
         view
         virtual
         override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed0.latestRoundData(); // F: [OBSLP-3]
+        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
 
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound);
+        (int256 answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
+        if (answerA < answer) answer = answerA;
 
-        uint80 roundIdNext;
-        int256 answerNext;
-        uint256 startedAtNext;
-        uint256 updatedAtNext;
-        uint80 answeredInRoundNext;
+        if (numAssets > 2) {
+            (answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck2);
+            if (answerA < answer) answer = answerA;
 
-        (roundIdNext, answerNext, startedAtNext, updatedAtNext, answeredInRoundNext) = priceFeed1.latestRoundData(); // F: [OBSLP-3]
+            if (numAssets > 3) {
+                (answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck3);
+                if (answerA < answer) answer = answerA;
 
-        _checkAnswer(roundIdNext, answerNext, updatedAtNext, answeredInRoundNext);
-
-        if (answerNext < answer) {
-            roundId = roundIdNext;
-            answer = answerNext;
-            startedAt = startedAtNext;
-            updatedAt = updatedAtNext;
-            answeredInRound = answeredInRoundNext;
-        }
-
-        if (numAssets >= 3) {
-            (roundIdNext, answerNext, startedAtNext, updatedAtNext, answeredInRoundNext) = priceFeed2.latestRoundData(); // F: [OBSLP-3]
-
-            _checkAnswer(roundIdNext, answerNext, updatedAtNext, answeredInRoundNext);
-
-            if (answerNext < answer) {
-                roundId = roundIdNext;
-                answer = answerNext;
-                startedAt = startedAtNext;
-                updatedAt = updatedAtNext;
-                answeredInRound = answeredInRoundNext;
+                if (numAssets > 4) {
+                    (answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck4);
+                    if (answerA < answer) answer = answerA;
+                }
             }
         }
 
-        if (numAssets >= 4) {
-            (roundIdNext, answerNext, startedAtNext, updatedAtNext, answeredInRoundNext) = priceFeed3.latestRoundData(); // F: [OBSLP-3]
-
-            _checkAnswer(roundIdNext, answerNext, updatedAtNext, answeredInRoundNext);
-
-            if (answerNext < answer) {
-                roundId = roundIdNext;
-                answer = answerNext;
-                startedAt = startedAtNext;
-                updatedAt = updatedAtNext;
-                answeredInRound = answeredInRoundNext;
-            }
-        }
-
-        if (numAssets == 5) {
-            (roundIdNext, answerNext, startedAtNext, updatedAtNext, answeredInRoundNext) = priceFeed4.latestRoundData(); // F: [OBSLP-3]
-
-            _checkAnswer(roundIdNext, answerNext, updatedAtNext, answeredInRoundNext);
-
-            if (answerNext < answer) {
-                roundId = roundIdNext;
-                answer = answerNext;
-                startedAt = startedAtNext;
-                updatedAt = updatedAtNext;
-                answeredInRound = answeredInRoundNext;
-            }
-        }
-
-        uint256 rate = balancerPool.getRate(); // F: [OBSLP-3]
-
-        // Checks that virtual_price is in within bounds
-        rate = _checkAndUpperBoundValue(rate); // F: [OBSLP-3]
-
-        answer = (answer * int256(rate)) / int256(DECIMALS); // F: [OBSLP-3]
+        answer = int256(uint256(answer) * _getValidatedLPExchangeRate() / WAD);
+        return (0, answer, 0, updatedAt, 0);
     }
 
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _upperBound)
-        internal
-        view
-        override
-        returns (bool)
-    {
-        uint256 rate = balancerPool.getRate();
-        if (rate < _lowerBound || rate > _upperBound) {
-            return false; // F: [OBSLP-4]
-        }
-        return true;
+    function _getLPExchangeRate() internal view override returns (uint256) {
+        return IBalancerStablePool(lpToken).getRate();
     }
 }

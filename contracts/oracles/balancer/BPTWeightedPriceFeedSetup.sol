@@ -5,14 +5,12 @@ pragma solidity ^0.8.17;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
 import {IBalancerV2VaultGetters} from "../../interfaces/balancer/IBalancerV2Vault.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
-import {FixedPoint} from "../../libraries/FixedPoint.sol";
 
 // EXCEPTIONS
 import {
@@ -26,28 +24,28 @@ contract BPTWeightedPriceFeedSetup {
     error TokenArraysLengthMismatchException();
 
     /// @dev Chainlink price feed for pool asset 0
-    AggregatorV3Interface public immutable priceFeed0;
+    address public immutable priceFeed0;
 
     /// @dev Chainlink price feed for pool asset 1
-    AggregatorV3Interface public immutable priceFeed1;
+    address public immutable priceFeed1;
 
     /// @dev Chainlink price feed for pool asset 2
-    AggregatorV3Interface public immutable priceFeed2;
+    address public immutable priceFeed2;
 
     /// @dev Chainlink price feed for pool asset 3
-    AggregatorV3Interface public immutable priceFeed3;
+    address public immutable priceFeed3;
 
     /// @dev Chainlink price feed for pool asset 4
-    AggregatorV3Interface public immutable priceFeed4;
+    address public immutable priceFeed4;
 
     /// @dev Chainlink price feed for pool asset 5
-    AggregatorV3Interface public immutable priceFeed5;
+    address public immutable priceFeed5;
 
     /// @dev Chainlink price feed for pool asset 6
-    AggregatorV3Interface public immutable priceFeed6;
+    address public immutable priceFeed6;
 
     /// @dev Chainlink price feed for pool asset 7
-    AggregatorV3Interface public immutable priceFeed7;
+    address public immutable priceFeed7;
 
     /// @dev Asset 0
     IERC20 public immutable asset0;
@@ -220,14 +218,14 @@ contract BPTWeightedPriceFeedSetup {
         normalizedWeight6 = numAssets >= 7 ? weights[6] : 0; // F: [OBWLP-1]
         normalizedWeight7 = numAssets >= 8 ? weights[7] : 0; // F: [OBWLP-1]
 
-        priceFeed0 = AggregatorV3Interface(priceFeeds[0]); // F: [OBWLP-1]
-        priceFeed1 = AggregatorV3Interface(priceFeeds[1]); // F: [OBWLP-1]
-        priceFeed2 = numAssets >= 3 ? AggregatorV3Interface(priceFeeds[2]) : AggregatorV3Interface(address(0)); // F: [OBWLP-1]
-        priceFeed3 = numAssets >= 4 ? AggregatorV3Interface(priceFeeds[3]) : AggregatorV3Interface(address(0)); // F: [OBWLP-1]
-        priceFeed4 = numAssets >= 5 ? AggregatorV3Interface(priceFeeds[4]) : AggregatorV3Interface(address(0)); // F: [OBWLP-1]
-        priceFeed5 = numAssets >= 6 ? AggregatorV3Interface(priceFeeds[5]) : AggregatorV3Interface(address(0)); // F: [OBWLP-1]
-        priceFeed6 = numAssets >= 7 ? AggregatorV3Interface(priceFeeds[6]) : AggregatorV3Interface(address(0)); // F: [OBWLP-1]
-        priceFeed7 = numAssets >= 8 ? AggregatorV3Interface(priceFeeds[7]) : AggregatorV3Interface(address(0)); // F: [OBWLP-1]
+        priceFeed0 = address(priceFeeds[0]); // F: [OBWLP-1]
+        priceFeed1 = address(priceFeeds[1]); // F: [OBWLP-1]
+        priceFeed2 = numAssets >= 3 ? address(priceFeeds[2]) : address(address(0)); // F: [OBWLP-1]
+        priceFeed3 = numAssets >= 4 ? address(priceFeeds[3]) : address(address(0)); // F: [OBWLP-1]
+        priceFeed4 = numAssets >= 5 ? address(priceFeeds[4]) : address(address(0)); // F: [OBWLP-1]
+        priceFeed5 = numAssets >= 6 ? address(priceFeeds[5]) : address(address(0)); // F: [OBWLP-1]
+        priceFeed6 = numAssets >= 7 ? address(priceFeeds[6]) : address(address(0)); // F: [OBWLP-1]
+        priceFeed7 = numAssets >= 8 ? address(priceFeeds[7]) : address(address(0)); // F: [OBWLP-1]
 
         index0 = indices[0]; // F: [OBWLP-1]
         index1 = indices[1]; // F: [OBWLP-1]
@@ -314,8 +312,8 @@ contract BPTWeightedPriceFeedSetup {
     }
 
     /// @dev Returns price feeds as an array
-    function _getPriceFeedsArray() internal view returns (AggregatorV3Interface[] memory priceFeeds) {
-        priceFeeds = new AggregatorV3Interface[](numAssets);
+    function _getPriceFeedsArray() internal view returns (address[] memory priceFeeds) {
+        priceFeeds = new address[](numAssets);
 
         priceFeeds[0] = priceFeed0;
         priceFeeds[1] = priceFeed1;

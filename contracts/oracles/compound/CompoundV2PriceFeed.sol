@@ -3,82 +3,28 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
-
-import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
-
 import {ICToken} from "../../interfaces/compound/ICToken.sol";
-
-// EXCEPTIONS
-import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
-
-uint256 constant RANGE_WIDTH = 200; // 2%
+import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title Compound V2 cToken price feed
-contract CompoundV2PriceFeed is LPPriceFeed {
-    /// @dev Chainlink price feed for the underlying token
-    AggregatorV3Interface public immutable priceFeed;
-
-    /// @dev Address of the cToken to compute prices for
-    ICToken public immutable cToken;
-
-    /// @dev Scale of the cToken's exchangeRate
-    uint256 public constant decimalsDivider = WAD;
-
+contract CompoundV2PriceFeed is SingleAssetLPPriceFeed {
+    /// @notice Contract version
+    uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOUND_V2_ORACLE;
-    uint256 public constant override version = 1;
 
-    /// @dev Whether to skip price sanity checks.
-    /// @notice Always set to true for LP price feeds,
-    ///         since they perform their own sanity checks
-    bool public constant override skipPriceCheck = true;
-
-    constructor(address addressProvider, address _cToken, address _priceFeed)
-        LPPriceFeed(
-            addressProvider,
-            RANGE_WIDTH,
-            _cToken != address(0) ? string(abi.encodePacked(ICToken(_cToken).name(), " priceFeed")) : ""
-        )
+    constructor(address addressProvider, address _cToken, address _priceFeed, uint32 _stalenessPeriod)
+        SingleAssetLPPriceFeed(addressProvider, _cToken, _priceFeed, _stalenessPeriod)
     {
-        if (_cToken == address(0) || _priceFeed == address(0)) {
-            revert ZeroAddressException(); // F: [OCPF-1]
-        }
-
-        cToken = ICToken(_cToken); // F: [OCPF-2]
-        priceFeed = AggregatorV3Interface(_priceFeed); // F: [OCPF-2]
-
-        uint256 exchangeRate = cToken.exchangeRateCurrent();
-        _setLimiter(exchangeRate); // F: [OCPF-2]
+        _initLimiter();
     }
 
-    /// @dev Returns the USD price of the cToken
-    /// @notice Computes the cToken price as (price(underlying) * exchangeRate)
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound)
-    {
-        (roundId, answer, startedAt, updatedAt, answeredInRound) = priceFeed.latestRoundData(); // F: [OCPF-3]
-
-        // Sanity check for chainlink pricefeed
-        _checkAnswer(roundId, answer, updatedAt, answeredInRound);
-
-        uint256 exchangeRate = cToken.exchangeRateStored();
-
-        // Checks that exchangeRate is within bounds
-        exchangeRate = _checkAndUpperBoundValue(exchangeRate); // F: [OCPF-4]
-
-        answer = int256((exchangeRate * uint256(answer)) / decimalsDivider); // F: [OCPF-3]
+    function _getLPExchangeRate() internal view override returns (uint256) {
+        return ICToken(lpToken).exchangeRateStored();
     }
 
-    function _checkCurrentValueInBounds(uint256 _lowerBound, uint256 _uBound) internal view override returns (bool) {
-        uint256 rate = cToken.exchangeRateStored();
-        if (rate < _lowerBound || rate > _uBound) {
-            return false; // F: [OCPF-5]
-        }
-        return true;
+    function _getScale() internal pure override returns (uint256) {
+        return WAD;
     }
 }
