@@ -3,14 +3,9 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IAToken} from "./IAToken.sol";
-import {ILendingPool} from "./ILendingPool.sol";
-
-/// @title Wrapped aToken interface
-interface IWrappedAToken is IERC20Metadata {
+interface IWrappedATokenV2Events {
     /// @notice Emitted on deposit
     /// @param account Account that performed deposit
     /// @param assets Amount of deposited aTokens
@@ -22,15 +17,21 @@ interface IWrappedAToken is IERC20Metadata {
     /// @param assets Amount of withdrawn aTokens
     /// @param shares Amount of waTokens burnt from account
     event Withdraw(address indexed account, uint256 assets, uint256 shares);
+}
+
+/// @title Wrapped aToken V2 interface
+interface IWrappedATokenV2 is IERC20Metadata, IWrappedATokenV2Events {
+    /// @notice waToken decimals, same as underlying and aToken
+    function decimals() external view override returns (uint8);
 
     /// @notice Underlying aToken
-    function aToken() external view returns (IAToken);
+    function aToken() external view returns (address);
 
     /// @notice Underlying token
-    function underlying() external view returns (IERC20);
+    function underlying() external view returns (address);
 
     /// @notice Aave lending pool
-    function lendingPool() external view returns (ILendingPool);
+    function lendingPool() external view returns (address);
 
     /// @notice Returns amount of aTokens belonging to given account (increases as interest is accrued)
     function balanceOfUnderlying(address account) external view returns (uint256);

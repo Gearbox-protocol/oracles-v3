@@ -11,7 +11,7 @@ import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/orac
 
 import "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
-import {WrappedAToken} from "../../tokens/aave/WrappedAToken.sol";
+import {WrappedATokenV2} from "../../tokens/aave/WrappedATokenV2.sol";
 
 import {WrappedAaveV2PriceFeed} from "../../oracles/aave/WrappedAaveV2PriceFeed.sol";
 
@@ -28,7 +28,7 @@ contract WrappedAaveV2PriceFeedTest is Test {
 
 // address dai;
 // ATokenMock aDai;
-// WrappedAToken waDai;
+// WrappedATokenV2 waDai;
 // LendingPoolMock lendingPool;
 
 // PriceFeedMock daiPriceFeed;
@@ -46,7 +46,7 @@ contract WrappedAaveV2PriceFeedTest is Test {
 //     // set yearly interest equal to the range width
 //     aDai = ATokenMock(lendingPool.addReserve(dai, RANGE_WIDTH * RAY / PERCENTAGE_FACTOR));
 //     tokensTestSuite.mint(Tokens.DAI, address(aDai), 1_000_000e18);
-//     waDai = new WrappedAToken(aDai);
+//     waDai = new WrappedATokenV2(aDai);
 
 //     daiPriceFeed = new PriceFeedMock(DAI_PRICE, 8);
 //     daiPriceFeed.setParams(11, 1111, 1112, 11);
