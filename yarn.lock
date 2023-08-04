@@ -1057,6 +1057,16 @@
     eslint-plugin-simple-import-sort "^7.0.0"
     eslint-plugin-unused-imports "^2.0.0"
 
+"@gearbox-protocol/oracles-v3@^1.3.0":
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/@gearbox-protocol/oracles-v3/-/oracles-v3-1.3.0.tgz#52f2aff7a3326a3b029e39f6090945696a5403c6"
+  integrity sha512-CO5e0X2U5me46N6OJqr61Yz9FzlbYOV+/WGzzjV51PhIfnPcX/HiYM+lsAtD8TQ0y1ietDBewBaMU5XGJxcKFg==
+  dependencies:
+    "@gearbox-protocol/core-v2" "^1.19.0-base.7"
+    "@gearbox-protocol/core-v3" "^1.30.0"
+    "@gearbox-protocol/sdk" "^2.1.10"
+    "@redstone-finance/evm-connector" "^0.2.2"
+
 "@gearbox-protocol/prettier-config@^1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@gearbox-protocol/prettier-config/-/prettier-config-1.5.0.tgz#4df8e9fd2305fee6ab8c1417a02e31343836932a"

@@ -10,7 +10,7 @@ import {IAToken} from "./IAToken.sol";
 import {ILendingPool} from "./ILendingPool.sol";
 
 /// @title Wrapped aToken interface
-interface IWrappedAToken is IERC20Metadata {
+interface IWrappedAV2Token is IERC20Metadata {
     /// @notice Emitted on deposit
     /// @param account Account that performed deposit
     /// @param assets Amount of deposited aTokens
@@ -24,13 +24,13 @@ interface IWrappedAToken is IERC20Metadata {
     event Withdraw(address indexed account, uint256 assets, uint256 shares);
 
     /// @notice Underlying aToken
-    function aToken() external view returns (IAToken);
+    function aToken() external view returns (address);
 
     /// @notice Underlying token
-    function underlying() external view returns (IERC20);
+    function underlying() external view returns (address);
 
     /// @notice Aave lending pool
-    function lendingPool() external view returns (ILendingPool);
+    function lendingPool() external view returns (address);
 
     /// @notice Returns amount of aTokens belonging to given account (increases as interest is accrued)
     function balanceOfUnderlying(address account) external view returns (uint256);

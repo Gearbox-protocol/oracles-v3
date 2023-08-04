@@ -10,7 +10,7 @@ import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {SingleAssetLPFeed} from "../SingleAssetLPFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
-import {IWrappedAToken} from "../../interfaces/aave/IWrappedAToken.sol";
+import {IWrappedAV2Token} from "../../interfaces/aave/IWrappedAV2Token.sol";
 
 // EXCEPTIONS
 import {ZeroAddressException} from "@gearbox-protocol/core-v2/contracts/interfaces/IErrors.sol";
@@ -29,6 +29,6 @@ contract WrappedAaveV2PriceFeed is SingleAssetLPFeed {
     }
 
     function _getContractValue() internal view override returns (uint256) {
-        return IWrappedAToken(lpToken).exchangeRate();
+        return IWrappedAV2Token(lpToken).exchangeRate();
     }
 }
