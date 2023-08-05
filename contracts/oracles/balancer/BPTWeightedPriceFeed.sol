@@ -3,35 +3,175 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {FixedPoint} from "../../libraries/FixedPoint.sol";
-import {BPTWeightedPriceFeedSetup} from "./BPTWeightedPriceFeedSetup.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
+import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+
+import {LPPriceFeed} from "../LPPriceFeed.sol";
+import {PriceFeedParams} from "../AbstractPriceFeed.sol";
+import {FixedPoint} from "../../libraries/FixedPoint.sol";
+
 import {IBalancerV2VaultGetters} from "../../interfaces/balancer/IBalancerV2Vault.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
 
 uint256 constant RANGE_WIDTH = 200; // 2%
-uint256 constant USD_FEED_SCALE = 10 ** 8;
+uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 
 /// @title Balancer weighted pool token price feed
-contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
+/// @notice Weighted Balancer pools LP tokens price feed.
+///         BPTs are priced according to the formula `k * prod((p_i / w_i) ^ w_i) / S`, where `k` is pool's invariant,
+///         `S` is pool's LP token total supply, `w_i` and `p_i` are `i`-th asset's weight and price respectively.
+///         Pool's invariant, in turn, equals `prod(b_i ^ w_i)`, where `b_i` is pool's balance of `i`-th asset.
+///         Bounding logic is applied to `k / S` which can be considered BPT's exchange rate that should grow slowly
+///         over time as fees accrue.
+/// @dev Severe gas optimizations have been made:
+///      * Many variables saved as immutable which reduces the number of external calls and storage reads
+///      * Variables are stored and processed in the order of ascending weights, which allows to reduce
+///        the number of fixed point exponentiations in case some assets have identical weights
+contract BPTWeightedPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
     /// @notice Contract version
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.BALANCER_WEIGHTED_LP_ORACLE;
 
-    constructor(address addressProvider, address _balancerVault, address _balancerPool, address[] memory priceFeeds)
-        LPPriceFeed(addressProvider, _balancerPool, RANGE_WIDTH)
-        BPTWeightedPriceFeedSetup(_balancerVault, _balancerPool, priceFeeds)
+    /// @notice Number of assets in the pool
+    uint256 public immutable numAssets;
+
+    /// @notice Balancer vault address
+    address public immutable vault;
+
+    /// @notice Balancer pool ID
+    bytes32 public immutable poolId;
+
+    address public immutable priceFeed0;
+    address public immutable priceFeed1;
+    address public immutable priceFeed2;
+    address public immutable priceFeed3;
+    address public immutable priceFeed4;
+    address public immutable priceFeed5;
+    address public immutable priceFeed6;
+    address public immutable priceFeed7;
+
+    uint32 public immutable stalenessPeriod0;
+    uint32 public immutable stalenessPeriod1;
+    uint32 public immutable stalenessPeriod2;
+    uint32 public immutable stalenessPeriod3;
+    uint32 public immutable stalenessPeriod4;
+    uint32 public immutable stalenessPeriod5;
+    uint32 public immutable stalenessPeriod6;
+    uint32 public immutable stalenessPeriod7;
+
+    bool public immutable skipCheck0;
+    bool public immutable skipCheck1;
+    bool public immutable skipCheck2;
+    bool public immutable skipCheck3;
+    bool public immutable skipCheck4;
+    bool public immutable skipCheck5;
+    bool public immutable skipCheck6;
+    bool public immutable skipCheck7;
+
+    uint256 public immutable weight0;
+    uint256 public immutable weight1;
+    uint256 public immutable weight2;
+    uint256 public immutable weight3;
+    uint256 public immutable weight4;
+    uint256 public immutable weight5;
+    uint256 public immutable weight6;
+    uint256 public immutable weight7;
+
+    uint256 immutable index0;
+    uint256 immutable index1;
+    uint256 immutable index2;
+    uint256 immutable index3;
+    uint256 immutable index4;
+    uint256 immutable index5;
+    uint256 immutable index6;
+    uint256 immutable index7;
+
+    uint256 immutable scale0;
+    uint256 immutable scale1;
+    uint256 immutable scale2;
+    uint256 immutable scale3;
+    uint256 immutable scale4;
+    uint256 immutable scale5;
+    uint256 immutable scale6;
+    uint256 immutable scale7;
+
+    constructor(address addressProvider, address _vault, address _pool, PriceFeedParams[] memory priceFeeds)
+        LPPriceFeed(addressProvider, _pool, RANGE_WIDTH)
+        nonZeroAddress(_vault)
+        nonZeroAddress(priceFeeds[0].priceFeed)
+        nonZeroAddress(priceFeeds[1].priceFeed)
     {
+        uint256[] memory weights = IBalancerWeightedPool(_pool).getNormalizedWeights();
+        uint256[] memory indices = _sort(weights);
+
+        numAssets = weights.length; // F: [OBWLP-1]
+        vault = _vault; // F: [OBWLP-1]
+        poolId = IBalancerWeightedPool(_pool).getPoolId(); // F: [OBWLP-1]
+
+        index0 = indices[0]; // F: [OBWLP-1]
+        index1 = indices[1]; // F: [OBWLP-1]
+        index2 = numAssets >= 3 ? indices[2] : 0; // F: [OBWLP-1]
+        index3 = numAssets >= 4 ? indices[3] : 0; // F: [OBWLP-1]
+        index4 = numAssets >= 5 ? indices[4] : 0; // F: [OBWLP-1]
+        index5 = numAssets >= 6 ? indices[5] : 0; // F: [OBWLP-1]
+        index6 = numAssets >= 7 ? indices[6] : 0; // F: [OBWLP-1]
+        index7 = numAssets >= 8 ? indices[7] : 0; // F: [OBWLP-1]
+
+        weight0 = weights[0]; // F: [OBWLP-1]
+        weight1 = weights[1]; // F: [OBWLP-1]
+        weight2 = numAssets >= 3 ? weights[2] : 0; // F: [OBWLP-1]
+        weight3 = numAssets >= 4 ? weights[3] : 0; // F: [OBWLP-1]
+        weight4 = numAssets >= 5 ? weights[4] : 0; // F: [OBWLP-1]
+        weight5 = numAssets >= 6 ? weights[5] : 0; // F: [OBWLP-1]
+        weight6 = numAssets >= 7 ? weights[6] : 0; // F: [OBWLP-1]
+        weight7 = numAssets >= 8 ? weights[7] : 0; // F: [OBWLP-1]
+
+        (IERC20[] memory tokens,,) = IBalancerV2VaultGetters(_vault).getPoolTokens(poolId);
+        scale0 = _getScale(tokens[index0]); // F: [OBWLP-1]
+        scale1 = _getScale(tokens[index1]); // F: [OBWLP-1]
+        scale2 = numAssets >= 3 ? _getScale(tokens[index2]) : 0; // F: [OBWLP-1]
+        scale3 = numAssets >= 4 ? _getScale(tokens[index3]) : 0; // F: [OBWLP-1]
+        scale4 = numAssets >= 5 ? _getScale(tokens[index4]) : 0; // F: [OBWLP-1]
+        scale5 = numAssets >= 6 ? _getScale(tokens[index5]) : 0; // F: [OBWLP-1]
+        scale6 = numAssets >= 7 ? _getScale(tokens[index6]) : 0; // F: [OBWLP-1]
+        scale7 = numAssets >= 8 ? _getScale(tokens[index7]) : 0; // F: [OBWLP-1]
+
+        priceFeed0 = priceFeeds[index0].priceFeed; // F: [OBWLP-1]
+        priceFeed1 = priceFeeds[index1].priceFeed; // F: [OBWLP-1]
+        priceFeed2 = numAssets >= 3 ? priceFeeds[index2].priceFeed : address(0); // F: [OBWLP-1]
+        priceFeed3 = numAssets >= 4 ? priceFeeds[index3].priceFeed : address(0); // F: [OBWLP-1]
+        priceFeed4 = numAssets >= 5 ? priceFeeds[index4].priceFeed : address(0); // F: [OBWLP-1]
+        priceFeed5 = numAssets >= 6 ? priceFeeds[index5].priceFeed : address(0); // F: [OBWLP-1]
+        priceFeed6 = numAssets >= 7 ? priceFeeds[index6].priceFeed : address(0); // F: [OBWLP-1]
+        priceFeed7 = numAssets >= 8 ? priceFeeds[index7].priceFeed : address(0); // F: [OBWLP-1]
+
+        stalenessPeriod0 = priceFeeds[index0].stalenessPeriod;
+        stalenessPeriod1 = priceFeeds[index1].stalenessPeriod;
+        stalenessPeriod2 = numAssets >= 3 ? priceFeeds[index2].stalenessPeriod : 0;
+        stalenessPeriod3 = numAssets >= 4 ? priceFeeds[index3].stalenessPeriod : 0;
+        stalenessPeriod4 = numAssets >= 5 ? priceFeeds[index4].stalenessPeriod : 0;
+        stalenessPeriod5 = numAssets >= 6 ? priceFeeds[index5].stalenessPeriod : 0;
+        stalenessPeriod6 = numAssets >= 7 ? priceFeeds[index6].stalenessPeriod : 0;
+        stalenessPeriod7 = numAssets >= 8 ? priceFeeds[index7].stalenessPeriod : 0;
+
+        skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
+        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
+        skipCheck2 = numAssets >= 3 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
+        skipCheck3 = numAssets >= 4 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
+        skipCheck4 = numAssets >= 5 ? _validatePriceFeed(priceFeed4, stalenessPeriod4) : false;
+        skipCheck5 = numAssets >= 6 ? _validatePriceFeed(priceFeed5, stalenessPeriod5) : false;
+        skipCheck6 = numAssets >= 7 ? _validatePriceFeed(priceFeed6, stalenessPeriod6) : false;
+        skipCheck7 = numAssets >= 8 ? _validatePriceFeed(priceFeed7, stalenessPeriod7) : false;
+
         _initLimiter();
     }
 
-    /// @dev Returns the price of a single BPT in USD (with 8 decimals)
-    /// @notice BPT price is computed as k * sum((p_i / w_i) ^ w_i) / S
-    /// @notice Also does limiter checks on k / S, since this value must growing in a stable way from fees
+    /// @notice Returns the USD price of the pool's LP token
     function latestRoundData()
         external
         view
@@ -40,19 +180,14 @@ contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
     {
         (uint256 invariantOverSupply, uint256[] memory weights) = _getInvariantOverSupplyAndWeights();
 
-        address[] memory priceFeeds = _getPriceFeedsArray();
-
         uint256 weightedPrice = FixedPoint.ONE;
         uint256 currentBase = FixedPoint.ONE;
-
         for (uint256 i = 0; i < numAssets;) {
-            // TODO: don't skip price check
-            (answer, updatedAt) = _getValidatedPrice(priceFeeds[i], 0, true); // F: [OBWLP-3,4]
-
-            answer = (answer * int256(WAD)) / int256(USD_FEED_SCALE);
+            (address priceFeed, uint32 stalenessPeriod, bool skipCheck) = _getPriceFeedParams(i);
+            (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // F: [OBWLP-3,4]
+            answer = answer * int256(WAD_OVER_USD_FEED_SCALE);
 
             currentBase = currentBase.mulDown(uint256(answer).divDown(weights[i]));
-
             if (i == numAssets - 1 || weights[i] != weights[i + 1]) {
                 weightedPrice = weightedPrice.mulDown(currentBase.powDown(weights[i])); // F: [OBWLP-3,4]
                 currentBase = FixedPoint.ONE;
@@ -63,65 +198,36 @@ contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
             }
         }
 
-        answer = int256(invariantOverSupply.mulDown(weightedPrice)); // F: [OBWLP-3,4]
-
-        answer = (answer * int256(USD_FEED_SCALE)) / int256(WAD); // F: [OBWLP-3,4]
-
+        answer = int256(invariantOverSupply.mulDown(weightedPrice) / WAD_OVER_USD_FEED_SCALE); // F: [OBWLP-3,4]
         return (0, answer, 0, updatedAt, 0);
     }
 
-    function getInvariantOverSupply() external view returns (uint256) {
-        return _getLPExchangeRate();
-    }
-
-    function _getLPExchangeRate() internal view override returns (uint256 value) {
+    function getLPExchangeRate() public view override returns (uint256 value) {
         (value,) = _getInvariantOverSupplyAndWeights();
     }
 
+    // ------- //
+    // PRICING //
+    // ------- //
+
+    /// @dev Returns pool invariant over supply and weights
     function _getInvariantOverSupplyAndWeights()
         internal
         view
         returns (uint256 invariantOverSupply, uint256[] memory weights)
     {
-        (, uint256[] memory balances,) = balancerVault.getPoolTokens(poolId);
         weights = _getWeightsArray();
-        balances = _alignAndScaleBalanceArray(balances);
-        invariantOverSupply = _computeInvariantOverSupply(balances, weights);
+        invariantOverSupply = _computeInvariant(_getBalancesArray(), weights).divDown(_getBPTSupply());
     }
 
-    /// @dev Returns the supply of BPT token
-    function _getBPTSupply() internal view returns (uint256 supply) {
-        try balancerPool.getActualSupply() returns (uint256 actualSupply) {
-            supply = actualSupply;
-        } catch {
-            supply = balancerPool.totalSupply();
-        }
-    }
-
-    /// @dev Returns the Balancer pool invariant divided by BPT supply
-    function _computeInvariantOverSupply(uint256[] memory balances, uint256[] memory weights)
-        internal
-        view
-        returns (uint256)
-    {
-        uint256 k = _computeInvariant(balances, weights);
-        uint256 supply = _getBPTSupply();
-
-        return k.divDown(supply);
-    }
-
-    /// @dev Returns the Balancer pool invariant
-    /// @notice Computes the invariant in a way that optimizes the number
-    ///         of exponentiations, which are gas-intensive
+    /// @dev Computes BPT invariant given asset balances and weights
     function _computeInvariant(uint256[] memory balances, uint256[] memory weights) internal pure returns (uint256 k) {
-        k = FixedPoint.ONE;
-        uint256 currentBase = FixedPoint.ONE;
-
         uint256 len = balances.length;
 
+        k = FixedPoint.ONE;
+        uint256 currentBase = FixedPoint.ONE;
         for (uint256 i = 0; i < len;) {
             currentBase = currentBase.mulDown(balances[i]);
-
             if (i == len - 1 || weights[i] != weights[i + 1]) {
                 k = k.mulDown(currentBase.powDown(weights[i])); // F: [OBWLP-3,4]
                 currentBase = FixedPoint.ONE;
@@ -133,35 +239,107 @@ contract BPTWeightedPriceFeed is BPTWeightedPriceFeedSetup, LPPriceFeed {
         }
     }
 
-    /// @dev Returns the balance array sorted in the order of increasing asset weights
-    function _alignAndScaleBalanceArray(uint256[] memory balances)
+    /// @dev Returns BPT total supply
+    function _getBPTSupply() internal view returns (uint256 supply) {
+        try IBalancerWeightedPool(lpToken).getActualSupply() returns (uint256 actualSupply) {
+            supply = actualSupply;
+        } catch {
+            supply = IBalancerWeightedPool(lpToken).totalSupply();
+        }
+    }
+
+    // ------- //
+    // HELPERS //
+    // ------- //
+
+    /// @dev Returns i-th price feed params
+    function _getPriceFeedParams(uint256 i)
         internal
         view
-        returns (uint256[] memory sortedBalances)
+        returns (address priceFeed, uint32 stalenessPeriod, bool skipCheck)
     {
-        uint256 len = balances.length;
+        if (i == 0) return (priceFeed0, stalenessPeriod0, skipCheck0);
+        if (i == 1) return (priceFeed1, stalenessPeriod1, skipCheck1);
+        if (i == 2) return (priceFeed2, stalenessPeriod2, skipCheck2);
+        if (i == 3) return (priceFeed3, stalenessPeriod3, skipCheck3);
+        if (i == 4) return (priceFeed4, stalenessPeriod4, skipCheck4);
+        if (i == 5) return (priceFeed5, stalenessPeriod5, skipCheck5);
+        if (i == 6) return (priceFeed6, stalenessPeriod6, skipCheck6);
+        if (i == 7) return (priceFeed7, stalenessPeriod7, skipCheck7);
+    }
 
-        sortedBalances = new uint256[](len);
+    /// @dev Returns weights as an array
+    function _getWeightsArray() internal view returns (uint256[] memory weights) {
+        weights = new uint256[](numAssets);
+        weights[0] = weight0;
+        weights[1] = weight1;
+        if (numAssets >= 3) weights[2] = weight2;
+        if (numAssets >= 4) weights[3] = weight3;
+        if (numAssets >= 5) weights[4] = weight4;
+        if (numAssets >= 6) weights[5] = weight5;
+        if (numAssets >= 7) weights[6] = weight6;
+        if (numAssets >= 8) weights[7] = weight7;
+    }
 
-        sortedBalances[0] = (balances[index0] * WAD) / (10 ** decimals0);
-        sortedBalances[1] = (balances[index1] * WAD) / (10 ** decimals1);
-        if (len >= 3) {
-            sortedBalances[2] = (balances[index2] * WAD) / (10 ** decimals2);
+    /// @dev Returns assets balances sorted in the order of increasing weights and scaled to have the same precision
+    function _getBalancesArray() internal view returns (uint256[] memory balances) {
+        (, uint256[] memory rawBalances,) = IBalancerV2VaultGetters(vault).getPoolTokens(poolId);
+
+        balances = new uint256[](numAssets);
+        balances[0] = rawBalances[index0] * WAD / scale0;
+        balances[1] = rawBalances[index1] * WAD / scale1;
+        if (numAssets >= 3) balances[2] = rawBalances[index2] * WAD / scale2;
+        if (numAssets >= 4) balances[3] = rawBalances[index3] * WAD / scale3;
+        if (numAssets >= 5) balances[4] = rawBalances[index4] * WAD / scale4;
+        if (numAssets >= 6) balances[5] = rawBalances[index5] * WAD / scale5;
+        if (numAssets >= 7) balances[6] = rawBalances[index6] * WAD / scale6;
+        if (numAssets >= 8) balances[7] = rawBalances[index7] * WAD / scale7;
+    }
+
+    /// @dev Returns `token`'s scale (10^decimals)
+    function _getScale(IERC20 token) internal view returns (uint256) {
+        return 10 ** IERC20Metadata(address(token)).decimals();
+    }
+
+    // ------- //
+    // SORTING //
+    // ------- //
+
+    /// @dev Sorts array in ascending order, returns the resulting permutation
+    function _sort(uint256[] memory data) internal pure returns (uint256[] memory indices) {
+        uint256 len = data.length;
+        indices = new uint256[](len);
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                indices[i] = i;
+            }
         }
-        if (len >= 4) {
-            sortedBalances[3] = (balances[index3] * WAD) / (10 ** decimals3);
-        }
-        if (len >= 5) {
-            sortedBalances[4] = (balances[index4] * WAD) / (10 ** decimals4);
-        }
-        if (len >= 6) {
-            sortedBalances[5] = (balances[index5] * WAD) / (10 ** decimals5);
-        }
-        if (len >= 7) {
-            sortedBalances[6] = (balances[index6] * WAD) / (10 ** decimals6);
-        }
-        if (len >= 8) {
-            sortedBalances[7] = (balances[index7] * WAD) / (10 ** decimals7);
+        _quickSort(data, indices, 0, len - 1);
+    }
+
+    /// @dev Quick sort sub-routine
+    function _quickSort(uint256[] memory data, uint256[] memory indices, uint256 low, uint256 high) private pure {
+        unchecked {
+            if (low < high) {
+                uint256 pVal = data[(low + high) / 2];
+
+                uint256 i = low;
+                uint256 j = high;
+                for (;;) {
+                    while (data[i] < pVal) i++;
+                    while (data[j] > pVal) j--;
+                    if (i >= j) break;
+                    if (data[i] != data[j]) {
+                        (data[i], data[j]) = (data[j], data[i]);
+                        (indices[i], indices[j]) = (indices[j], indices[i]);
+                    }
+                    i++;
+                    j--;
+                }
+                if (low < j) _quickSort(data, indices, low, j);
+                j++;
+                if (j < high) _quickSort(data, indices, j, high);
+            }
         }
     }
 }

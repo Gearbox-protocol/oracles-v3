@@ -106,7 +106,7 @@ contract BPTStablePriceFeed is LPPriceFeed {
         return (0, answer, 0, updatedAt, 0);
     }
 
-    function _getLPExchangeRate() internal view override returns (uint256) {
+    function getLPExchangeRate() public view override returns (uint256) {
         return IBalancerStablePool(lpToken).getRate();
     }
 }

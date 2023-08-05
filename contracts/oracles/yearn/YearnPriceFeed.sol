@@ -13,21 +13,21 @@ contract YearnPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.YEARN_ORACLE;
 
-    /// @notice Scale of yVault's pricePerShare
-    uint256 public immutable scale;
+    /// @dev Scale of yVault's pricePerShare
+    uint256 immutable _scale;
 
     constructor(address addressProvider, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
         SingleAssetLPPriceFeed(addressProvider, _yVault, _priceFeed, _stalenessPeriod)
     {
-        scale = 10 ** IYVault(_yVault).decimals();
+        _scale = 10 ** IYVault(_yVault).decimals();
         _initLimiter();
     }
 
-    function _getLPExchangeRate() internal view override returns (uint256) {
+    function getLPExchangeRate() public view override returns (uint256) {
         return IYVault(lpToken).pricePerShare();
     }
 
-    function _getScale() internal view override returns (uint256) {
-        return scale;
+    function getScale() public view override returns (uint256) {
+        return _scale;
     }
 }

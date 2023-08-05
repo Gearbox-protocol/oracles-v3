@@ -33,7 +33,7 @@ abstract contract AbstractCurveLPPriceFeed is LPPriceFeed {
     /// @dev Returns pool-specific aggregate of underlying tokens prices, must be implemented by derived price feeds
     function _getAggregatePrice() internal view virtual returns (int256 answer, uint256 updatedAt);
 
-    function _getLPExchangeRate() internal view override returns (uint256) {
+    function getLPExchangeRate() public view override returns (uint256) {
         return uint256(ICurvePool(lpToken).get_virtual_price());
     }
 }
