@@ -55,7 +55,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     /// @dev Returns upper-bounded LP token exhcange rate and its scale, reverts if rate falls below the lower bound
     /// @dev When computing LP token price, this MUST be used to get the exchange rate
     function _getValidatedLPExchangeRate() internal view returns (uint256 exchangeRate) {
-        exchangeRate = _getLPExchangeRate();
+        exchangeRate = getLPExchangeRate();
 
         uint256 lb = lowerBound;
         if (exchangeRate < lb) revert ValueOutOfRangeException();
@@ -65,7 +65,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     }
 
     /// @dev Returns LP token exchange rate, must be implemented by derived price feeds
-    function _getLPExchangeRate() internal view virtual returns (uint256 exchangeRate);
+    function getLPExchangeRate() public view virtual returns (uint256 exchangeRate);
 
     /// @dev Computes upper bound as `lowerBound * (1 + delta)`
     function _upperBound(uint256 lb) internal view returns (uint256) {
@@ -84,7 +84,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
         override
         controllerOnly // F:[LPF-4]
     {
-        uint256 exchangeRate = _getLPExchangeRate();
+        uint256 exchangeRate = getLPExchangeRate();
         if (newLowerBound == 0 || exchangeRate < newLowerBound || exchangeRate > _upperBound(newLowerBound)) {
             revert IncorrectLimitsException(); // F:[LPF-4]
         }
@@ -96,7 +96,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     /// @dev Derived price feeds MUST call this in the constructor after initializing all the
     ///      state variables needed for exchange rate calculation
     function _initLimiter() internal {
-        uint256 newLowerBound = _getLPExchangeRate();
+        uint256 newLowerBound = getLPExchangeRate();
         lowerBound = newLowerBound;
         emit SetBounds(newLowerBound, _upperBound(newLowerBound));
     }

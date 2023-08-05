@@ -20,11 +20,11 @@ contract WstETHPriceFeed is SingleAssetLPPriceFeed {
         _initLimiter();
     }
 
-    function _getLPExchangeRate() internal view override returns (uint256) {
+    function getLPExchangeRate() public view override returns (uint256) {
         return IwstETH(lpToken).stEthPerToken();
     }
 
-    function _getScale() internal pure override returns (uint256) {
+    function getScale() public pure override returns (uint256) {
         return WAD;
     }
 }

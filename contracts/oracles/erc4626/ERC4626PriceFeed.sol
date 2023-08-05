@@ -14,25 +14,25 @@ contract ERC4626PriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.ERC4626_VAULT_ORACLE;
 
-    /// @notice Amount of shares comprising a single unit (accounting for decimals)
-    uint256 public immutable shareUnit;
+    /// @dev Amount of shares comprising a single unit (accounting for decimals)
+    uint256 immutable _shareUnit;
 
-    /// @notice Amount of underlying asset comprising a single unit (accounting for decimals)
-    uint256 public immutable assetUnit;
+    /// @dev Amount of underlying asset comprising a single unit (accounting for decimals)
+    uint256 immutable _assetUnit;
 
     constructor(address addressProvider, address _vault, address _assetPriceFeed, uint32 _stalenessPeriod)
         SingleAssetLPPriceFeed(addressProvider, _vault, _assetPriceFeed, _stalenessPeriod)
     {
-        shareUnit = 10 ** IERC4626(_vault).decimals(); // U:[TVPF-2]
-        assetUnit = 10 ** ERC20(IERC4626(_vault).asset()).decimals(); // U:[TVPF-2]
+        _shareUnit = 10 ** IERC4626(_vault).decimals(); // U:[TVPF-2]
+        _assetUnit = 10 ** ERC20(IERC4626(_vault).asset()).decimals(); // U:[TVPF-2]
         _initLimiter();
     }
 
-    function _getLPExchangeRate() internal view override returns (uint256) {
-        return IERC4626(lpToken).convertToAssets(shareUnit); // U:[TVPF-3]
+    function getLPExchangeRate() public view override returns (uint256) {
+        return IERC4626(lpToken).convertToAssets(_shareUnit); // U:[TVPF-3]
     }
 
-    function _getScale() internal view override returns (uint256) {
-        return assetUnit;
+    function getScale() public view override returns (uint256) {
+        return _assetUnit;
     }
 }

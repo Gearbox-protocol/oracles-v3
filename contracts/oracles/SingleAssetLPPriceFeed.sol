@@ -40,10 +40,10 @@ abstract contract SingleAssetLPPriceFeed is LPPriceFeed {
         returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
         (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // F:[OCLP-6]
-        answer = int256((_getValidatedLPExchangeRate() * uint256(answer)) / _getScale()); // F: [OAPF-3]
+        answer = int256((_getValidatedLPExchangeRate() * uint256(answer)) / getScale()); // F: [OAPF-3]
         return (0, answer, 0, updatedAt, 0);
     }
 
     /// @dev Returns LP token exchange rate scale, must be implemented by derived price feeds
-    function _getScale() internal view virtual returns (uint256 scale);
+    function getScale() public view virtual returns (uint256 scale);
 }
