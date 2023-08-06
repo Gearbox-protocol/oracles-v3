@@ -53,6 +53,8 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
         skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
         skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
         skipCheck2 = nCoins == 3 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
+
+        _initLimiter();
     }
 
     function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
