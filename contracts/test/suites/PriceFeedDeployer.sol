@@ -129,11 +129,11 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                                 [
                                     PriceFeedParams({
                                         priceFeed: compositePriceFeeds[i].targetToBaseFeed,
-                                        stalenessPeriod: compositePriceFeeds[i].targetToBaseStalenessPeriod
+                                        stalenessPeriod: compositePriceFeeds[i].targetStalenessPeriod
                                     }),
                                     PriceFeedParams({
                                         priceFeed: compositePriceFeeds[i].baseToUSDFeed,
-                                        stalenessPeriod: compositePriceFeeds[i].baseToUSDStalenessPeriod
+                                        stalenessPeriod: compositePriceFeeds[i].baseStalenessPeriod
                                     })
                                 ]
                             )
