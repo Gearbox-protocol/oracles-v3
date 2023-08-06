@@ -8,6 +8,10 @@ import {AbstractPriceFeed} from "./AbstractPriceFeed.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {ACLNonReentrantTrait} from "@gearbox-protocol/core-v3/contracts/traits/ACLNonReentrantTrait.sol";
+import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
+import {
+    IAddressProviderV3, AP_PRICE_ORACLE
+} from "@gearbox-protocol/core-v3/contracts/interfaces/IAddressProviderV3.sol";
 
 // EXCEPTIONS
 import {
@@ -21,6 +25,9 @@ import {
 ///         of underlying tokens prices. This contract simplifies creation of such price feeds and provides standard
 ///         validation of the LP token exchange rate that protects against price manipulation.
 abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentrantTrait {
+    /// @notice Address provider contract
+    address public immutable override addressProvider;
+
     /// @notice LP token for which the prices are computed
     address public immutable override lpToken;
 
@@ -33,6 +40,9 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     /// @notice Window size in bps, used to compute upper bound given lower bound
     uint256 public constant override delta = 2_00;
 
+    /// @notice Whether permissionless bounds update is allowed
+    bool public override updateBoundsAllowed;
+
     /// @notice Constructor
     /// @param _addressProvider Address provider contract address
     /// @param _lpToken  LP token for which the prices are computed
@@ -42,6 +52,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
         nonZeroAddress(_lpToken)
         nonZeroAddress(_lpContract)
     {
+        addressProvider = _addressProvider;
         lpToken = _lpToken;
         lpContract = _lpContract;
     }
@@ -96,24 +107,48 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     // CONFIGURATION //
     // ------------- //
 
+    /// @notice Allows or forbids permissionless bounds update
+    function setUpdateBoundsAllowed(bool allowed) external override configuratorOnly {
+        if (updateBoundsAllowed == allowed) return;
+        updateBoundsAllowed = allowed;
+        emit SetUpdateBoundsAllowed(allowed);
+    }
+
     /// @notice Sets new lower and upper bounds for the LP token exchange rate
     /// @param newLowerBound New lower bound value
     /// @dev New upper bound value is computed as `newLowerBound * (1 + delta)`
     function setLimiter(uint256 newLowerBound) external override controllerOnly {
-        uint256 exchangeRate = getLPExchangeRate();
-        if (newLowerBound == 0 || exchangeRate < newLowerBound || exchangeRate > _upperBound(newLowerBound)) {
-            revert IncorrectLimitsException();
-        }
-        lowerBound = newLowerBound;
-        emit SetBounds(newLowerBound, _upperBound(newLowerBound));
+        _setLimiter(newLowerBound, getLPExchangeRate());
     }
 
-    /// @dev Inititalizes bounds such that lower bound is the current LP token exhcange rate
+    /// @notice Permissionlessly updates LP token's exchange rate bounds using answer from the reserve price feed.
+    ///         The lower bound is set to the induced reserve exchange rate (with small downside buffer).
+    function updateBounds() external override {
+        if (!updateBoundsAllowed) return;
+
+        address priceOracle = IAddressProviderV3(addressProvider).getAddressOrRevert(AP_PRICE_ORACLE, 3_00);
+        address reserveFeed = IPriceOracleV3(priceOracle).priceFeedsRaw(lpToken, true);
+
+        (, int256 reserveAnswer,,,) = ILPPriceFeed(reserveFeed).latestRoundData();
+        (int256 price,) = getAggregatePrice();
+        uint256 reserveExchangeRate = uint256(reserveAnswer * int256(getScale()) / price);
+
+        _setLimiter(reserveExchangeRate * 998 / 1000, getLPExchangeRate());
+    }
+
+    /// @dev Sets lower bound to the current LP token exhcange rate (with small downside buffer)
     /// @dev Derived price feeds MUST call this in the constructor after initializing all the
     ///      state variables needed for exchange rate calculation
     function _initLimiter() internal {
-        uint256 newLowerBound = getLPExchangeRate();
-        lowerBound = newLowerBound;
-        emit SetBounds(newLowerBound, _upperBound(newLowerBound));
+        uint256 exchangeRate = getLPExchangeRate();
+        _setLimiter(exchangeRate * 998 / 1000, exchangeRate);
+    }
+
+    /// @dev `setLimiter` implementation: sets new bounds, ensures that current value is within them, emits event
+    function _setLimiter(uint256 lower, uint256 current) internal {
+        uint256 upper = _upperBound(lower);
+        if (lower == 0 || current < lower || current > upper) revert IncorrectLimitsException();
+        lowerBound = lower;
+        emit SetBounds(lower, upper);
     }
 }

@@ -59,6 +59,8 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
         priceFeedType = nCoins == 2
             ? PriceFeedType.CURVE_2LP_ORACLE
             : (nCoins == 3 ? PriceFeedType.CURVE_3LP_ORACLE : PriceFeedType.CURVE_4LP_ORACLE);
+
+        _initLimiter();
     }
 
     function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
