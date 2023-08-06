@@ -10,7 +10,6 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title Compound V2 cToken price feed
 contract CompoundV2PriceFeed is SingleAssetLPPriceFeed {
-    /// @notice Contract version
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOUND_V2_ORACLE;
 

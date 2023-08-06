@@ -3,41 +3,39 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
+import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedParams} from "../AbstractPriceFeed.sol";
-import {AbstractCurveLPPriceFeed} from "./AbstractCurveLPPriceFeed.sol";
+import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 /// @title Curve stable LP price feed
-contract CurveStableLPPriceFeed is AbstractCurveLPPriceFeed {
-    /// @notice Contract version
+/// @dev For stableswap pools, aggregate is simply the minimum of underlying tokens prices
+/// @dev Older pools may be decoupled from their LP token, so constructor accepts both token and pool
+contract CurveStableLPPriceFeed is LPPriceFeed {
     uint256 public constant override version = 3_00;
     PriceFeedType public immutable override priceFeedType;
 
-    /// @notice Number of coins in the pool
     uint16 public immutable nCoins;
 
-    /// @notice Coin 0 price feed
     address public immutable priceFeed0;
     uint32 public immutable stalenessPeriod0;
     bool public immutable skipCheck0;
 
-    /// @notice Coin 1 price feed
     address public immutable priceFeed1;
     uint32 public immutable stalenessPeriod1;
     bool public immutable skipCheck1;
 
-    /// @notice Coin 2 price feed
     address public immutable priceFeed2;
     uint32 public immutable stalenessPeriod2;
     bool public immutable skipCheck2;
 
-    /// @notice Coin 3 price feed
     address public immutable priceFeed3;
     uint32 public immutable stalenessPeriod3;
     bool public immutable skipCheck3;
 
-    constructor(address addressProvider, address _curvePool, PriceFeedParams[4] memory priceFeeds)
-        AbstractCurveLPPriceFeed(addressProvider, _curvePool)
+    constructor(address addressProvider, address _token, address _pool, PriceFeedParams[4] memory priceFeeds)
+        LPPriceFeed(addressProvider, _token, _pool)
         nonZeroAddress(priceFeeds[0].priceFeed)
         nonZeroAddress(priceFeeds[1].priceFeed)
     {
@@ -63,8 +61,7 @@ contract CurveStableLPPriceFeed is AbstractCurveLPPriceFeed {
             : (nCoins == 3 ? PriceFeedType.CURVE_3LP_ORACLE : PriceFeedType.CURVE_4LP_ORACLE);
     }
 
-    /// @dev For stable pools, aggregate is simply the minimum of underlying tokens prices
-    function _getAggregatePrice() internal view override returns (int256 answer, uint256 updatedAt) {
+    function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
         (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
 
         (int256 answer2,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
@@ -79,5 +76,13 @@ contract CurveStableLPPriceFeed is AbstractCurveLPPriceFeed {
                 if (answer2 < answer) answer = answer2;
             }
         }
+    }
+
+    function getLPExchangeRate() public view override returns (uint256) {
+        return uint256(ICurvePool(lpContract).get_virtual_price());
+    }
+
+    function getScale() public pure override returns (uint256) {
+        return WAD;
     }
 }

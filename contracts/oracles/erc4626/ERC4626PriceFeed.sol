@@ -10,7 +10,6 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title ERC4626 vault shares price feed
 contract ERC4626PriceFeed is SingleAssetLPPriceFeed {
-    /// @notice Contract version
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.ERC4626_VAULT_ORACLE;
 
@@ -23,13 +22,13 @@ contract ERC4626PriceFeed is SingleAssetLPPriceFeed {
     constructor(address addressProvider, address _vault, address _assetPriceFeed, uint32 _stalenessPeriod)
         SingleAssetLPPriceFeed(addressProvider, _vault, _assetPriceFeed, _stalenessPeriod)
     {
-        _shareUnit = 10 ** IERC4626(_vault).decimals(); // U:[TVPF-2]
-        _assetUnit = 10 ** ERC20(IERC4626(_vault).asset()).decimals(); // U:[TVPF-2]
+        _shareUnit = 10 ** IERC4626(_vault).decimals();
+        _assetUnit = 10 ** ERC20(IERC4626(_vault).asset()).decimals();
         _initLimiter();
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return IERC4626(lpToken).convertToAssets(_shareUnit); // U:[TVPF-3]
+        return IERC4626(lpToken).convertToAssets(_shareUnit);
     }
 
     function getScale() public view override returns (uint256) {

@@ -97,7 +97,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         address pf = address(
                             new BoundedPriceFeed(
                                 boundedPriceFeeds[i].priceFeed,
-                                2 hours, // TODO: add staleness period to `BoundedPriceFeedData`
+                                boundedPriceFeeds[i].stalenessPeriod,
                                 int256(boundedPriceFeeds[i].upperBound)
                             )
                         );
@@ -129,11 +129,11 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                                 [
                                     PriceFeedParams({
                                         priceFeed: compositePriceFeeds[i].targetToBaseFeed,
-                                        stalenessPeriod: 2 hours // TODO: add staleness period to `CompositePriceFeedData`
+                                        stalenessPeriod: compositePriceFeeds[i].targetToBaseStalenessPeriod
                                     }),
                                     PriceFeedParams({
                                         priceFeed: compositePriceFeeds[i].baseToUSDFeed,
-                                        stalenessPeriod: 2 hours // TODO: add staleness period to `CompositePriceFeedData`
+                                        stalenessPeriod: compositePriceFeeds[i].baseToUSDStalenessPeriod
                                     })
                                 ]
                             )
@@ -200,6 +200,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         pf = address(
                             new CurveStableLPPriceFeed(
                                 addressProvider,
+                                tokenTestSuite.addressOf(lpToken),
                                 pool,
                                 [
                                     PriceFeedParams({
@@ -252,6 +253,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     pf = address(
                         new CurveCryptoLPPriceFeed(
                             addressProvider,
+                            tokenTestSuite.addressOf(lpToken),
                             pool,
                             [
                                 PriceFeedParams({
@@ -313,7 +315,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         addressProvider,
                         yVault,
                         priceFeeds[underlying],
-                        2 hours
+                        stalenessPeriods[underlying]
                     )
                 );
 
@@ -466,12 +468,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     }
 
     function setPriceFeed(address token, address priceFeed) internal {
-        priceFeeds[token] = priceFeed;
-        priceFeedConfig.push(PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: 0}));
+        setPriceFeed(token, priceFeed, 0);
     }
 
     function setPriceFeed(address token, address priceFeed, uint32 stalenessPeriod) internal {
         priceFeeds[token] = priceFeed;
+        stalenessPeriods[token] = stalenessPeriod;
         priceFeedConfig.push(PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod}));
     }
 

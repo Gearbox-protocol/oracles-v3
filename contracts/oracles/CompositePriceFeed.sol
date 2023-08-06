@@ -18,12 +18,11 @@ contract CompositePriceFeed is AbstractPriceFeed, SanityCheckTrait {
     /// @notice Price feed that returns target asset price denominated in base asset
     address public immutable priceFeed0;
     uint32 public immutable stalenessPeriod0;
-    bool public immutable skipCheck0;
 
     /// @notice Price feed that returns base price denominated in USD
     address public immutable priceFeed1;
     uint32 public immutable stalenessPeriod1;
-    bool public immutable skipCheck1;
+    bool skipCheck1;
 
     /// @notice Scale of answers in target/base price feed
     int256 public immutable targetFeedScale;
@@ -41,10 +40,9 @@ contract CompositePriceFeed is AbstractPriceFeed, SanityCheckTrait {
         stalenessPeriod0 = priceFeeds[0].stalenessPeriod;
         stalenessPeriod1 = priceFeeds[1].stalenessPeriod;
 
-        skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
-        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
-
         targetFeedScale = int256(10 ** AggregatorV3Interface(priceFeed0).decimals());
+        // target/base price feed validation is omitted because it will fail if feed has other than 8 decimals
+        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
     }
 
     /// @notice Price feed description
@@ -66,7 +64,7 @@ contract CompositePriceFeed is AbstractPriceFeed, SanityCheckTrait {
         override
         returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
+        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, false);
         (int256 answer2,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
         answer = (answer * answer2) / targetFeedScale;
         return (0, answer, 0, updatedAt, 0);
