@@ -10,7 +10,6 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title Aave V2 waToken price feed
 contract WrappedAaveV2PriceFeed is SingleAssetLPPriceFeed {
-    /// @notice Contract version
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.WRAPPED_AAVE_V2_ORACLE;
 

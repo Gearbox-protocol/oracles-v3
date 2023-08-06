@@ -10,7 +10,6 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title wstETH price feed
 contract WstETHPriceFeed is SingleAssetLPPriceFeed {
-    /// @notice Contract version
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.WSTETH_ORACLE;
 

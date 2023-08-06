@@ -17,29 +17,33 @@ import {
 
 /// @title LP price feed
 /// @notice Abstract contract for LP token price feeds.
-///         Typically, the price of an LP token is some function of its exchange rate (or virtual price) and
-///         prices of underlying tokens. This contract simplifies creation of such price feeds and provides
-///         standardized validation of the LP token exchange rate that protects against price manipulation.
+///         It is assumed that the price of an LP token is the product of its exchange rate and some aggregate function
+///         of underlying tokens prices. This contract simplifies creation of such price feeds and provides standard
+///         validation of the LP token exchange rate that protects against price manipulation.
 abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentrantTrait {
     /// @notice LP token for which the prices are computed
     address public immutable override lpToken;
 
+    /// @notice LP contract (can be different from LP token)
+    address public immutable override lpContract;
+
     /// @notice Lower bound for the LP token exchange rate
-    uint256 public lowerBound;
+    uint256 public override lowerBound;
 
     /// @notice Window size in bps, used to compute upper bound given lower bound
-    uint256 public immutable delta;
+    uint256 public constant override delta = 2_00;
 
     /// @notice Constructor
-    /// @param addressProvider Address provider contract address
+    /// @param _addressProvider Address provider contract address
     /// @param _lpToken  LP token for which the prices are computed
-    /// @param _delta Window size in bps
-    constructor(address addressProvider, address _lpToken, uint256 _delta)
-        ACLNonReentrantTrait(addressProvider)
+    /// @param _lpContract LP contract (can be different from LP token)
+    constructor(address _addressProvider, address _lpToken, address _lpContract)
+        ACLNonReentrantTrait(_addressProvider)
         nonZeroAddress(_lpToken)
+        nonZeroAddress(_lpContract)
     {
         lpToken = _lpToken;
-        delta = _delta; // F:[LPF-1]
+        lpContract = _lpContract;
     }
 
     /// @notice Price feed description
@@ -47,29 +51,45 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
         return string(abi.encodePacked(ERC20(lpToken).symbol(), " / USD price feed"));
     }
 
-    /// @notice Upper bound for the LP token exchange rate
-    function upperBound() external view returns (uint256) {
-        return _upperBound(lowerBound); // F:[LPF-5]
-    }
-
-    /// @dev Returns upper-bounded LP token exhcange rate and its scale, reverts if rate falls below the lower bound
-    /// @dev When computing LP token price, this MUST be used to get the exchange rate
-    function _getValidatedLPExchangeRate() internal view returns (uint256 exchangeRate) {
-        exchangeRate = getLPExchangeRate();
-
+    /// @notice Returns USD price of the LP token with 8 decimals
+    function latestRoundData()
+        external
+        view
+        override
+        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
+    {
+        uint256 exchangeRate = getLPExchangeRate();
         uint256 lb = lowerBound;
         if (exchangeRate < lb) revert ValueOutOfRangeException();
 
         uint256 ub = _upperBound(lb);
-        return exchangeRate > ub ? ub : exchangeRate;
+        if (exchangeRate > ub) exchangeRate = ub;
+
+        (answer, updatedAt) = getAggregatePrice();
+        answer = int256((exchangeRate * uint256(answer)) / getScale());
+        return (0, answer, 0, updatedAt, 0);
     }
 
-    /// @dev Returns LP token exchange rate, must be implemented by derived price feeds
-    function getLPExchangeRate() public view virtual returns (uint256 exchangeRate);
+    /// @notice Upper bound for the LP token exchange rate
+    function upperBound() external view returns (uint256) {
+        return _upperBound(lowerBound);
+    }
+
+    /// @notice Returns aggregate price of underlying tokens
+    /// @dev Must be implemented by derived price feeds
+    function getAggregatePrice() public view virtual override returns (int256 answer, uint256 updatedAt);
+
+    /// @notice Returns LP token exchange rate
+    /// @dev Must be implemented by derived price feeds
+    function getLPExchangeRate() public view virtual override returns (uint256 exchangeRate);
+
+    /// @notice Returns LP token exchange rate scale
+    /// @dev Must be implemented by derived price feeds
+    function getScale() public view virtual override returns (uint256 scale);
 
     /// @dev Computes upper bound as `lowerBound * (1 + delta)`
-    function _upperBound(uint256 lb) internal view returns (uint256) {
-        return (lb * (PERCENTAGE_FACTOR + delta)) / PERCENTAGE_FACTOR; // F:[LPF-5]
+    function _upperBound(uint256 lb) internal pure returns (uint256) {
+        return (lb * (PERCENTAGE_FACTOR + delta)) / PERCENTAGE_FACTOR;
     }
 
     // ------------- //
@@ -79,17 +99,13 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     /// @notice Sets new lower and upper bounds for the LP token exchange rate
     /// @param newLowerBound New lower bound value
     /// @dev New upper bound value is computed as `newLowerBound * (1 + delta)`
-    function setLimiter(uint256 newLowerBound)
-        external
-        override
-        controllerOnly // F:[LPF-4]
-    {
+    function setLimiter(uint256 newLowerBound) external override controllerOnly {
         uint256 exchangeRate = getLPExchangeRate();
         if (newLowerBound == 0 || exchangeRate < newLowerBound || exchangeRate > _upperBound(newLowerBound)) {
-            revert IncorrectLimitsException(); // F:[LPF-4]
+            revert IncorrectLimitsException();
         }
-        lowerBound = newLowerBound; // F:[LPF-5]
-        emit SetBounds(newLowerBound, _upperBound(newLowerBound)); // F:[LPF-5]
+        lowerBound = newLowerBound;
+        emit SetBounds(newLowerBound, _upperBound(newLowerBound));
     }
 
     /// @dev Inititalizes bounds such that lower bound is the current LP token exhcange rate

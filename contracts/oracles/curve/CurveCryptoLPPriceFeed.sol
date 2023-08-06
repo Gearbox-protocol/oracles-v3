@@ -3,48 +3,46 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
+import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedParams} from "../AbstractPriceFeed.sol";
 import {FixedPoint} from "../../libraries/FixedPoint.sol";
-import {AbstractCurveLPPriceFeed} from "./AbstractCurveLPPriceFeed.sol";
+import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 uint256 constant USD_FEED_SCALE = 10 ** 8;
 
 /// @title Curve crypto LP price feed
-contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
+/// @dev For cryptoswap pools, aggregate is geometric mean of underlying tokens prices times the number of coins
+/// @dev Older pools may be decoupled from their LP token, so constructor accepts both token and pool
+contract CurveCryptoLPPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
-    /// @notice Contract version
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.CURVE_CRYPTO_ORACLE;
 
-    /// @notice Number of coins in the pool
     uint16 public immutable nCoins;
 
-    /// @notice Coin 0 price feed
     address public immutable priceFeed0;
     uint32 public immutable stalenessPeriod0;
     bool public immutable skipCheck0;
 
-    /// @notice Coin 1 price feed
     address public immutable priceFeed1;
     uint32 public immutable stalenessPeriod1;
     bool public immutable skipCheck1;
 
-    /// @notice Coin 2 price feed
     address public immutable priceFeed2;
     uint32 public immutable stalenessPeriod2;
     bool public immutable skipCheck2;
 
-    constructor(address addressProvider, address _curvePool, PriceFeedParams[3] memory priceFeeds)
-        AbstractCurveLPPriceFeed(addressProvider, _curvePool)
+    constructor(address addressProvider, address _token, address _pool, PriceFeedParams[3] memory priceFeeds)
+        LPPriceFeed(addressProvider, _token, _pool)
         nonZeroAddress(priceFeeds[0].priceFeed)
         nonZeroAddress(priceFeeds[1].priceFeed)
     {
-        priceFeed0 = priceFeeds[0].priceFeed; // F:[OCLP-1]
-        priceFeed1 = priceFeeds[1].priceFeed; // F:[OCLP-1]
-        priceFeed2 = priceFeeds[2].priceFeed; // F:[OCLP-1]
+        priceFeed0 = priceFeeds[0].priceFeed;
+        priceFeed1 = priceFeeds[1].priceFeed;
+        priceFeed2 = priceFeeds[2].priceFeed;
 
         stalenessPeriod0 = priceFeeds[0].stalenessPeriod;
         stalenessPeriod1 = priceFeeds[1].stalenessPeriod;
@@ -57,8 +55,7 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
         skipCheck2 = nCoins == 3 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
     }
 
-    /// @dev For crypto pools, aggregate is geometric mean of underlying tokens prices times the number of coins
-    function _getAggregatePrice() internal view override returns (int256 answer, uint256 updatedAt) {
+    function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
         (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
         uint256 product = uint256(answer) * WAD / USD_FEED_SCALE;
 
@@ -71,5 +68,13 @@ contract CurveCryptoLPPriceFeed is AbstractCurveLPPriceFeed {
         }
 
         answer = int256(nCoins * product.powDown(WAD / nCoins) * USD_FEED_SCALE / WAD);
+    }
+
+    function getLPExchangeRate() public view override returns (uint256) {
+        return uint256(ICurvePool(lpContract).get_virtual_price());
+    }
+
+    function getScale() public pure override returns (uint256) {
+        return WAD;
     }
 }

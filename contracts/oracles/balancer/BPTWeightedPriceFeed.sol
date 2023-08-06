@@ -16,7 +16,6 @@ import {FixedPoint} from "../../libraries/FixedPoint.sol";
 import {IBalancerV2VaultGetters} from "../../interfaces/balancer/IBalancerV2Vault.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
 
-uint256 constant RANGE_WIDTH = 200; // 2%
 uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 
 /// @title Balancer weighted pool token price feed
@@ -33,18 +32,16 @@ uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 contract BPTWeightedPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
-    /// @notice Contract version
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.BALANCER_WEIGHTED_LP_ORACLE;
-
-    /// @notice Number of assets in the pool
-    uint256 public immutable numAssets;
 
     /// @notice Balancer vault address
     address public immutable vault;
 
     /// @notice Balancer pool ID
     bytes32 public immutable poolId;
+
+    uint256 public immutable numAssets;
 
     address public immutable priceFeed0;
     address public immutable priceFeed1;
@@ -101,7 +98,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     uint256 immutable scale7;
 
     constructor(address addressProvider, address _vault, address _pool, PriceFeedParams[] memory priceFeeds)
-        LPPriceFeed(addressProvider, _pool, RANGE_WIDTH)
+        LPPriceFeed(addressProvider, _pool, _pool)
         nonZeroAddress(_vault)
         nonZeroAddress(priceFeeds[0].priceFeed)
         nonZeroAddress(priceFeeds[1].priceFeed)
@@ -132,14 +129,14 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         weight7 = numAssets >= 8 ? weights[7] : 0; // F: [OBWLP-1]
 
         (IERC20[] memory tokens,,) = IBalancerV2VaultGetters(_vault).getPoolTokens(poolId);
-        scale0 = _getScale(tokens[index0]); // F: [OBWLP-1]
-        scale1 = _getScale(tokens[index1]); // F: [OBWLP-1]
-        scale2 = numAssets >= 3 ? _getScale(tokens[index2]) : 0; // F: [OBWLP-1]
-        scale3 = numAssets >= 4 ? _getScale(tokens[index3]) : 0; // F: [OBWLP-1]
-        scale4 = numAssets >= 5 ? _getScale(tokens[index4]) : 0; // F: [OBWLP-1]
-        scale5 = numAssets >= 6 ? _getScale(tokens[index5]) : 0; // F: [OBWLP-1]
-        scale6 = numAssets >= 7 ? _getScale(tokens[index6]) : 0; // F: [OBWLP-1]
-        scale7 = numAssets >= 8 ? _getScale(tokens[index7]) : 0; // F: [OBWLP-1]
+        scale0 = _tokenScale(tokens[index0]); // F: [OBWLP-1]
+        scale1 = _tokenScale(tokens[index1]); // F: [OBWLP-1]
+        scale2 = numAssets >= 3 ? _tokenScale(tokens[index2]) : 0; // F: [OBWLP-1]
+        scale3 = numAssets >= 4 ? _tokenScale(tokens[index3]) : 0; // F: [OBWLP-1]
+        scale4 = numAssets >= 5 ? _tokenScale(tokens[index4]) : 0; // F: [OBWLP-1]
+        scale5 = numAssets >= 6 ? _tokenScale(tokens[index5]) : 0; // F: [OBWLP-1]
+        scale6 = numAssets >= 7 ? _tokenScale(tokens[index6]) : 0; // F: [OBWLP-1]
+        scale7 = numAssets >= 8 ? _tokenScale(tokens[index7]) : 0; // F: [OBWLP-1]
 
         priceFeed0 = priceFeeds[index0].priceFeed; // F: [OBWLP-1]
         priceFeed1 = priceFeeds[index1].priceFeed; // F: [OBWLP-1]
@@ -171,14 +168,12 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         _initLimiter();
     }
 
-    /// @notice Returns the USD price of the pool's LP token
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
-    {
-        (uint256 invariantOverSupply, uint256[] memory weights) = _getInvariantOverSupplyAndWeights();
+    // ------- //
+    // PRICING //
+    // ------- //
+
+    function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
+        uint256[] memory weights = _getWeightsArray();
 
         uint256 weightedPrice = FixedPoint.ONE;
         uint256 currentBase = FixedPoint.ONE;
@@ -198,30 +193,22 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
             }
         }
 
-        answer = int256(invariantOverSupply.mulDown(weightedPrice) / WAD_OVER_USD_FEED_SCALE); // F: [OBWLP-3,4]
-        return (0, answer, 0, updatedAt, 0);
+        answer = int256(weightedPrice / WAD_OVER_USD_FEED_SCALE);
     }
 
-    function getLPExchangeRate() public view override returns (uint256 value) {
-        (value,) = _getInvariantOverSupplyAndWeights();
+    function getLPExchangeRate() public view override returns (uint256) {
+        return _getBPTInvariant().divDown(_getBPTSupply());
     }
 
-    // ------- //
-    // PRICING //
-    // ------- //
-
-    /// @dev Returns pool invariant over supply and weights
-    function _getInvariantOverSupplyAndWeights()
-        internal
-        view
-        returns (uint256 invariantOverSupply, uint256[] memory weights)
-    {
-        weights = _getWeightsArray();
-        invariantOverSupply = _computeInvariant(_getBalancesArray(), weights).divDown(_getBPTSupply());
+    function getScale() public pure override returns (uint256) {
+        return WAD;
     }
 
-    /// @dev Computes BPT invariant given asset balances and weights
-    function _computeInvariant(uint256[] memory balances, uint256[] memory weights) internal pure returns (uint256 k) {
+    /// @dev Returns BPT invariant
+    function _getBPTInvariant() internal view returns (uint256 k) {
+        uint256[] memory balances = _getBalancesArray();
+        uint256[] memory weights = _getWeightsArray();
+
         uint256 len = balances.length;
 
         k = FixedPoint.ONE;
@@ -297,7 +284,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     }
 
     /// @dev Returns `token`'s scale (10^decimals)
-    function _getScale(IERC20 token) internal view returns (uint256) {
+    function _tokenScale(IERC20 token) internal view returns (uint256) {
         return 10 ** IERC20Metadata(address(token)).decimals();
     }
 

@@ -13,9 +13,15 @@ interface ILPPriceFeedEvents {
 /// @title LP price feed interface
 interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents {
     function lpToken() external view returns (address);
+    function lpContract() external view returns (address);
+
     function lowerBound() external view returns (uint256);
     function upperBound() external view returns (uint256);
     function delta() external view returns (uint256);
+
+    function getAggregatePrice() external view returns (int256 answer, uint256 updatedAt);
+    function getLPExchangeRate() external view returns (uint256 exchangeRate);
+    function getScale() external view returns (uint256 scale);
 
     // ------------- //
     // CONFIGURATION //
