@@ -16,6 +16,7 @@ import {
     SingeTokenPriceFeedData,
     CompositePriceFeedData,
     CurvePriceFeedData,
+    CrvUsdPriceFeedData,
     GenericLPPriceFeedData,
     TheSamePriceFeedData,
     RedStonePriceFeedData
@@ -33,6 +34,7 @@ import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
 import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
 
+import {CurveUSDPriceFeed} from "../../oracles/curve/CurveUSDPriceFeed.sol";
 import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
 import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
 
@@ -83,8 +85,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 }
             }
         }
+
+        // BOUNDED PRICE FEEDS
         {
-            // BOUNDED_PRICE_FEEDS
             BoundedPriceFeedData[] memory boundedPriceFeeds = boundedPriceFeedsByNetwork[chainId];
             len = boundedPriceFeeds.length;
             unchecked {
@@ -110,8 +113,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 }
             }
         }
+
+        // COMPOSITE PRICE FEEDS
         {
-            // COMPOSITE_PRICE_FEEDS
             CompositePriceFeedData[] memory compositePriceFeeds = compositePriceFeedsByNetwork[chainId];
             len = compositePriceFeeds.length;
             unchecked {
@@ -147,6 +151,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 }
             }
         }
+
         // ZERO PRICE FEEDS
         {
             SingeTokenPriceFeedData[] memory zeroPriceFeeds = zeroPriceFeedsByNetwork[chainId];
@@ -158,15 +163,43 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         address token = tokenTestSuite.addressOf(zeroPriceFeeds[i].token);
                         if (token != address(0)) {
                             setPriceFeed(token, zeroPF);
-
-                            vm.label(zeroPF, "ZERO PRICEFEED");
                         }
                     }
+                }
+                vm.label(zeroPF, "ZERO PRICEFEED");
+            }
+        }
+
+        // crvUSD PRICE FEEDS
+        {
+            CrvUsdPriceFeedData[] memory crvUSDPriceFeeds = crvUSDPriceFeedsByNetwork[chainId];
+            len = crvUSDPriceFeeds.length;
+            unchecked {
+                for (uint256 i; i < len; ++i) {
+                    Tokens t = crvUSDPriceFeeds[i].token;
+                    address token = tokenTestSuite.addressOf(t);
+                    if (token == address(0)) continue;
+
+                    address underlying = tokenTestSuite.addressOf(crvUSDPriceFeeds[i].underlying);
+                    address pf = address(
+                        new CurveUSDPriceFeed(
+                            addressProvider,
+                            token,
+                            supportedContracts.addressOf(crvUSDPriceFeeds[i].pool),
+                            priceFeeds[underlying],
+                            stalenessPeriods[underlying]
+                        )
+                    );
+
+                    setPriceFeed(token, pf);
+
+                    string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                    vm.label(pf, description);
                 }
             }
         }
 
-        // CURVE PRICE FEEDS
+        // CURVE STABLE PRICE FEEDS
         {
             CurvePriceFeedData[] memory curvePriceFeeds = curvePriceFeedsByNetwork[chainId];
             len = curvePriceFeeds.length;
@@ -326,7 +359,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
-        // WSTETH_PRICE_FEED
+        // wstETH PRICE FEED
         unchecked {
             Tokens t = wstethPriceFeedByNetwork[chainId].token;
             if (t != Tokens.NO_TOKEN) {
@@ -379,6 +412,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 }
             }
         }
+
         // COMPOUND V2 PRICE FEEDS
         GenericLPPriceFeedData[] memory compoundV2PriceFeeds = compoundV2PriceFeedsByNetwork[chainId];
         len = compoundV2PriceFeeds.length;
