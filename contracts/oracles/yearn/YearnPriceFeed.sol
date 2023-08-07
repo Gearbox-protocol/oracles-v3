@@ -16,7 +16,7 @@ contract YearnPriceFeed is SingleAssetLPPriceFeed {
     uint256 immutable _scale;
 
     constructor(address addressProvider, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(addressProvider, _yVault, _priceFeed, _stalenessPeriod)
+        SingleAssetLPPriceFeed(addressProvider, _yVault, _yVault, _priceFeed, _stalenessPeriod)
     {
         _scale = 10 ** IYVault(_yVault).decimals();
         _initLimiter();
