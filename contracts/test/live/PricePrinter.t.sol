@@ -45,8 +45,9 @@ contract PricePrinterTest is Test {
     function printUsdPrice(address token, uint256 price) public view {
         uint256 integerPart = price / 1e8;
         uint256 fractionalPart = (price / 1e6) % 100;
+        string memory zero = fractionalPart < 10 ? "0" : "";
         string memory result = string.concat(
-            ERC20(token).symbol(), ": $", Strings.toString(integerPart), ".", Strings.toString(fractionalPart)
+            ERC20(token).symbol(), ": $", Strings.toString(integerPart), ".", zero, Strings.toString(fractionalPart)
         );
         console.log(result);
     }
