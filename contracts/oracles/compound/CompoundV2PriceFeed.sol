@@ -14,7 +14,7 @@ contract CompoundV2PriceFeed is SingleAssetLPPriceFeed {
     PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOUND_V2_ORACLE;
 
     constructor(address addressProvider, address _cToken, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(addressProvider, _cToken, _priceFeed, _stalenessPeriod)
+        SingleAssetLPPriceFeed(addressProvider, _cToken, _cToken, _priceFeed, _stalenessPeriod)
     {
         _initLimiter();
     }
