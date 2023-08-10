@@ -35,5 +35,5 @@ interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents {
 
     function setUpdateBoundsAllowed(bool allowed) external;
     function setLimiter(uint256 newLowerBound) external;
-    function updateBounds() external;
+    function updateBounds(bool updatePrice, bytes calldata data) external;
 }
