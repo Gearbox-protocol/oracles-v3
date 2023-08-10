@@ -122,13 +122,12 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
 
     /// @notice Permissionlessly updates LP token's exchange rate bounds using answer from the reserve price feed.
     ///         Lower bound is set to the induced reserve exchange rate (with small buffer for downside movement).
-    /// @param updatePrice If true, update the reserve price feed prior to querying its answer
-    /// @param data Data to update the reserve price feed with
-    function updateBounds(bool updatePrice, bytes calldata data) external override {
+    /// @param updateData If non-empty, updates the reserve price feed with this data prior to querying its answer
+    function updateBounds(bytes calldata updateData) external override {
         if (!updateBoundsAllowed) return;
 
         address reserveFeed = IPriceOracleV3(priceOracle).priceFeedsRaw({token: lpToken, reserve: true});
-        if (updatePrice) IUpdatablePriceFeed(reserveFeed).updatePrice(data);
+        if (updateData.length != 0) IUpdatablePriceFeed(reserveFeed).updatePrice(updateData);
 
         (, int256 reserveAnswer,,,) = IPriceFeed(reserveFeed).latestRoundData();
         (int256 price,) = getAggregatePrice();
