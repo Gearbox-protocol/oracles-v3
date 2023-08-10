@@ -22,7 +22,6 @@ interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents {
 
     function lowerBound() external view returns (uint256);
     function upperBound() external view returns (uint256);
-    function delta() external view returns (uint256);
     function updateBoundsAllowed() external view returns (bool);
 
     function getAggregatePrice() external view returns (int256 answer, uint256 updatedAt);

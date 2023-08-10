@@ -21,6 +21,12 @@ import {
     IncorrectLimitsException
 } from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
+/// @dev Window size in bps, used to compute upper bound given lower bound
+uint256 constant WINDOW_SIZE = 200;
+
+/// @dev Buffer size in bps, used to compute new lower bound given current exchange rate
+uint256 constant BUFFER_SIZE = 20;
+
 /// @title LP price feed
 /// @notice Abstract contract for LP token price feeds.
 ///         It is assumed that the price of an LP token is the product of its exchange rate and some aggregate function
@@ -38,9 +44,6 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
 
     /// @notice Lower bound for the LP token exchange rate
     uint256 public override lowerBound;
-
-    /// @notice Window size in bps, used to compute upper bound given lower bound
-    uint256 public constant override delta = 2_00;
 
     /// @notice Whether permissionless bounds update is allowed
     bool public override updateBoundsAllowed;
@@ -75,7 +78,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
         uint256 lb = lowerBound;
         if (exchangeRate < lb) revert ValueOutOfRangeException();
 
-        uint256 ub = _upperBound(lb);
+        uint256 ub = _calcUpperBound(lb);
         if (exchangeRate > ub) exchangeRate = ub;
 
         (answer, updatedAt) = getAggregatePrice();
@@ -85,7 +88,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
 
     /// @notice Upper bound for the LP token exchange rate
     function upperBound() external view returns (uint256) {
-        return _upperBound(lowerBound);
+        return _calcUpperBound(lowerBound);
     }
 
     /// @notice Returns aggregate price of underlying tokens
@@ -100,11 +103,6 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     /// @dev Must be implemented by derived price feeds
     function getScale() public view virtual override returns (uint256 scale);
 
-    /// @dev Computes upper bound as `lowerBound * (1 + delta)`
-    function _upperBound(uint256 lb) internal pure returns (uint256) {
-        return (lb * (PERCENTAGE_FACTOR + delta)) / PERCENTAGE_FACTOR;
-    }
-
     // ------------- //
     // CONFIGURATION //
     // ------------- //
@@ -118,7 +116,6 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
 
     /// @notice Sets new lower and upper bounds for the LP token exchange rate
     /// @param newLowerBound New lower bound value
-    /// @dev New upper bound value is computed as `newLowerBound * (1 + delta)`
     function setLimiter(uint256 newLowerBound) external override controllerOnly {
         _setLimiter(newLowerBound, getLPExchangeRate());
     }
@@ -138,7 +135,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
         (int256 price,) = getAggregatePrice();
         uint256 reserveExchangeRate = uint256(reserveAnswer * int256(getScale()) / price);
 
-        _setLimiter(reserveExchangeRate * 998 / 1000, getLPExchangeRate());
+        _setLimiter(_calcLowerBound(reserveExchangeRate), getLPExchangeRate());
     }
 
     /// @dev Sets lower bound to the current LP token exhcange rate (with small buffer for downside movement)
@@ -146,14 +143,24 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     ///      needed for exchange rate calculation
     function _initLimiter() internal {
         uint256 exchangeRate = getLPExchangeRate();
-        _setLimiter(exchangeRate * 998 / 1000, exchangeRate);
+        _setLimiter(_calcLowerBound(exchangeRate), exchangeRate);
     }
 
     /// @dev `setLimiter` implementation: sets new bounds, ensures that current value is within them, emits event
     function _setLimiter(uint256 lower, uint256 current) internal {
-        uint256 upper = _upperBound(lower);
+        uint256 upper = _calcUpperBound(lower);
         if (lower == 0 || current < lower || current > upper) revert IncorrectLimitsException();
         lowerBound = lower;
         emit SetBounds(lower, upper);
+    }
+
+    /// @dev Computes upper bound as `_lowerBound * (1 + WINDOW_SIZE)`
+    function _calcUpperBound(uint256 _lowerBound) internal pure returns (uint256) {
+        return _lowerBound * (PERCENTAGE_FACTOR + WINDOW_SIZE) / PERCENTAGE_FACTOR;
+    }
+
+    /// @dev Computes lower bound as `exchangeRate * (1 - BUFFER_SIZE)`
+    function _calcLowerBound(uint256 exchangeRate) internal pure returns (uint256) {
+        return exchangeRate * (PERCENTAGE_FACTOR - BUFFER_SIZE) / PERCENTAGE_FACTOR;
     }
 }
