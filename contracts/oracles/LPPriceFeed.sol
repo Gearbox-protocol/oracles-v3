@@ -33,8 +33,8 @@ uint256 constant BUFFER_SIZE = 20;
 ///         of underlying tokens prices. This contract simplifies creation of such price feeds and provides standard
 ///         validation of the LP token exchange rate that protects against price manipulation.
 abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentrantTrait {
-    /// @notice Address provider contract
-    address public immutable override addressProvider;
+    /// @notice Price oracle contract
+    address public immutable override priceOracle;
 
     /// @notice LP token for which the prices are computed
     address public immutable override lpToken;
@@ -57,7 +57,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
         nonZeroAddress(_lpToken)
         nonZeroAddress(_lpContract)
     {
-        addressProvider = _addressProvider;
+        priceOracle = IAddressProviderV3(_addressProvider).getAddressOrRevert(AP_PRICE_ORACLE, 3_00);
         lpToken = _lpToken;
         lpContract = _lpContract;
     }
@@ -127,7 +127,6 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
     function updateBounds(bool updatePrice, bytes calldata data) external override {
         if (!updateBoundsAllowed) return;
 
-        address priceOracle = IAddressProviderV3(addressProvider).getAddressOrRevert(AP_PRICE_ORACLE, 3_00);
         address reserveFeed = IPriceOracleV3(priceOracle).priceFeedsRaw({token: lpToken, reserve: true});
         if (updatePrice) IUpdatablePriceFeed(reserveFeed).updatePrice(data);
 

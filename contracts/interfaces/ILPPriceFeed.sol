@@ -15,7 +15,7 @@ interface ILPPriceFeedEvents {
 
 /// @title LP price feed interface
 interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents {
-    function addressProvider() external view returns (address);
+    function priceOracle() external view returns (address);
 
     function lpToken() external view returns (address);
     function lpContract() external view returns (address);
