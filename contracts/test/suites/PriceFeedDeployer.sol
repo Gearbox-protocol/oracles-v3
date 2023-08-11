@@ -322,7 +322,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address tokenHasSamePriceFeed = tokenTestSuite.addressOf(theSamePriceFeeds[i].tokenHasSamePriceFeed);
                     address pf = priceFeeds[tokenHasSamePriceFeed];
                     if (pf != address(0)) {
-                        setPriceFeed(token, pf);
+                        setPriceFeed(token, pf, stalenessPeriods[token]);
                     } else {
                         console.log("WARNING: Price feed for ", ERC20(token).symbol(), " not found");
                     }
