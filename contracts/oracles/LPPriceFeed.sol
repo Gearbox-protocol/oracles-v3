@@ -3,14 +3,13 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IPriceFeed} from "../interfaces/IPriceFeed.sol";
 import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
-import {AbstractPriceFeed} from "./AbstractPriceFeed.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {ACLNonReentrantTrait} from "@gearbox-protocol/core-v3/contracts/traits/ACLNonReentrantTrait.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/ICreditFacadeV3Multicall.sol";
+import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
 import {
     IAddressProviderV3, AP_PRICE_ORACLE
 } from "@gearbox-protocol/core-v3/contracts/interfaces/IAddressProviderV3.sol";
@@ -32,7 +31,13 @@ uint256 constant BUFFER_SIZE = 20;
 ///         It is assumed that the price of an LP token is the product of its exchange rate and some aggregate function
 ///         of underlying tokens prices. This contract simplifies creation of such price feeds and provides standard
 ///         validation of the LP token exchange rate that protects against price manipulation.
-abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentrantTrait {
+abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedValidationTrait {
+    /// @notice Answer precision (always 8 decimals for USD price feeds)
+    uint8 public constant override decimals = 8;
+
+    /// @notice Indicates that price oracle can skip checks for this price feed's answers
+    bool public constant override skipPriceCheck = true;
+
     /// @notice Price oracle contract
     address public immutable override priceOracle;
 
@@ -122,16 +127,18 @@ abstract contract LPPriceFeed is ILPPriceFeed, AbstractPriceFeed, ACLNonReentran
 
     /// @notice Permissionlessly updates LP token's exchange rate bounds using answer from the reserve price feed.
     ///         Lower bound is set to the induced reserve exchange rate (with small buffer for downside movement).
-    /// @param updateData If non-empty, updates the reserve price feed with this data prior to querying its answer
+    /// @param updateData Data to update the reserve price feed with before querying its answer if it is updatable
     function updateBounds(bytes calldata updateData) external override {
         if (!updateBoundsAllowed) return;
 
         address reserveFeed = IPriceOracleV3(priceOracle).priceFeedsRaw({token: lpToken, reserve: true});
-        if (updateData.length != 0) IUpdatablePriceFeed(reserveFeed).updatePrice(updateData);
+        try IUpdatablePriceFeed(reserveFeed).updatable() returns (bool updatable) {
+            if (updatable) IUpdatablePriceFeed(reserveFeed).updatePrice(updateData);
+        } catch {}
 
-        (, int256 reserveAnswer,,,) = IPriceFeed(reserveFeed).latestRoundData();
+        uint256 reserveAnswer = IPriceOracleV3(priceOracle).getPriceRaw({token: lpToken, reserve: true});
         (int256 price,) = getAggregatePrice();
-        uint256 reserveExchangeRate = uint256(reserveAnswer * int256(getScale()) / price);
+        uint256 reserveExchangeRate = uint256(reserveAnswer * getScale() / uint256(price));
 
         _setLimiter(_calcLowerBound(reserveExchangeRate), getLPExchangeRate());
     }

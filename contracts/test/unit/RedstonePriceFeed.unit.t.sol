@@ -5,12 +5,16 @@ pragma solidity ^0.8.10;
 
 import {
     RedstonePriceFeed,
+    IRedstonePriceFeedEvents,
     IRedstonePriceFeedExceptions,
-    IRedstonePriceFeedEvents
-} from "../../oracles/redstone/RedstonePriceFeed.sol";
+    DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS,
+    DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS
+} from "../../oracles/custom/RedstonePriceFeed.sol";
 import {RedstoneConstants} from "@redstone-finance/evm-connector/contracts/core/RedstoneConstants.sol";
+import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 // TEST
+import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
 import {TestHelper} from "@gearbox-protocol/core-v3/contracts/test/lib/helper.sol";
 
 /// @title RedstonePriceFeed test
@@ -31,7 +35,7 @@ contract RedstonePriceFeedTest is
         _generateSigners(10);
 
         pf = new RedstonePriceFeed(
-            "USDC",
+            address(new ERC20Mock("USD Coin", "USDC", 6)),
             bytes32("USDC"),
             signers,
             10
@@ -52,7 +56,7 @@ contract RedstonePriceFeedTest is
         uint256 numDataPackages,
         bool oneTimestampWrong,
         bool oneSignerWrong
-    ) internal returns (bytes memory payload) {
+    ) internal view returns (bytes memory payload) {
         // GENERATING SIGNED DATA PACKAGES
 
         for (uint256 i = 0; i < numDataPackages; ++i) {
@@ -101,7 +105,7 @@ contract RedstonePriceFeedTest is
 
     /// @dev U: [OR-1]: constructor sets correct values
     function test_U_OR_01_constructor_sets_correct_values() public {
-        assertEq(pf.description(), "USDC Redstone Price Feed", "Incorrect description");
+        assertEq(pf.description(), "USDC Redstone price feed", "Incorrect description");
 
         assertEq(pf.dataFeedId(), bytes32("USDC"), "Incorrect data feed id");
 
@@ -139,7 +143,7 @@ contract RedstonePriceFeedTest is
 
         vm.expectEmit(false, false, false, true);
 
-        emit PriceUpdated(100000000);
+        emit UpdatePrice(100000000);
 
         pf.updatePrice(data);
 
@@ -248,26 +252,8 @@ contract RedstonePriceFeedTest is
         pf.updatePrice(data);
     }
 
-    /// @dev U: [OR-9]: latestRoundData() reverts on price not being updated on same block
-    function test_U_OR_09_latestRoundData_reverts_on_old_price() public {
-        uint256 expectedPayloadTimestamp = block.timestamp - 1;
-
-        bytes memory payload =
-            _generateRedstonePayload(bytes32("USDC"), 100000000, uint48((block.timestamp - 1) * 1000), 10, false, false);
-
-        bytes memory data = abi.encode(expectedPayloadTimestamp, payload);
-
-        pf.updatePrice(data);
-
-        vm.warp(block.timestamp - 1 + pf.DEFAULT_PRICE_EXPIRATION_TIME() + 1);
-
-        vm.expectRevert(RedstonePriceStaleException.selector);
-
-        pf.latestRoundData();
-    }
-
-    /// @dev U: [OR-10]: updatePrice reverts on zero price
-    function test_U_OR_10_updatePrice_reverts_on_zero_price() public {
+    /// @dev U: [OR-9]: updatePrice reverts on zero price
+    function test_U_OR_09_updatePrice_reverts_on_zero_price() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
         bytes memory payload =
@@ -275,14 +261,14 @@ contract RedstonePriceFeedTest is
 
         bytes memory data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(ZeroPriceException.selector);
+        vm.expectRevert(IncorrectPriceException.selector);
 
         pf.updatePrice(data);
     }
 
-    /// @dev U: [OR-11]: updatePrice reverts if the payload timestamp is too far from block timestamp
-    function test_U_OR_11_updatePrice_fails_if_payload_timestamp_too_far_from_block() public {
-        uint256 expectedPayloadTimestamp = block.timestamp - pf.DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS() - 1;
+    /// @dev U: [OR-10]: updatePrice reverts if the payload timestamp is too far from block timestamp
+    function test_U_OR_10_updatePrice_fails_if_payload_timestamp_too_far_from_block() public {
+        uint256 expectedPayloadTimestamp = block.timestamp - DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS - 1;
 
         bytes memory payload = _generateRedstonePayload(
             bytes32("USDC"), 100000000, uint48((expectedPayloadTimestamp) * 1000), 10, false, false
@@ -294,7 +280,7 @@ contract RedstonePriceFeedTest is
 
         pf.updatePrice(data);
 
-        expectedPayloadTimestamp = block.timestamp + pf.DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS() + 1;
+        expectedPayloadTimestamp = block.timestamp + DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS + 1;
 
         payload = _generateRedstonePayload(
             bytes32("USDC"), 100000000, uint48((expectedPayloadTimestamp) * 1000), 10, false, false

@@ -3,10 +3,11 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {AbstractPriceFeed} from "./AbstractPriceFeed.sol";
-import {PriceFeedType} from "../interfaces/IPriceFeed.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import {AggregatorV2V3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV2V3Interface.sol";
+
+import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 
 interface ChainlinkReadableAggregator {
     function aggregator() external view returns (address);
@@ -17,10 +18,11 @@ interface ChainlinkReadableAggregator {
 /// @title Bounded price feed
 /// @notice Can be used to provide upper-bounded answers for assets that are
 ///         expected to have the price in a certain range, e.g. stablecoins
-contract BoundedPriceFeed is AbstractPriceFeed, ChainlinkReadableAggregator {
-    /// @notice Contract version
-    uint256 public constant override version = 3_00;
+contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, PriceFeedValidationTrait {
     PriceFeedType public constant override priceFeedType = PriceFeedType.BOUNDED_ORACLE;
+    uint256 public constant override version = 3_00;
+    uint8 public constant override decimals = 8;
+    bool public constant override skipPriceCheck = true;
 
     /// @notice Underlying price feed
     address public immutable priceFeed;
@@ -43,7 +45,7 @@ contract BoundedPriceFeed is AbstractPriceFeed, ChainlinkReadableAggregator {
 
     /// @notice Price feed description
     function description() external view override returns (string memory) {
-        return string(abi.encodePacked("Bounded ", AggregatorV3Interface(priceFeed).description(), " price feed"));
+        return string(abi.encodePacked("Bounded ", IPriceFeed(priceFeed).description(), " price feed"));
     }
 
     /// @notice Returns the upper-bounded USD price of the token
@@ -62,15 +64,19 @@ contract BoundedPriceFeed is AbstractPriceFeed, ChainlinkReadableAggregator {
         return (value > upperBound) ? upperBound : value;
     }
 
-    function aggregator() external view returns (address) {
-        return ChainlinkReadableAggregator(address(priceFeed)).aggregator();
+    // --------- //
+    // ANALYTICS //
+    // --------- //
+
+    function aggregator() external view override returns (address) {
+        return ChainlinkReadableAggregator(priceFeed).aggregator();
     }
 
-    function phaseAggregators(uint16 idx) external view returns (AggregatorV2V3Interface) {
-        return ChainlinkReadableAggregator(address(priceFeed)).phaseAggregators(idx);
+    function phaseAggregators(uint16 idx) external view override returns (AggregatorV2V3Interface) {
+        return ChainlinkReadableAggregator(priceFeed).phaseAggregators(idx);
     }
 
-    function phaseId() external view returns (uint16) {
-        return ChainlinkReadableAggregator(address(priceFeed)).phaseId();
+    function phaseId() external view override returns (uint16) {
+        return ChainlinkReadableAggregator(priceFeed).phaseId();
     }
 }

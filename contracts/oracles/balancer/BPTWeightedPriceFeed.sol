@@ -10,7 +10,7 @@ import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {PriceFeedParams} from "../AbstractPriceFeed.sol";
+import {PriceFeedParams} from "../PriceFeedParams.sol";
 import {FixedPoint} from "../../libraries/FixedPoint.sol";
 
 import {IBalancerV2VaultGetters} from "../../interfaces/balancer/IBalancerV2Vault.sol";

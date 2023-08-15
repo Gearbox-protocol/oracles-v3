@@ -3,16 +3,17 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {AbstractPriceFeed} from "./AbstractPriceFeed.sol";
-import {PriceFeedType} from "../interfaces/IPriceFeed.sol";
+import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
 
 /// @title Zero price feed
 /// @notice Always returns zero price as answer
-contract ZeroPriceFeed is AbstractPriceFeed {
-    /// @notice Contract version
-    uint256 public constant override version = 3_00;
+contract ZeroPriceFeed is IPriceFeed {
     PriceFeedType public constant override priceFeedType = PriceFeedType.ZERO_ORACLE;
+    uint256 public constant override version = 3_00;
+    uint8 public constant override decimals = 8;
     string public constant override description = "Zero price feed";
+    bool public constant override skipPriceCheck = true;
 
     /// @notice Returns zero price
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {

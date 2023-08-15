@@ -3,7 +3,7 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IPriceFeed} from "./IPriceFeed.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
 
 interface ILPPriceFeedEvents {
     /// @notice Emitted when new LP token exchange rate bounds are set
