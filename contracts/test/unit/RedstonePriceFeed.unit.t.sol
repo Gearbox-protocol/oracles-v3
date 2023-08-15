@@ -105,7 +105,7 @@ contract RedstonePriceFeedTest is
 
     /// @dev U: [OR-1]: constructor sets correct values
     function test_U_OR_01_constructor_sets_correct_values() public {
-        assertEq(pf.description(), "USDC Redstone price feed", "Incorrect description");
+        assertEq(pf.description(), "USDC / USD Redstone price feed", "Incorrect description");
 
         assertEq(pf.dataFeedId(), bytes32("USDC"), "Incorrect data feed id");
 
