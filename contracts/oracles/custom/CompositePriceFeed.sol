@@ -3,17 +3,19 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {AbstractPriceFeed, PriceFeedParams} from "./AbstractPriceFeed.sol";
-import {PriceFeedType} from "../interfaces/IPriceFeed.sol";
+import {PriceFeedParams} from "../PriceFeedParams.sol";
+import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
 /// @title Composite price feed
 /// @notice Computes target asset USD price as product of target/base price times base/USD price
-contract CompositePriceFeed is AbstractPriceFeed, SanityCheckTrait {
-    /// @notice Contract version
-    uint256 public constant override version = 3_00;
+contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheckTrait {
     PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOSITE_ORACLE;
+    uint256 public constant override version = 3_00;
+    uint8 public constant override decimals = 8;
+    bool public constant override skipPriceCheck = true;
 
     /// @notice Price feed that returns target asset price denominated in base asset
     address public immutable priceFeed0;
@@ -40,7 +42,7 @@ contract CompositePriceFeed is AbstractPriceFeed, SanityCheckTrait {
         stalenessPeriod0 = priceFeeds[0].stalenessPeriod;
         stalenessPeriod1 = priceFeeds[1].stalenessPeriod;
 
-        targetFeedScale = int256(10 ** AggregatorV3Interface(priceFeed0).decimals());
+        targetFeedScale = int256(10 ** IPriceFeed(priceFeed0).decimals());
         // target/base price feed validation is omitted because it will fail if feed has other than 8 decimals
         skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
     }
@@ -49,9 +51,9 @@ contract CompositePriceFeed is AbstractPriceFeed, SanityCheckTrait {
     function description() external view override returns (string memory) {
         return string(
             abi.encodePacked(
-                AggregatorV3Interface(priceFeed0).description(),
+                IPriceFeed(priceFeed0).description(),
                 " * ",
-                AggregatorV3Interface(priceFeed1).description(),
+                IPriceFeed(priceFeed1).description(),
                 " composite price feed"
             )
         );

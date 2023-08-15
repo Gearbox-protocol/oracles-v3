@@ -4,7 +4,7 @@
 pragma solidity ^0.8.17;
 
 import {LPPriceFeed} from "./LPPriceFeed.sol";
-import {PriceFeedParams} from "./AbstractPriceFeed.sol";
+import {PriceFeedParams} from "./PriceFeedParams.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @title Single-asset LP price feed

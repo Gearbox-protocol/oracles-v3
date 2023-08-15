@@ -6,6 +6,7 @@ pragma solidity ^0.8.10;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import {Test} from "forge-std/Test.sol";
+import {console} from "forge-std/console.sol";
 
 import {Tokens} from "@gearbox-protocol/sdk/contracts/Tokens.sol";
 import {ISupportedContracts, Contracts} from "@gearbox-protocol/sdk/contracts/SupportedContracts.sol";
@@ -28,28 +29,26 @@ import {IACL} from "@gearbox-protocol/core-v2/contracts/interfaces/IACL.sol";
 
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
-import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
+
 import {YearnPriceFeed} from "../../oracles/yearn/YearnPriceFeed.sol";
 import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
-import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
-import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
-
 import {CurveUSDPriceFeed} from "../../oracles/curve/CurveUSDPriceFeed.sol";
 import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
 import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
-
 import {WrappedAaveV2PriceFeed} from "../../oracles/aave/WrappedAaveV2PriceFeed.sol";
 import {CompoundV2PriceFeed} from "../../oracles/compound/CompoundV2PriceFeed.sol";
 import {ERC4626PriceFeed} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
-import {RedstonePriceFeed} from "../../oracles/redstone/RedstonePriceFeed.sol";
+
+import {ZeroPriceFeed} from "../../oracles/custom/ZeroPriceFeed.sol";
+import {CompositePriceFeed} from "../../oracles/custom/CompositePriceFeed.sol";
+import {BoundedPriceFeed} from "../../oracles/custom/BoundedPriceFeed.sol";
+import {RedstonePriceFeed} from "../../oracles/custom/RedstonePriceFeed.sol";
 
 import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
 import {IYVault} from "../../interfaces/yearn/IYVault.sol";
 import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 
-import {PriceFeedParams} from "../../oracles/AbstractPriceFeed.sol";
-
-import "forge-std/console.sol";
+import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
 
 contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
@@ -484,14 +483,14 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pf = address(
                     new RedstonePriceFeed(
-                        redStonePriceFeedData.tokenSymbol,
+                        token,
                         redStonePriceFeedData.dataFeedId,
                         redStonePriceFeedData.signers,
                         redStonePriceFeedData.signersThreshold
                     )
                 );
 
-                setPriceFeed(token, pf);
+                setPriceFeed(token, pf, 4 minutes);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);

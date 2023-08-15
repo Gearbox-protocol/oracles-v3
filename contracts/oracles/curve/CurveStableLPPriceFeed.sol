@@ -4,7 +4,7 @@
 pragma solidity ^0.8.17;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {PriceFeedParams} from "../AbstractPriceFeed.sol";
+import {PriceFeedParams} from "../PriceFeedParams.sol";
 import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
