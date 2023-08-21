@@ -4,7 +4,7 @@
 pragma solidity ^0.8.17;
 
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk/contracts/PriceFeedType.sol";
+import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 interface IPool {

@@ -17,7 +17,7 @@ import {AddressProviderV3ACLMock} from
 
 // SUITES
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
-import {Tokens} from "@gearbox-protocol/sdk/contracts/Tokens.sol";
+import {Tokens} from "@gearbox-protocol/sdk-gov/contracts/Tokens.sol";
 
 // EXCEPTIONS
 import {
