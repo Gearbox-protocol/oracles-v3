@@ -14,12 +14,6 @@ import {
     IAddressProviderV3, AP_PRICE_ORACLE
 } from "@gearbox-protocol/core-v3/contracts/interfaces/IAddressProviderV3.sol";
 
-// EXCEPTIONS
-import {
-    ValueOutOfRangeException,
-    IncorrectLimitsException
-} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
-
 /// @dev Window size in bps, used to compute upper bound given lower bound
 uint256 constant WINDOW_SIZE = 200;
 
@@ -81,7 +75,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     {
         uint256 exchangeRate = getLPExchangeRate();
         uint256 lb = lowerBound;
-        if (exchangeRate < lb) revert ValueOutOfRangeException();
+        if (exchangeRate < lb) revert ExchangeRateOutOfBoundsException();
 
         uint256 ub = _calcUpperBound(lb);
         if (exchangeRate > ub) exchangeRate = ub;
@@ -154,7 +148,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     /// @dev `setLimiter` implementation: sets new bounds, ensures that current value is within them, emits event
     function _setLimiter(uint256 lower, uint256 current) internal {
         uint256 upper = _calcUpperBound(lower);
-        if (lower == 0 || current < lower || current > upper) revert IncorrectLimitsException();
+        if (lower == 0 || current < lower || current > upper) revert ExchangeRateOutOfBoundsException();
         lowerBound = lower;
         emit SetBounds(lower, upper);
     }
