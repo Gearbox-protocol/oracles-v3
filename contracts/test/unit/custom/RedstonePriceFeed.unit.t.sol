@@ -9,7 +9,7 @@ import {
     IRedstonePriceFeedExceptions,
     DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS,
     DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS
-} from "../../oracles/custom/RedstonePriceFeed.sol";
+} from "../../../oracles/custom/RedstonePriceFeed.sol";
 import {RedstoneConstants} from "@redstone-finance/evm-connector/contracts/core/RedstoneConstants.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
@@ -17,9 +17,9 @@ import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/inter
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
 import {TestHelper} from "@gearbox-protocol/core-v3/contracts/test/lib/helper.sol";
 
-/// @title RedstonePriceFeed test
-/// @notice Designed for unit test purposes only
-contract RedstonePriceFeedTest is
+/// @title Redstone price feed unit test
+/// @notice U:[RPF]: Unit tests for Redstone price feed
+contract RedstonePriceFeedUnitTest is
     TestHelper,
     IRedstonePriceFeedExceptions,
     IRedstonePriceFeedEvents,
@@ -97,14 +97,8 @@ contract RedstonePriceFeedTest is
         payload = abi.encodePacked(payload, message, uint24(message.length), REDSTONE_MARKER);
     }
 
-    ///
-    ///
-    ///  TESTS
-    ///
-    ///
-
-    /// @dev U: [OR-1]: constructor sets correct values
-    function test_U_OR_01_constructor_sets_correct_values() public {
+    /// @notice U: [RPF-1]: constructor sets correct values
+    function test_U_RPF_01_constructor_sets_correct_values() public {
         assertEq(pf.description(), "USDC / USD Redstone price feed", "Incorrect description");
 
         assertEq(pf.dataFeedId(), bytes32("USDC"), "Incorrect data feed id");
@@ -129,11 +123,11 @@ contract RedstonePriceFeedTest is
 
         assertEq(pf.signerAddress9(), signers[9], "Incorrect signer address 9");
 
-        assertEq(pf.signersThreshold(), 10, "Incorrect signers threshold");
+        assertEq(pf.getUniqueSignersThreshold(), 10, "Incorrect signers threshold");
     }
 
-    /// @dev U: [OR-2]: updatePrice works correctly on correct payload
-    function test_U_OR_02_updatePrice_successfully_updates_price_with_correct_payload() public {
+    /// @notice U: [RPF-2]: updatePrice works correctly on correct payload
+    function test_U_RPF_02_updatePrice_successfully_updates_price_with_correct_payload() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
         bytes memory payload =
@@ -151,13 +145,14 @@ contract RedstonePriceFeedTest is
 
         assertEq(pf.lastPayloadTimestamp(), block.timestamp - 1, "Last payload timestamp was not set correctly");
 
-        (, int256 answer,,,) = pf.latestRoundData();
+        (, int256 answer,, uint256 updatedAt,) = pf.latestRoundData();
 
-        assertEq(answer, 100000000, "Answer incorrect");
+        assertEq(answer, 100000000, "Incorrect answer");
+        assertEq(updatedAt, block.timestamp - 1, "Incorrect updatedAt");
     }
 
-    /// @dev U: [OR-3]: updatePrice reverts on package timestamp not equal to expected payload timestamp
-    function test_U_OR_03_updatePrice_fails_on_at_least_one_package_timestamp_incorrect() public {
+    /// @notice U: [RPF-3]: updatePrice reverts on package timestamp not equal to expected payload timestamp
+    function test_U_RPF_03_updatePrice_fails_on_at_least_one_package_timestamp_incorrect() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
         bytes memory payload =
@@ -170,8 +165,8 @@ contract RedstonePriceFeedTest is
         pf.updatePrice(data);
     }
 
-    /// @dev U: [OR-4]: updatePrice does nothing if updating in a new block with an old payload
-    function test_U_OR_04_updatePrice_skips_execution_if_updating_with_an_old_payload() public {
+    /// @notice U: [RPF-4]: updatePrice does nothing if updating in a new block with an old payload
+    function test_U_RPF_04_updatePrice_skips_execution_if_updating_with_an_old_payload() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
         bytes memory payload =
@@ -197,8 +192,8 @@ contract RedstonePriceFeedTest is
         assertEq(pf.lastPayloadTimestamp(), block.timestamp - 1);
     }
 
-    /// @dev U: [OR-6]: updatePrice performs an update for newer payload in the same block
-    function test_U_OR_06_updatePrice_fully_executes_on_new_payload_in_same_block() public {
+    /// @notice U: [RPF-5]: updatePrice performs an update for newer payload in the same block
+    function test_U_RPF_05_updatePrice_fully_executes_on_new_payload_in_same_block() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
         bytes memory payload =
@@ -222,8 +217,8 @@ contract RedstonePriceFeedTest is
         assertEq(pf.lastPayloadTimestamp(), block.timestamp + 1, "Incorrect last payload timestamp");
     }
 
-    /// @dev U: [OR-7]: updatePrice reverts on at least 1 wrong signer
-    function test_U_OR_07_updatePrice_fails_on_wrong_signer() public {
+    /// @notice U: [RPF-6]: updatePrice reverts on at least 1 wrong signer
+    function test_U_RPF_06_updatePrice_fails_on_wrong_signer() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
         bytes memory payload =
@@ -238,8 +233,8 @@ contract RedstonePriceFeedTest is
         pf.updatePrice(data);
     }
 
-    /// @dev U: [OR-8]: updatePrice reverts on less signatures than required
-    function test_U_OR_08_updatePrice_fails_on_insufficient_signatures() public {
+    /// @notice U: [RPF-7]: updatePrice reverts on less signatures than required
+    function test_U_RPF_07_updatePrice_fails_on_insufficient_signatures() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
         bytes memory payload =
@@ -252,8 +247,8 @@ contract RedstonePriceFeedTest is
         pf.updatePrice(data);
     }
 
-    /// @dev U: [OR-9]: updatePrice reverts on zero price
-    function test_U_OR_09_updatePrice_reverts_on_zero_price() public {
+    /// @notice U: [RPF-8]: updatePrice reverts on zero price
+    function test_U_RPF_08_updatePrice_reverts_on_zero_price() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
         bytes memory payload =
@@ -266,8 +261,8 @@ contract RedstonePriceFeedTest is
         pf.updatePrice(data);
     }
 
-    /// @dev U: [OR-10]: updatePrice reverts if the payload timestamp is too far from block timestamp
-    function test_U_OR_10_updatePrice_fails_if_payload_timestamp_too_far_from_block() public {
+    /// @notice U: [RPF-9]: updatePrice reverts if the payload timestamp is too far from block timestamp
+    function test_U_RPF_09_updatePrice_fails_if_payload_timestamp_too_far_from_block() public {
         uint256 expectedPayloadTimestamp = block.timestamp - DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS - 1;
 
         bytes memory payload = _generateRedstonePayload(

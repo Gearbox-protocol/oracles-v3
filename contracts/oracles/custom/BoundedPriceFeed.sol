@@ -22,8 +22,8 @@ interface ChainlinkReadableAggregator {
 contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityCheckTrait, PriceFeedValidationTrait {
     PriceFeedType public constant override priceFeedType = PriceFeedType.BOUNDED_ORACLE;
     uint256 public constant override version = 3_00;
-    uint8 public constant override decimals = 8;
-    bool public constant override skipPriceCheck = true;
+    uint8 public constant override decimals = 8; // U:[BPF-2]
+    bool public constant override skipPriceCheck = true; // U:[BPF-2]
 
     /// @notice Underlying price feed
     address public immutable priceFeed;
@@ -37,16 +37,18 @@ contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityChec
     /// @param _priceFeed Underlying price feed
     /// @param _stalenessPeriod Underlying price feed staleness period, must be non-zero unless it performs own checks
     /// @param _upperBound Upper bound for underlying price feed answers
-    constructor(address _priceFeed, uint32 _stalenessPeriod, int256 _upperBound) nonZeroAddress(_priceFeed) {
-        priceFeed = _priceFeed;
-        stalenessPeriod = _stalenessPeriod;
-        skipCheck = _validatePriceFeed(priceFeed, stalenessPeriod);
-        upperBound = _upperBound;
+    constructor(address _priceFeed, uint32 _stalenessPeriod, int256 _upperBound)
+        nonZeroAddress(_priceFeed) // U:[BPF-1]
+    {
+        priceFeed = _priceFeed; // U:[BPF-1]
+        stalenessPeriod = _stalenessPeriod; // U:[BPF-1]
+        skipCheck = _validatePriceFeed(priceFeed, stalenessPeriod); // U:[BPF-1]
+        upperBound = _upperBound; // U:[BPF-1]
     }
 
     /// @notice Price feed description
     function description() external view override returns (string memory) {
-        return string(abi.encodePacked(IPriceFeed(priceFeed).description(), " bounded price feed"));
+        return string(abi.encodePacked(IPriceFeed(priceFeed).description(), " bounded price feed")); // U:[BPF-2]
     }
 
     /// @notice Returns the upper-bounded USD price of the token
@@ -56,8 +58,8 @@ contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityChec
         override
         returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
-        return (0, _upperBoundValue(answer), 0, updatedAt, 0);
+        (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[BPF-3]
+        return (0, _upperBoundValue(answer), 0, updatedAt, 0); // U:[BPF-3]
     }
 
     /// @dev Upper-bounds given value

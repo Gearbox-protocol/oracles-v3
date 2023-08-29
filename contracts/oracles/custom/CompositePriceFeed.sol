@@ -14,8 +14,8 @@ import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/Sanit
 contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheckTrait {
     PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOSITE_ORACLE;
     uint256 public constant override version = 3_00;
-    uint8 public constant override decimals = 8;
-    bool public constant override skipPriceCheck = true;
+    uint8 public constant override decimals = 8; // U:[CPF-2]
+    bool public constant override skipPriceCheck = true; // U:[CPF-2]
 
     /// @notice Price feed that returns target asset price denominated in base asset
     address public immutable priceFeed0;
@@ -33,18 +33,18 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     /// @param priceFeeds Array with two price feeds, where the first one returns target asset price
     ///        denominated in base asset, and the second one returns base price denominated in USD
     constructor(PriceFeedParams[2] memory priceFeeds)
-        nonZeroAddress(priceFeeds[0].priceFeed)
-        nonZeroAddress(priceFeeds[1].priceFeed)
+        nonZeroAddress(priceFeeds[0].priceFeed) // U:[CPF-1]
+        nonZeroAddress(priceFeeds[1].priceFeed) // U:[CPF-1]
     {
-        priceFeed0 = priceFeeds[0].priceFeed;
-        priceFeed1 = priceFeeds[1].priceFeed;
+        priceFeed0 = priceFeeds[0].priceFeed; // U:[CPF-1]
+        priceFeed1 = priceFeeds[1].priceFeed; // U:[CPF-1]
 
-        stalenessPeriod0 = priceFeeds[0].stalenessPeriod;
-        stalenessPeriod1 = priceFeeds[1].stalenessPeriod;
+        stalenessPeriod0 = priceFeeds[0].stalenessPeriod; // U:[CPF-1]
+        stalenessPeriod1 = priceFeeds[1].stalenessPeriod; // U:[CPF-1]
 
-        targetFeedScale = int256(10 ** IPriceFeed(priceFeed0).decimals());
+        targetFeedScale = int256(10 ** IPriceFeed(priceFeed0).decimals()); // U:[CPF-1]
         // target/base price feed validation is omitted because it will fail if feed has other than 8 decimals
-        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
+        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1); // U:[CPF-1]
     }
 
     /// @notice Price feed description
@@ -56,7 +56,7 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
                 IPriceFeed(priceFeed1).description(),
                 " composite price feed"
             )
-        );
+        ); // U:[CPF-2]
     }
 
     /// @notice Returns the USD price of the target asset, computed as target/base price times base/USD price
@@ -66,9 +66,9 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
         override
         returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, false);
-        (int256 answer2,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
-        answer = (answer * answer2) / targetFeedScale;
+        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, false); // U:[CPF-3]
+        (int256 answer2,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1); // U:[CPF-3]
+        answer = (answer * answer2) / targetFeedScale; // U:[CPF-3]
         return (0, answer, 0, updatedAt, 0);
     }
 }

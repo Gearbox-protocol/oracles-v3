@@ -20,13 +20,16 @@ abstract contract SingleAssetLPPriceFeed is LPPriceFeed {
         address _lpContract,
         address _priceFeed,
         uint32 _stalenessPeriod
-    ) LPPriceFeed(addressProvider, _lpToken, _lpContract) nonZeroAddress(_priceFeed) {
-        priceFeed = _priceFeed;
-        stalenessPeriod = _stalenessPeriod;
-        skipCheck = _validatePriceFeed(_priceFeed, _stalenessPeriod);
+    )
+        LPPriceFeed(addressProvider, _lpToken, _lpContract) // U:[SAPF-1]
+        nonZeroAddress(_priceFeed) // U:[SAPF-1]
+    {
+        priceFeed = _priceFeed; // U:[SAPF-1]
+        stalenessPeriod = _stalenessPeriod; // U:[SAPF-1]
+        skipCheck = _validatePriceFeed(_priceFeed, _stalenessPeriod); // U:[SAPF-1]
     }
 
     function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
+        (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[SAPF-2]
     }
 }

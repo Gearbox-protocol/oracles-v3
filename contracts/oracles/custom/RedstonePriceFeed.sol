@@ -88,7 +88,7 @@ contract RedstonePriceFeed is
         }
 
         token = _token;
-        dataFeedId = _dataFeedId;
+        dataFeedId = _dataFeedId; // U:[RPF-1]
 
         signerAddress0 = _signers[0];
         signerAddress1 = _signers[1];
@@ -101,12 +101,12 @@ contract RedstonePriceFeed is
         signerAddress8 = _signers[8];
         signerAddress9 = _signers[9];
 
-        _signersThreshold = signersThreshold;
+        _signersThreshold = signersThreshold; // U:[RPF-1]
     }
 
     /// @notice Price feed description
     function description() external view override returns (string memory) {
-        return string(abi.encodePacked(ERC20(token).symbol(), " / USD Redstone price feed"));
+        return string(abi.encodePacked(ERC20(token).symbol(), " / USD Redstone price feed")); // U:[RPF-1]
     }
 
     /// @notice Returns the USD price of the token
@@ -116,7 +116,7 @@ contract RedstonePriceFeed is
         override
         returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        return (0, int256(uint256(lastPrice)), 0, lastPayloadTimestamp, 0);
+        return (0, int256(uint256(lastPrice)), 0, lastPayloadTimestamp, 0); // U:[RPF-2]
     }
 
     /// @notice Saves validated price retrieved from the passed Redstone payload
@@ -129,21 +129,21 @@ contract RedstonePriceFeed is
         // We want to minimize price update execution, in case, e.g., when several users submit
         // the same price update in a short span of time. So only updates with a larger payload timestamp
         // are fully validated and applied
-        if (expectedPayloadTimestamp <= lastPayloadTimestamp) return;
+        if (expectedPayloadTimestamp <= lastPayloadTimestamp) return; // U:[RPF-4]
 
         // We validate and set the payload timestamp here. Data packages' timestamps being equal
         // to the expected timestamp is checked in `validateTimestamp()`, which is called
         // from inside `getOracleNumericValueFromTxMsg`
         _validateExpectedPayloadTimestamp(expectedPayloadTimestamp);
-        lastPayloadTimestamp = uint40(expectedPayloadTimestamp);
+        lastPayloadTimestamp = uint40(expectedPayloadTimestamp); // U:[RPF-2,5]
 
-        uint256 priceValue = getOracleNumericValueFromTxMsg(dataFeedId);
+        uint256 priceValue = getOracleNumericValueFromTxMsg(dataFeedId); // U:[RPF-7]
 
-        if (priceValue == 0) revert IncorrectPriceException();
+        if (priceValue == 0) revert IncorrectPriceException(); // U:[RPF-8]
 
         if (priceValue != lastPrice) {
-            lastPrice = priceValue.toUint128();
-            emit UpdatePrice(priceValue);
+            lastPrice = priceValue.toUint128(); // U:[RPF-2,5]
+            emit UpdatePrice(priceValue); // U:[RPF-2,5]
         }
     }
 
@@ -167,7 +167,7 @@ contract RedstonePriceFeed is
         if (signerAddress == signerAddress8) return 8;
         if (signerAddress == signerAddress9) return 9;
 
-        revert SignerNotAuthorised(signerAddress);
+        revert SignerNotAuthorised(signerAddress); // U:[RPF-6]
     }
 
     /// @notice Validates that a timestamp in a data package is valid
@@ -178,7 +178,7 @@ contract RedstonePriceFeed is
         uint256 receivedTimestampSeconds = receivedTimestampMilliseconds / 1000;
 
         if (receivedTimestampSeconds != lastPayloadTimestamp) {
-            revert DataPackageTimestampIncorrect();
+            revert DataPackageTimestampIncorrect(); // U:[RPF-3]
         }
     }
 
@@ -188,10 +188,10 @@ contract RedstonePriceFeed is
     function _validateExpectedPayloadTimestamp(uint256 expectedPayloadTimestamp) internal view {
         if ((block.timestamp < expectedPayloadTimestamp)) {
             if ((expectedPayloadTimestamp - block.timestamp) > DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
-                revert RedstonePayloadTimestampIncorrect();
+                revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
             }
         } else if ((block.timestamp - expectedPayloadTimestamp) > DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
-            revert RedstonePayloadTimestampIncorrect();
+            revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
         }
     }
 }
