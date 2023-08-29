@@ -16,17 +16,17 @@ contract YearnPriceFeed is SingleAssetLPPriceFeed {
     uint256 immutable _scale;
 
     constructor(address addressProvider, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(addressProvider, _yVault, _yVault, _priceFeed, _stalenessPeriod)
+        SingleAssetLPPriceFeed(addressProvider, _yVault, _yVault, _priceFeed, _stalenessPeriod) // U:[YFI-1]
     {
         _scale = 10 ** IYVault(_yVault).decimals();
-        _initLimiter();
+        _initLimiter(); // U:[YFI-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return IYVault(lpToken).pricePerShare();
+        return IYVault(lpToken).pricePerShare(); // U:[YFI-1]
     }
 
     function getScale() public view override returns (uint256) {
-        return _scale;
+        return _scale; // U:[YFI-1]
     }
 }
