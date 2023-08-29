@@ -21,41 +21,21 @@ interface IWrappedATokenV2Events {
 
 /// @title Wrapped aToken V2 interface
 interface IWrappedATokenV2 is IERC20Metadata, IWrappedATokenV2Events {
-    /// @notice waToken decimals, same as underlying and aToken
-    function decimals() external view override returns (uint8);
-
-    /// @notice Underlying aToken
     function aToken() external view returns (address);
 
-    /// @notice Underlying token
     function underlying() external view returns (address);
 
-    /// @notice Aave lending pool
     function lendingPool() external view returns (address);
 
-    /// @notice Returns amount of aTokens belonging to given account (increases as interest is accrued)
     function balanceOfUnderlying(address account) external view returns (uint256);
 
-    /// @notice Returns amount of aTokens per waToken, scaled by 1e18
     function exchangeRate() external view returns (uint256);
 
-    /// @notice Deposit given amount of aTokens (aToken must be approved before the call)
-    /// @param assets Amount of aTokens to deposit in exchange for waTokens
-    /// @return shares Amount of waTokens minted to the caller
     function deposit(uint256 assets) external returns (uint256 shares);
 
-    /// @notice Deposit given amount underlying tokens (underlying must be approved before the call)
-    /// @param assets Amount of underlying tokens to deposit in exchange for waTokens
-    /// @return shares Amount of waTokens minted to the caller
     function depositUnderlying(uint256 assets) external returns (uint256 shares);
 
-    /// @notice Withdraw given amount of waTokens for aTokens
-    /// @param shares Amount of waTokens to burn in exchange for aTokens
-    /// @return assets Amount of aTokens sent to the caller
     function withdraw(uint256 shares) external returns (uint256 assets);
 
-    /// @notice Withdraw given amount of waTokens for underlying tokens
-    /// @param shares Amount of waTokens to burn in exchange for underlying tokens
-    /// @return assets Amount of underlying tokens sent to the caller
     function withdrawUnderlying(uint256 shares) external returns (uint256 assets);
 }

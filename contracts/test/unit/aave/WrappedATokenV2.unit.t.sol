@@ -8,10 +8,10 @@ import {Test} from "forge-std/Test.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {ZeroAddressException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
-import {WrappedATokenV2} from "../../tokens/aave/WrappedATokenV2.sol";
-import {IWrappedATokenV2Events} from "../../interfaces/aave/IWrappedATokenV2.sol";
+import {WrappedATokenV2} from "../../../tokens/aave/WrappedATokenV2.sol";
+import {IWrappedATokenV2Events} from "../../../interfaces/aave/IWrappedATokenV2.sol";
 
-import {LendingPoolMock} from "../mocks/integrations/aave/LendingPoolMock.sol";
+import {LendingPoolMock} from "../../mocks/integrations/aave/LendingPoolMock.sol";
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
 import {FRIEND, USER} from "@gearbox-protocol/core-v3/contracts/test/lib/constants.sol";
 import {BalanceHelper} from "@gearbox-protocol/core-v3/contracts/test/helpers/BalanceHelper.sol";
