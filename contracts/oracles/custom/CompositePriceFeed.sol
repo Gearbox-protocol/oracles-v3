@@ -24,7 +24,7 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     /// @notice Price feed that returns base price denominated in USD
     address public immutable priceFeed1;
     uint32 public immutable stalenessPeriod1;
-    bool skipCheck1;
+    bool public immutable skipCheck1;
 
     /// @notice Scale of answers in target/base price feed
     int256 public immutable targetFeedScale;

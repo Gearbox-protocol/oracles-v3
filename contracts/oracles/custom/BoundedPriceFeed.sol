@@ -7,6 +7,7 @@ import {AggregatorV2V3Interface} from "@chainlink/contracts/src/v0.8/interfaces/
 
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 
 interface ChainlinkReadableAggregator {
@@ -18,7 +19,7 @@ interface ChainlinkReadableAggregator {
 /// @title Bounded price feed
 /// @notice Can be used to provide upper-bounded answers for assets that are
 ///         expected to have the price in a certain range, e.g. stablecoins
-contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, PriceFeedValidationTrait {
+contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityCheckTrait, PriceFeedValidationTrait {
     PriceFeedType public constant override priceFeedType = PriceFeedType.BOUNDED_ORACLE;
     uint256 public constant override version = 3_00;
     uint8 public constant override decimals = 8;
@@ -36,7 +37,7 @@ contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, PriceFeedV
     /// @param _priceFeed Underlying price feed
     /// @param _stalenessPeriod Underlying price feed staleness period, must be non-zero unless it performs own checks
     /// @param _upperBound Upper bound for underlying price feed answers
-    constructor(address _priceFeed, uint32 _stalenessPeriod, int256 _upperBound) {
+    constructor(address _priceFeed, uint32 _stalenessPeriod, int256 _upperBound) nonZeroAddress(_priceFeed) {
         priceFeed = _priceFeed;
         stalenessPeriod = _stalenessPeriod;
         skipCheck = _validatePriceFeed(priceFeed, stalenessPeriod);
@@ -45,7 +46,7 @@ contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, PriceFeedV
 
     /// @notice Price feed description
     function description() external view override returns (string memory) {
-        return string(abi.encodePacked("Bounded ", IPriceFeed(priceFeed).description(), " price feed"));
+        return string(abi.encodePacked(IPriceFeed(priceFeed).description(), " bounded price feed"));
     }
 
     /// @notice Returns the upper-bounded USD price of the token
