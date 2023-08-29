@@ -18,6 +18,9 @@ uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS = 3 minutes;
 /// @dev Max period that the payload can be forward in time relative to the block
 uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 1 minutes;
 
+/// @dev Max number of authorized signers
+uint256 constant MAX_SIGNERS = 10;
+
 interface IRedstonePriceFeedExceptions {
     /// @notice Thrown when zero-address signers are passed or the signer set is smaller than allowed
     error InvalidSignerSetException();
@@ -67,8 +70,8 @@ contract RedstonePriceFeed is
     address public immutable signerAddress8;
     address public immutable signerAddress9;
 
-    /// @notice Minimal number of unique signatures from authorized signers required to validate a payload
-    uint8 public immutable signersThreshold;
+    /// @dev Minimal number of unique signatures from authorized signers required to validate a payload
+    uint8 internal immutable _signersThreshold;
 
     /// @notice The last stored price value
     uint128 public lastPrice;
@@ -76,10 +79,12 @@ contract RedstonePriceFeed is
     /// @notice The timestamp of the last update's payload
     uint40 public lastPayloadTimestamp;
 
-    constructor(address _token, bytes32 _dataFeedId, address[10] memory _signers, uint8 _signersThreshold) {
-        if (_signersThreshold > 10) revert InvalidSignerSetException();
-        for (uint256 i = 0; i < _signersThreshold; ++i) {
-            if (_signers[i] == address(0)) revert InvalidSignerSetException();
+    constructor(address _token, bytes32 _dataFeedId, address[MAX_SIGNERS] memory _signers, uint8 signersThreshold) {
+        if (signersThreshold == 0 || signersThreshold > MAX_SIGNERS) revert InvalidSignerSetException();
+        unchecked {
+            for (uint256 i = 0; i < signersThreshold; ++i) {
+                if (_signers[i] == address(0)) revert InvalidSignerSetException();
+            }
         }
 
         token = _token;
@@ -96,7 +101,7 @@ contract RedstonePriceFeed is
         signerAddress8 = _signers[8];
         signerAddress9 = _signers[9];
 
-        signersThreshold = _signersThreshold;
+        _signersThreshold = signersThreshold;
     }
 
     /// @notice Price feed description
@@ -144,11 +149,13 @@ contract RedstonePriceFeed is
 
     /// @notice Returns the number of unique signatures required to validate a payload
     function getUniqueSignersThreshold() public view virtual override returns (uint8) {
-        return signersThreshold;
+        return _signersThreshold;
     }
 
     /// @notice Returns the index of the provided signer or reverts if the address is not a signer
     function getAuthorisedSignerIndex(address signerAddress) public view virtual override returns (uint8) {
+        if (signerAddress == address(0)) revert SignerNotAuthorised(signerAddress);
+
         if (signerAddress == signerAddress0) return 0;
         if (signerAddress == signerAddress1) return 1;
         if (signerAddress == signerAddress2) return 2;
