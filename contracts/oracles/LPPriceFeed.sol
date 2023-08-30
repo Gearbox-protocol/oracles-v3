@@ -90,7 +90,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
         return _calcUpperBound(lowerBound); // U:[LPPF-4]
     }
 
-    /// @notice Returns aggregate price of underlying tokens
+    /// @notice Returns aggregate price of underlying tokens with 8 decimals
     /// @dev Must be implemented by derived price feeds
     function getAggregatePrice() public view virtual override returns (int256 answer, uint256 updatedAt);
 

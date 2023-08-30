@@ -10,7 +10,7 @@ import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
-uint256 constant USD_FEED_SCALE = 10 ** 8;
+uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 
 /// @title Curve crypto LP price feed
 /// @dev For cryptoswap pools, aggregate is geometric mean of underlying tokens prices times the number of coins
@@ -59,17 +59,17 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
 
     function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
         (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
-        uint256 product = uint256(answer) * WAD / USD_FEED_SCALE;
+        uint256 product = uint256(answer) * WAD_OVER_USD_FEED_SCALE;
 
         (answer,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
-        product = product.mulDown(uint256(answer) * WAD / USD_FEED_SCALE);
+        product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE);
 
         if (nCoins == 3) {
             (answer,) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
-            product = product.mulDown(uint256(answer) * WAD / USD_FEED_SCALE);
+            product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE);
         }
 
-        answer = int256(nCoins * product.powDown(WAD / nCoins) * USD_FEED_SCALE / WAD);
+        answer = int256(nCoins * product.powDown(WAD / nCoins) / WAD_OVER_USD_FEED_SCALE);
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
