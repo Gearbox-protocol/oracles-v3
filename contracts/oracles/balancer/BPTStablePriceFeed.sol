@@ -72,15 +72,15 @@ contract BPTStablePriceFeed is LPPriceFeed {
         if (answerA < answer) answer = answerA;
 
         if (numAssets > 2) {
-            (answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck2);
+            (answerA,) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
             if (answerA < answer) answer = answerA;
 
             if (numAssets > 3) {
-                (answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck3);
+                (answerA,) = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
                 if (answerA < answer) answer = answerA;
 
                 if (numAssets > 4) {
-                    (answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck4);
+                    (answerA,) = _getValidatedPrice(priceFeed4, stalenessPeriod4, skipCheck4);
                     if (answerA < answer) answer = answerA;
                 }
             }
