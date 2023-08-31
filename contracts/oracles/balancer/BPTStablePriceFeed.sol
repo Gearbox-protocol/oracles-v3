@@ -38,9 +38,9 @@ contract BPTStablePriceFeed is LPPriceFeed {
     bool public immutable skipCheck4;
 
     constructor(address addressProvider, address _balancerPool, PriceFeedParams[5] memory priceFeeds)
-        LPPriceFeed(addressProvider, _balancerPool, _balancerPool)
-        nonZeroAddress(priceFeeds[0].priceFeed)
-        nonZeroAddress(priceFeeds[1].priceFeed)
+        LPPriceFeed(addressProvider, _balancerPool, _balancerPool) // U:[BAL-S-1]
+        nonZeroAddress(priceFeeds[0].priceFeed) // U:[BAL-S-2]
+        nonZeroAddress(priceFeeds[1].priceFeed) // U:[BAL-S-2]
     {
         priceFeed0 = priceFeeds[0].priceFeed;
         priceFeed1 = priceFeeds[1].priceFeed;
@@ -54,7 +54,7 @@ contract BPTStablePriceFeed is LPPriceFeed {
         stalenessPeriod3 = priceFeeds[3].stalenessPeriod;
         stalenessPeriod4 = priceFeeds[4].stalenessPeriod;
 
-        numAssets = priceFeed2 == address(0) ? 2 : (priceFeed3 == address(0) ? 3 : (priceFeed4 == address(0) ? 4 : 5));
+        numAssets = priceFeed2 == address(0) ? 2 : (priceFeed3 == address(0) ? 3 : (priceFeed4 == address(0) ? 4 : 5)); // U:[BAL-S-2]
 
         skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
         skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
@@ -62,36 +62,36 @@ contract BPTStablePriceFeed is LPPriceFeed {
         skipCheck3 = numAssets > 3 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
         skipCheck4 = numAssets > 4 ? _validatePriceFeed(priceFeed4, stalenessPeriod4) : false;
 
-        _initLimiter();
+        _initLimiter(); // U:[BAL-S-1]
     }
 
     function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
+        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[BAL-S-2]
 
         (int256 answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
-        if (answerA < answer) answer = answerA;
+        if (answerA < answer) answer = answerA; // U:[BAL-S-2]
 
         if (numAssets > 2) {
             (answerA,) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
-            if (answerA < answer) answer = answerA;
+            if (answerA < answer) answer = answerA; // U:[BAL-S-2]
 
             if (numAssets > 3) {
                 (answerA,) = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
-                if (answerA < answer) answer = answerA;
+                if (answerA < answer) answer = answerA; // U:[BAL-S-2]
 
                 if (numAssets > 4) {
                     (answerA,) = _getValidatedPrice(priceFeed4, stalenessPeriod4, skipCheck4);
-                    if (answerA < answer) answer = answerA;
+                    if (answerA < answer) answer = answerA; // U:[BAL-S-2]
                 }
             }
         }
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return IBalancerStablePool(lpToken).getRate();
+        return IBalancerStablePool(lpToken).getRate(); // U:[BAL-S-1]
     }
 
     function getScale() public pure override returns (uint256) {
-        return WAD;
+        return WAD; // U:[BAL-S-1]
     }
 }

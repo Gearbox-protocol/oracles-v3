@@ -14,7 +14,7 @@ import {CurveStableLPPriceFeed} from "../../../oracles/curve/CurveStableLPPriceF
 
 import {ZeroAddressException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
-contract CurveStableLPPriceFeedTest is PriceFeedTest {
+contract CurveStableLPPriceFeedUnitTest is PriceFeedTest {
     CurveStableLPPriceFeed priceFeed;
     CurvePoolMock curvePool;
 
