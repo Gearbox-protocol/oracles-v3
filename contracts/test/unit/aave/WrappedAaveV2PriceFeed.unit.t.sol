@@ -5,9 +5,9 @@ pragma solidity ^0.8.17;
 
 import {PriceFeedTest} from "../PriceFeedTest.sol";
 
-import {WATokenMock} from "../../mocks/integrations/aave/WATokenMock.sol";
+import {WATokenMock} from "../../mocks/aave/WATokenMock.sol";
 
-import {IWrappedATokenV2} from "../../../interfaces/aave/IWrappedATokenV2.sol";
+import {IWAToken} from "../../../interfaces/aave/IWAToken.sol";
 import {WrappedAaveV2PriceFeed} from "../../../oracles/aave/WrappedAaveV2PriceFeed.sol";
 
 contract WrappedAaveV2PriceFeedUnitTest is PriceFeedTest {
@@ -17,7 +17,7 @@ contract WrappedAaveV2PriceFeedUnitTest is PriceFeedTest {
     function setUp() public {
         _setUp();
 
-        waToken = new WATokenMock("Aave Test Token", "aTEST", 18);
+        waToken = new WATokenMock();
         waToken.hackExchangeRate(1.02 ether);
 
         priceFeed = new WrappedAaveV2PriceFeed(
@@ -38,7 +38,7 @@ contract WrappedAaveV2PriceFeedUnitTest is PriceFeedTest {
         assertEq(priceFeed.lowerBound(), 1.01796 ether, "Incorrect lower bound"); // 1.02 * 0.998
 
         // overriden functions
-        vm.expectCall(address(waToken), abi.encodeCall(IWrappedATokenV2.exchangeRate, ()));
+        vm.expectCall(address(waToken), abi.encodeCall(IWAToken.exchangeRate, ()));
         assertEq(priceFeed.getLPExchangeRate(), 1.03 ether, "Incorrect getLPExchangeRate");
         assertEq(priceFeed.getScale(), 1 ether, "Incorrect getScale");
     }

@@ -7,7 +7,7 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
 import {PriceFeedTest} from "../PriceFeedTest.sol";
 
-import {ERC4626Mock} from "../../mocks/integrations/erc4626/ERC4626Mock.sol";
+import {ERC4626Mock} from "../../mocks/erc4626/ERC4626Mock.sol";
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
 
 import {ERC4626PriceFeed} from "../../../oracles/erc4626/ERC4626PriceFeed.sol";

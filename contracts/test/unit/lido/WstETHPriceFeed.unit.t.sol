@@ -5,9 +5,9 @@ pragma solidity ^0.8.17;
 
 import {PriceFeedTest} from "../PriceFeedTest.sol";
 
-import {WstETHMock} from "../../mocks/integrations/lido/WstETHMock.sol";
+import {WstETHMock} from "../../mocks/lido/WstETHMock.sol";
 
-import {IwstETHGetters} from "../../../interfaces/lido/IwstETH.sol";
+import {IwstETH} from "../../../interfaces/lido/IwstETH.sol";
 import {WstETHPriceFeed} from "../../../oracles/lido/WstETHPriceFeed.sol";
 
 contract WstETHPriceFeedUnitTest is PriceFeedTest {
@@ -17,7 +17,7 @@ contract WstETHPriceFeedUnitTest is PriceFeedTest {
     function setUp() public {
         _setUp();
 
-        wstETH = new WstETHMock();
+        wstETH = new WstETHMock(makeAddr("stETH"));
         wstETH.hackStEthPerToken(1.02 ether);
 
         priceFeed = new WstETHPriceFeed(
@@ -38,7 +38,7 @@ contract WstETHPriceFeedUnitTest is PriceFeedTest {
         assertEq(priceFeed.lowerBound(), 1.01796 ether, "Incorrect lower bound"); // 1.02 * 0.998
 
         // overriden functions
-        vm.expectCall(address(wstETH), abi.encodeCall(IwstETHGetters.stEthPerToken, ()));
+        vm.expectCall(address(wstETH), abi.encodeCall(IwstETH.stEthPerToken, ()));
         assertEq(priceFeed.getLPExchangeRate(), 1.03 ether, "Incorrect getLPExchangeRate");
         assertEq(priceFeed.getScale(), 1 ether, "Incorrect getScale");
     }

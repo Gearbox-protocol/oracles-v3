@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
 
 import {PriceFeedTest} from "../PriceFeedTest.sol";
 
-import {CTokenMock} from "../../mocks/integrations/compound/CTokenMock.sol";
+import {CTokenMock} from "../../mocks/compound/CTokenMock.sol";
 
 import {ICToken} from "../../../interfaces/compound/ICToken.sol";
 import {CompoundV2PriceFeed} from "../../../oracles/compound/CompoundV2PriceFeed.sol";
@@ -17,7 +17,7 @@ contract CompoundV2PriceFeedUnitTest is PriceFeedTest {
     function setUp() public {
         _setUp();
 
-        cToken = new CTokenMock("Compound Test Token", "cTEST");
+        cToken = new CTokenMock();
         cToken.hackExchangeRateStored(1.02 ether);
 
         priceFeed = new CompoundV2PriceFeed(

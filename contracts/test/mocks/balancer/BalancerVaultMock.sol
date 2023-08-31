@@ -14,8 +14,8 @@ import {
     ExitPoolRequest,
     JoinKind,
     ExitKind
-} from "../../../../interfaces/balancer/IBalancerV2Vault.sol";
-import {IAsset} from "../../../../interfaces/balancer/IAsset.sol";
+} from "../../../interfaces/balancer/IBalancerV2Vault.sol";
+import {IAsset} from "../../../interfaces/balancer/IAsset.sol";
 import {BPTMock} from "./BPTMock.sol";
 import {BPTStableMock} from "./BPTStableMock.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";

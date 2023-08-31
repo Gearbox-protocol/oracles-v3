@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
 
 import {PriceFeedTest} from "../PriceFeedTest.sol";
 
-import {YVaultMock} from "../../mocks/integrations/yearn/YVaultMock.sol";
+import {YVaultMock} from "../../mocks/yearn/YVaultMock.sol";
 
 import {IYVault} from "../../../interfaces/yearn/IYVault.sol";
 import {YearnPriceFeed} from "../../../oracles/yearn/YearnPriceFeed.sol";
@@ -17,7 +17,7 @@ contract YearnPriceFeedUnitTest is PriceFeedTest {
     function setUp() public {
         _setUp();
 
-        yVault = new YVaultMock("TEST yVault", "yvTEST", 6);
+        yVault = new YVaultMock(makeAddr("TOKEN"), 6);
         yVault.hackPricePerShare(1.02e6);
 
         priceFeed = new YearnPriceFeed(

@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
 
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {IWrappedATokenV2} from "../../interfaces/aave/IWrappedATokenV2.sol";
+import {IWAToken} from "../../interfaces/aave/IWAToken.sol";
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title Aave V2 waToken price feed
@@ -20,7 +20,7 @@ contract WrappedAaveV2PriceFeed is SingleAssetLPPriceFeed {
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return IWrappedATokenV2(lpToken).exchangeRate(); // U:[AAVE-1]
+        return IWAToken(lpToken).exchangeRate(); // U:[AAVE-1]
     }
 
     function getScale() public pure override returns (uint256) {

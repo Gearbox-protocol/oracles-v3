@@ -3,12 +3,15 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
+import {IwstETH} from "../../../interfaces/lido/IwstETH.sol";
 
-contract WstETHMock is ERC20Mock {
-    uint256 public stEthPerToken;
+contract WstETHMock is IwstETH {
+    address public override stETH;
+    uint256 public override stEthPerToken;
 
-    constructor() ERC20Mock("Wrapped staked Ether", "wstETH", 18) {}
+    constructor(address _stETH) {
+        stETH = _stETH;
+    }
 
     function hackStEthPerToken(uint256 newStEthPerToken) external {
         stEthPerToken = newStEthPerToken;

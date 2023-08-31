@@ -3,8 +3,6 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-interface IwstETH {
-    function stETH() external view returns (address);
-
-    function stEthPerToken() external view returns (uint256);
+interface IWAToken {
+    function exchangeRate() external view returns (uint256);
 }

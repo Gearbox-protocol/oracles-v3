@@ -3,7 +3,7 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {ICurvePool} from "../../../../interfaces/curve/ICurvePool.sol";
+import {ICurvePool} from "../../../interfaces/curve/ICurvePool.sol";
 
 contract CurvePoolMock is ICurvePool {
     uint256 public override get_virtual_price;
