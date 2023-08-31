@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+// Gearbox Protocol. Generalized leverage for DeFi protocols
+// (c) Gearbox Foundation, 2023.
+pragma solidity ^0.8.17;
 
 interface IBalancerWeightedPool {
     function getNormalizedWeights() external view returns (uint256[] memory);

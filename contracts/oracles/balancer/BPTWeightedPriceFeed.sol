@@ -3,7 +3,6 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
@@ -13,7 +12,7 @@ import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedParams} from "../PriceFeedParams.sol";
 import {FixedPoint} from "../../libraries/FixedPoint.sol";
 
-import {IBalancerV2VaultGetters} from "../../interfaces/balancer/IBalancerV2Vault.sol";
+import {IBalancerVault} from "../../interfaces/balancer/IBalancerVault.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
 
 uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
@@ -128,7 +127,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         weight6 = numAssets >= 7 ? weights[6] : 0; // F: [OBWLP-1]
         weight7 = numAssets >= 8 ? weights[7] : 0; // F: [OBWLP-1]
 
-        (IERC20[] memory tokens,,) = IBalancerV2VaultGetters(_vault).getPoolTokens(poolId);
+        (address[] memory tokens,,) = IBalancerVault(_vault).getPoolTokens(poolId);
         scale0 = _tokenScale(tokens[index0]); // F: [OBWLP-1]
         scale1 = _tokenScale(tokens[index1]); // F: [OBWLP-1]
         scale2 = numAssets >= 3 ? _tokenScale(tokens[index2]) : 0; // F: [OBWLP-1]
@@ -270,7 +269,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
 
     /// @dev Returns assets balances sorted in the order of increasing weights and scaled to have the same precision
     function _getBalancesArray() internal view returns (uint256[] memory balances) {
-        (, uint256[] memory rawBalances,) = IBalancerV2VaultGetters(vault).getPoolTokens(poolId);
+        (, uint256[] memory rawBalances,) = IBalancerVault(vault).getPoolTokens(poolId);
 
         balances = new uint256[](numAssets);
         balances[0] = rawBalances[index0] * WAD / scale0;
@@ -284,8 +283,8 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     }
 
     /// @dev Returns `token`'s scale (10^decimals)
-    function _tokenScale(IERC20 token) internal view returns (uint256) {
-        return 10 ** IERC20Metadata(address(token)).decimals();
+    function _tokenScale(address token) internal view returns (uint256) {
+        return 10 ** IERC20Metadata(token).decimals();
     }
 
     // ------- //
