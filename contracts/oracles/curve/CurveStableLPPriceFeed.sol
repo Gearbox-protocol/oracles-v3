@@ -35,9 +35,9 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
     bool public immutable skipCheck3;
 
     constructor(address addressProvider, address _token, address _pool, PriceFeedParams[4] memory priceFeeds)
-        LPPriceFeed(addressProvider, _token, _pool)
-        nonZeroAddress(priceFeeds[0].priceFeed)
-        nonZeroAddress(priceFeeds[1].priceFeed)
+        LPPriceFeed(addressProvider, _token, _pool) // U:[CRV-S-1]
+        nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-S-2]
+        nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-S-2]
     {
         priceFeed0 = priceFeeds[0].priceFeed;
         priceFeed1 = priceFeeds[1].priceFeed;
@@ -49,7 +49,7 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
         stalenessPeriod2 = priceFeeds[2].stalenessPeriod;
         stalenessPeriod3 = priceFeeds[3].stalenessPeriod;
 
-        nCoins = priceFeed2 == address(0) ? 2 : (priceFeed3 == address(0) ? 3 : 4);
+        nCoins = priceFeed2 == address(0) ? 2 : (priceFeed3 == address(0) ? 3 : 4); // U:[CRV-S-2]
 
         skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
         skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
@@ -60,31 +60,31 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
             ? PriceFeedType.CURVE_2LP_ORACLE
             : (nCoins == 3 ? PriceFeedType.CURVE_3LP_ORACLE : PriceFeedType.CURVE_4LP_ORACLE);
 
-        _initLimiter();
+        _initLimiter(); // U:[CRV-S-1]
     }
 
     function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
+        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[CRV-S-2]
 
         (int256 answer2,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
-        if (answer2 < answer) answer = answer2;
+        if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
 
         if (nCoins > 2) {
             (answer2,) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
-            if (answer2 < answer) answer = answer2;
+            if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
 
             if (nCoins > 3) {
                 (answer2,) = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
-                if (answer2 < answer) answer = answer2;
+                if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
             }
         }
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return uint256(ICurvePool(lpContract).get_virtual_price());
+        return uint256(ICurvePool(lpContract).get_virtual_price()); // U:[CRV-S-1]
     }
 
     function getScale() public pure override returns (uint256) {
-        return WAD;
+        return WAD; // U:[CRV-S-1]
     }
 }

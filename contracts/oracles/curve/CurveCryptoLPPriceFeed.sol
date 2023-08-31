@@ -36,9 +36,9 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     bool public immutable skipCheck2;
 
     constructor(address addressProvider, address _token, address _pool, PriceFeedParams[3] memory priceFeeds)
-        LPPriceFeed(addressProvider, _token, _pool)
-        nonZeroAddress(priceFeeds[0].priceFeed)
-        nonZeroAddress(priceFeeds[1].priceFeed)
+        LPPriceFeed(addressProvider, _token, _pool) // U:[CRV-C-1]
+        nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-C-2]
+        nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-C-2]
     {
         priceFeed0 = priceFeeds[0].priceFeed;
         priceFeed1 = priceFeeds[1].priceFeed;
@@ -48,35 +48,35 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
         stalenessPeriod1 = priceFeeds[1].stalenessPeriod;
         stalenessPeriod2 = priceFeeds[2].stalenessPeriod;
 
-        nCoins = priceFeed2 == address(0) ? 2 : 3;
+        nCoins = priceFeed2 == address(0) ? 2 : 3; // U:[CRV-C-2]
 
         skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
         skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
         skipCheck2 = nCoins == 3 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
 
-        _initLimiter();
+        _initLimiter(); // U:[CRV-C-1]
     }
 
     function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
         (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
-        uint256 product = uint256(answer) * WAD_OVER_USD_FEED_SCALE;
+        uint256 product = uint256(answer) * WAD_OVER_USD_FEED_SCALE; // U:[CRV-C-2]
 
         (answer,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
-        product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE);
+        product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE); // U:[CRV-C-2]
 
         if (nCoins == 3) {
             (answer,) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
-            product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE);
+            product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE); // U:[CRV-C-2]
         }
 
-        answer = int256(nCoins * product.powDown(WAD / nCoins) / WAD_OVER_USD_FEED_SCALE);
+        answer = int256(nCoins * product.powDown(WAD / nCoins) / WAD_OVER_USD_FEED_SCALE); // U:[CRV-C-2]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return uint256(ICurvePool(lpContract).get_virtual_price());
+        return uint256(ICurvePool(lpContract).get_virtual_price()); // U:[CRV-C-1]
     }
 
     function getScale() public pure override returns (uint256) {
-        return WAD;
+        return WAD; // U:[CRV-C-1]
     }
 }
