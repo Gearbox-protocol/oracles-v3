@@ -63,18 +63,18 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
         _initLimiter(); // U:[CRV-S-1]
     }
 
-    function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[CRV-S-2]
+    function getAggregatePrice() public view override returns (int256 answer) {
+        answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[CRV-S-2]
 
-        (int256 answer2,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
+        int256 answer2 = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
         if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
 
         if (nCoins > 2) {
-            (answer2,) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
+            answer2 = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
             if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
 
             if (nCoins > 3) {
-                (answer2,) = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
+                answer2 = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
                 if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
             }
         }

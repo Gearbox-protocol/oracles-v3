@@ -12,7 +12,6 @@ contract LPPriceFeedHarness is LPPriceFeed {
     uint256 public constant override version = 0;
 
     int256 _answer;
-    uint256 _updatedAt;
     uint256 _exchangeRate;
     uint256 _scale;
 
@@ -20,13 +19,12 @@ contract LPPriceFeedHarness is LPPriceFeed {
         LPPriceFeed(_addressProvider, _lpToken, _lpContract)
     {}
 
-    function hackAggregatePrice(int256 answer, uint256 updatedAt) external {
+    function hackAggregatePrice(int256 answer) external {
         _answer = answer;
-        _updatedAt = updatedAt;
     }
 
-    function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
-        return (_answer, _updatedAt);
+    function getAggregatePrice() public view override returns (int256 answer) {
+        return _answer;
     }
 
     function hackLPExchangeRate(uint256 exchangeRate) external {

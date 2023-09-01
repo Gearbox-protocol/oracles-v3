@@ -76,7 +76,7 @@ contract CurveCryptoLPPriceFeedUnitTest is PriceFeedTest {
             priceFeed = _newCurvePriceFeed(numFeeds);
             assertEq(priceFeed.nCoins(), numFeeds, "Incorrect nCoins");
 
-            (int256 answer,) = priceFeed.getAggregatePrice();
+            int256 answer = priceFeed.getAggregatePrice();
             assertApproxEqAbs(answer, int256(int256(numFeeds * 1e8 * 2 ** (numFeeds - 1))), 1, "Incorrect answer");
         }
     }

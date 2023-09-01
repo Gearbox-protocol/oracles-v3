@@ -76,7 +76,7 @@ contract CurveStableLPPriceFeedUnitTest is PriceFeedTest {
             priceFeed = _newCurvePriceFeed(numFeeds);
             assertEq(priceFeed.nCoins(), numFeeds, "Incorrect nCoins");
 
-            (int256 answer,) = priceFeed.getAggregatePrice();
+            int256 answer = priceFeed.getAggregatePrice();
             assertEq(answer, int256(1e6 * (101 - numFeeds)), "Incorrect answer");
         }
     }

@@ -57,15 +57,15 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
         _initLimiter(); // U:[CRV-C-1]
     }
 
-    function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
+    function getAggregatePrice() public view override returns (int256 answer) {
+        answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
         uint256 product = uint256(answer) * WAD_OVER_USD_FEED_SCALE; // U:[CRV-C-2]
 
-        (answer,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
+        answer = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
         product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE); // U:[CRV-C-2]
 
         if (nCoins == 3) {
-            (answer,) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
+            answer = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
             product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE); // U:[CRV-C-2]
         }
 

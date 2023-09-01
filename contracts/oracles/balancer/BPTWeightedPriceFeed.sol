@@ -171,14 +171,14 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     // PRICING //
     // ------- //
 
-    function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
+    function getAggregatePrice() public view override returns (int256 answer) {
         uint256[] memory weights = _getWeightsArray();
 
         uint256 weightedPrice = FixedPoint.ONE;
         uint256 currentBase = FixedPoint.ONE;
         for (uint256 i = 0; i < numAssets;) {
             (address priceFeed, uint32 stalenessPeriod, bool skipCheck) = _getPriceFeedParams(i);
-            (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // F: [OBWLP-3,4]
+            answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // F: [OBWLP-3,4]
             answer = answer * int256(WAD_OVER_USD_FEED_SCALE);
 
             currentBase = currentBase.mulDown(uint256(answer).divDown(weights[i]));

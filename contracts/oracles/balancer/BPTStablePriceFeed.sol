@@ -65,22 +65,22 @@ contract BPTStablePriceFeed is LPPriceFeed {
         _initLimiter(); // U:[BAL-S-1]
     }
 
-    function getAggregatePrice() public view override returns (int256 answer, uint256 updatedAt) {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[BAL-S-2]
+    function getAggregatePrice() public view override returns (int256 answer) {
+        answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[BAL-S-2]
 
-        (int256 answerA,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
+        int256 answerA = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
         if (answerA < answer) answer = answerA; // U:[BAL-S-2]
 
         if (numAssets > 2) {
-            (answerA,) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
+            answerA = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
             if (answerA < answer) answer = answerA; // U:[BAL-S-2]
 
             if (numAssets > 3) {
-                (answerA,) = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
+                answerA = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
                 if (answerA < answer) answer = answerA; // U:[BAL-S-2]
 
                 if (numAssets > 4) {
-                    (answerA,) = _getValidatedPrice(priceFeed4, stalenessPeriod4, skipCheck4);
+                    answerA = _getValidatedPrice(priceFeed4, stalenessPeriod4, skipCheck4);
                     if (answerA < answer) answer = answerA; // U:[BAL-S-2]
                 }
             }

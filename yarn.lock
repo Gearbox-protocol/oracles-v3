@@ -1321,7 +1321,12 @@
   dependencies:
     "@typechain/ethers-v5" "^10.2.1"
 
-"@gearbox-protocol/core-v3@^1.33.0", "@gearbox-protocol/core-v3@^1.34.1":
+"@gearbox-protocol/core-v3@1.38.2":
+  version "1.38.2"
+  resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v3/-/core-v3-1.38.2.tgz#28de2cd40d417c3916948533f515b084e15bbae1"
+  integrity sha512-G6pOD6/snW/4O5EbJNOd/Q5iYZ47wK4x8e9cdVW37U2wZ7GXuwrp8hw5cFr105j7NapFuNa+ybgGDOCM7+Hl/g==
+
+"@gearbox-protocol/core-v3@^1.34.1":
   version "1.36.4"
   resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v3/-/core-v3-1.36.4.tgz#012537ebd4a967935a335f757062da1c2db63684"
   integrity sha512-efv01HHHelmXHs9aJMJkLVvkCAuKCOetDhPtK0TRVa1dxnjNUWLXbpcH2CSAHlNymXekUzanuWwNv41noNI9lQ==

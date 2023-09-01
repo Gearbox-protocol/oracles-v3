@@ -64,7 +64,7 @@ contract BPTStablePriceFeedUnitTest is PriceFeedTest {
             priceFeed = _newBalancerPriceFeed(numFeeds);
             assertEq(priceFeed.numAssets(), numFeeds, "Incorrect numAssets");
 
-            (int256 answer,) = priceFeed.getAggregatePrice();
+            int256 answer = priceFeed.getAggregatePrice();
             assertEq(answer, int256(1e6 * (101 - numFeeds)), "Incorrect answer");
         }
     }

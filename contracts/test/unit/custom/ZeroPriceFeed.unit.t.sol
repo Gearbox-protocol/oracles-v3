@@ -14,7 +14,6 @@ contract ZeroPriceFeedUnitTest is Test {
 
     function setUp() public {
         priceFeed = new ZeroPriceFeed();
-        vm.warp(block.timestamp + 42069);
     }
 
     /// @notice U:[ZPF-1]: Price feed has correct metadata
@@ -26,8 +25,7 @@ contract ZeroPriceFeedUnitTest is Test {
 
     /// @notice U:[ZPF-2]: `latestRoundData` works as expected
     function test_U_ZPF_02_latestRoundData_works_as_expected() public {
-        (, int256 answer,, uint256 updatedAt,) = priceFeed.latestRoundData();
+        (, int256 answer,,,) = priceFeed.latestRoundData();
         assertEq(answer, 0, "Incorrect answer");
-        assertEq(updatedAt, block.timestamp, "Incorrect updatedAt");
     }
 }

@@ -33,7 +33,7 @@ interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents, ILPPriceFeedExceptions
     function upperBound() external view returns (uint256);
     function updateBoundsAllowed() external view returns (bool);
 
-    function getAggregatePrice() external view returns (int256 answer, uint256 updatedAt);
+    function getAggregatePrice() external view returns (int256 answer);
     function getLPExchangeRate() external view returns (uint256 exchangeRate);
     function getScale() external view returns (uint256 scale);
 

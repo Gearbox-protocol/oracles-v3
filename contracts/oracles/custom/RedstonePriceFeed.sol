@@ -35,6 +35,7 @@ interface IRedstonePriceFeedExceptions {
 
 interface IRedstonePriceFeedEvents {
     /// @notice Emitted when a successful price update is pushed
+    /// @param price New USD price of the token with 8 decimals
     event UpdatePrice(uint256 price);
 }
 
@@ -109,7 +110,7 @@ contract RedstonePriceFeed is
         return string(abi.encodePacked(ERC20(token).symbol(), " / USD Redstone price feed")); // U:[RPF-1]
     }
 
-    /// @notice Returns the USD price of the token
+    /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
     function latestRoundData()
         external
         view

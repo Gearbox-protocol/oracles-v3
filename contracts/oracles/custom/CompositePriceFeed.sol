@@ -60,15 +60,10 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     }
 
     /// @notice Returns the USD price of the target asset, computed as target/base price times base/USD price
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
-    {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, false); // U:[CPF-3]
-        (int256 answer2,) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1); // U:[CPF-3]
+    function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
+        answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, false); // U:[CPF-3]
+        int256 answer2 = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1); // U:[CPF-3]
         answer = (answer * answer2) / targetFeedScale; // U:[CPF-3]
-        return (0, answer, 0, updatedAt, 0);
+        return (0, answer, 0, 0, 0);
     }
 }

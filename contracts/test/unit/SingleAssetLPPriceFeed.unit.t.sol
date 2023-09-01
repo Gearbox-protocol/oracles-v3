@@ -81,9 +81,8 @@ contract SingleAssetLPPriceFeedUnitTest is Test {
     /// @notice U:[SAPF-2]: `getAggregatePrice` works as expected
     function test_U_SAPF_02_getAggregatePrice_works_as_expected() public {
         // returns same answer as underlying price feed
-        (int256 answer, uint256 updatedAt) = priceFeed.getAggregatePrice();
+        int256 answer = priceFeed.getAggregatePrice();
         assertEq(answer, 1e8, "Incorrect answer");
-        assertEq(updatedAt, block.timestamp + 36500 days, "Incorrect updatedAt");
 
         // reverts on stale answer
         underlyingPriceFeed.setParams(0, 0, block.timestamp - 2 days, 0);

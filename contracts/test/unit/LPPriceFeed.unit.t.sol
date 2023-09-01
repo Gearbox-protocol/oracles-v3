@@ -82,7 +82,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
     /// @notice U:[LPPF-3]: `latestRoundData` works as expected
     function test_U_LPPF_03_latestRoundData_works_as_expected() public {
         priceFeed.hackLowerBound(1 ether);
-        priceFeed.hackAggregatePrice(2e8, 42069);
+        priceFeed.hackAggregatePrice(2e8);
         priceFeed.hackScale(1 ether);
 
         // reverts if exchange rate below lower bound
@@ -92,15 +92,13 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         // computes normally if exchange rate within bounds
         priceFeed.hackLPExchangeRate(1.01 ether);
-        (, int256 answer,, uint256 updatedAt,) = priceFeed.latestRoundData();
+        (, int256 answer,,,) = priceFeed.latestRoundData();
         assertEq(answer, 2.02e8, "Incorrect answer (exchange rate within bounds)");
-        assertEq(updatedAt, 42069, "Incorrect updatedAt (exchange rate within bounds)");
 
         // limits if exchange rate above upper bound
         priceFeed.hackLPExchangeRate(2 ether);
-        (, answer,, updatedAt,) = priceFeed.latestRoundData();
+        (, answer,,,) = priceFeed.latestRoundData();
         assertEq(answer, 2.04e8, "Incorrect answer (exchange rate above upper bound)");
-        assertEq(updatedAt, 42069, "Incorrect updatedAt (exchange rate above upper bound)");
     }
 
     /// @notice U:[LPPF-4]: `upperBound` works as expected
@@ -169,7 +167,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
             priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.02e8)
         );
 
-        priceFeed.hackAggregatePrice(2e8, 42069);
+        priceFeed.hackAggregatePrice(2e8);
         priceFeed.hackLPExchangeRate(1.02 ether);
         priceFeed.hackScale(1 ether);
 

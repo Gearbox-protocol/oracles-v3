@@ -52,14 +52,9 @@ contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityChec
     }
 
     /// @notice Returns the upper-bounded USD price of the token
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
-    {
-        (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[BPF-3]
-        return (0, _upperBoundValue(answer), 0, updatedAt, 0); // U:[BPF-3]
+    function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
+        answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[BPF-3]
+        return (0, _upperBoundValue(answer), 0, 0, 0); // U:[BPF-3]
     }
 
     /// @dev Upper-bounds given value

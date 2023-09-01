@@ -16,7 +16,7 @@ contract ZeroPriceFeed is IPriceFeed {
     bool public constant override skipPriceCheck = true; // U:[ZPF-1]
 
     /// @notice Returns zero price
-    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
-        return (0, 0, 0, block.timestamp, 0); // U:[ZPF-2]
+    function latestRoundData() external pure override returns (uint80, int256 answer, uint256, uint256, uint80) {
+        return (0, 0, 0, 0, 0); // U:[ZPF-2]
     }
 }

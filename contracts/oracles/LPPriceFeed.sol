@@ -67,12 +67,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     }
 
     /// @notice Returns USD price of the LP token with 8 decimals
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
-    {
+    function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
         uint256 exchangeRate = getLPExchangeRate();
         uint256 lb = lowerBound;
         if (exchangeRate < lb) revert ExchangeRateOutOfBoundsException(); // U:[LPPF-3]
@@ -80,9 +75,8 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
         uint256 ub = _calcUpperBound(lb);
         if (exchangeRate > ub) exchangeRate = ub; // U:[LPPF-3]
 
-        (answer, updatedAt) = getAggregatePrice(); // U:[LPPF-3]
-        answer = int256((exchangeRate * uint256(answer)) / getScale()); // U:[LPPF-3]
-        return (0, answer, 0, updatedAt, 0);
+        answer = int256((exchangeRate * uint256(getAggregatePrice())) / getScale()); // U:[LPPF-3]
+        return (0, answer, 0, 0, 0);
     }
 
     /// @notice Upper bound for the LP token exchange rate
@@ -92,7 +86,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
 
     /// @notice Returns aggregate price of underlying tokens with 8 decimals
     /// @dev Must be implemented by derived price feeds
-    function getAggregatePrice() public view virtual override returns (int256 answer, uint256 updatedAt);
+    function getAggregatePrice() public view virtual override returns (int256 answer);
 
     /// @notice Returns LP token exchange rate
     /// @dev Must be implemented by derived price feeds
@@ -139,8 +133,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
         } catch {}
 
         uint256 reserveAnswer = IPriceOracleV3(priceOracle).getPriceRaw({token: lpToken, reserve: true}); // U:[LPPF-7]
-        (int256 price,) = getAggregatePrice();
-        uint256 reserveExchangeRate = uint256(reserveAnswer * getScale() / uint256(price)); // U:[LPPF-7]
+        uint256 reserveExchangeRate = uint256(reserveAnswer * getScale() / uint256(getAggregatePrice())); // U:[LPPF-7]
 
         _setLimiter(_calcLowerBound(reserveExchangeRate), getLPExchangeRate()); // U:[LPPF-7]
     }
