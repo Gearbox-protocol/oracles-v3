@@ -291,7 +291,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     // SORTING //
     // ------- //
 
-    /// @dev Sorts array in ascending order, returns the resulting permutation
+    /// @dev Sorts array in-place in ascending order, also returns the resulting permutation
     function _sort(uint256[] memory data) internal pure returns (uint256[] memory indices) {
         uint256 len = data.length;
         indices = new uint256[](len);
