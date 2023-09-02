@@ -20,6 +20,7 @@ import {
     CrvUsdPriceFeedData,
     GenericLPPriceFeedData,
     TheSamePriceFeedData,
+    BalancerLPPriceFeedData,
     RedStonePriceFeedData
 } from "@gearbox-protocol/sdk-gov/contracts/PriceFeedDataLive.sol";
 import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
@@ -43,6 +44,9 @@ import {ZeroPriceFeed} from "../../oracles/custom/ZeroPriceFeed.sol";
 import {CompositePriceFeed} from "../../oracles/custom/CompositePriceFeed.sol";
 import {BoundedPriceFeed} from "../../oracles/custom/BoundedPriceFeed.sol";
 import {RedstonePriceFeed} from "../../oracles/custom/RedstonePriceFeed.sol";
+
+import {BPTStablePriceFeed} from "../../oracles/balancer/BPTStablePriceFeed.sol";
+import {BPTWeightedPriceFeed} from "../../oracles/balancer/BPTWeightedPriceFeed.sol";
 
 import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
 import {IYVault} from "../../interfaces/yearn/IYVault.sol";
@@ -310,7 +314,113 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
-        // CURVE LIKE PRICEFEEDS
+        // wstETH PRICE FEED
+        unchecked {
+            Tokens t = wstethPriceFeedByNetwork[chainId].token;
+            if (t != Tokens.NO_TOKEN) {
+                address wsteth = tokenTestSuite.addressOf(t);
+
+                if (wsteth != address(0)) {
+                    address steth = IwstETH(wsteth).stETH();
+
+                    address pf = address(
+                        new WstETHPriceFeed(
+                            addressProvider,
+                            wsteth,
+                            priceFeeds[steth],
+                            stalenessPeriods[steth]
+                        )
+                    );
+
+                    setPriceFeed(wsteth, pf);
+
+                    string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                    vm.label(pf, description);
+                }
+            }
+        }
+
+        // BALANCER STABLE PRICEFEEDS
+        {
+            BalancerLPPriceFeedData[] memory balancerStableLPPriceFeeds = balancerStableLPPriceFeedsByNetwork[chainId];
+            len = balancerStableLPPriceFeeds.length;
+
+            unchecked {
+                for (uint256 i; i < len; ++i) {
+                    Tokens lpToken = balancerStableLPPriceFeeds[i].lpToken;
+
+                    address pf;
+
+                    if (tokenTestSuite.addressOf(lpToken) != address(0)) {
+                        PriceFeedParams[5] memory pfParams;
+
+                        uint256 nAssets = balancerStableLPPriceFeeds[i].assets.length;
+                        for (uint256 j; j < nAssets; ++j) {
+                            address asset = tokenTestSuite.addressOf(balancerStableLPPriceFeeds[i].assets[j]);
+                            pfParams[j] = PriceFeedParams({
+                                priceFeed: priceFeeds[asset],
+                                stalenessPeriod: stalenessPeriods[asset]
+                            });
+                        }
+
+                        pf = address(
+                            new BPTStablePriceFeed(
+                            addressProvider,
+                            tokenTestSuite.addressOf(lpToken),
+                            pfParams
+                            )
+                        );
+
+                        setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
+                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
+                    }
+                }
+            }
+        }
+
+        // BALANCER WEIGHTED PRICEFEEDS
+        {
+            BalancerLPPriceFeedData[] memory balancerWeightedLPPriceFeeds =
+                balancerWeightedLPPriceFeedsByNetwork[chainId];
+            len = balancerWeightedLPPriceFeeds.length;
+
+            unchecked {
+                for (uint256 i; i < len; ++i) {
+                    Tokens lpToken = balancerWeightedLPPriceFeeds[i].lpToken;
+
+                    address pf;
+
+                    if (tokenTestSuite.addressOf(lpToken) != address(0)) {
+                        uint256 nAssets = balancerWeightedLPPriceFeeds[i].assets.length;
+
+                        PriceFeedParams[] memory pfParams = new PriceFeedParams[](nAssets);
+                        for (uint256 j; j < nAssets; ++j) {
+                            address asset = tokenTestSuite.addressOf(balancerWeightedLPPriceFeeds[i].assets[j]);
+                            pfParams[j] = PriceFeedParams({
+                                priceFeed: priceFeeds[asset],
+                                stalenessPeriod: stalenessPeriods[asset]
+                            });
+                        }
+
+                        // console.log("BV", supportedContracts.addressOf(Contracts.BALANCER_VAULT));
+
+                        pf = address(
+                            new BPTWeightedPriceFeed(
+                            addressProvider,
+                            supportedContracts.addressOf(Contracts.BALANCER_VAULT),
+                            tokenTestSuite.addressOf(lpToken),
+                            pfParams
+                            )
+                        );
+
+                        setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
+                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
+                    }
+                }
+            }
+        }
+
+        // THE SAME PRICEFEEDS
         TheSamePriceFeedData[] memory theSamePriceFeeds = theSamePriceFeedsByNetwork[chainId];
         len = theSamePriceFeeds.length;
         unchecked {
@@ -355,32 +465,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
-            }
-        }
-
-        // wstETH PRICE FEED
-        unchecked {
-            Tokens t = wstethPriceFeedByNetwork[chainId].token;
-            if (t != Tokens.NO_TOKEN) {
-                address wsteth = tokenTestSuite.addressOf(t);
-
-                if (wsteth != address(0)) {
-                    address steth = IwstETH(wsteth).stETH();
-
-                    address pf = address(
-                        new WstETHPriceFeed(
-                            addressProvider,
-                            wsteth,
-                            priceFeeds[steth],
-                            stalenessPeriods[steth]
-                        )
-                    );
-
-                    setPriceFeed(wsteth, pf);
-
-                    string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                    vm.label(pf, description);
-                }
             }
         }
 

@@ -46,8 +46,15 @@ contract PricePrinterTest is Test {
         uint256 integerPart = price / 1e8;
         uint256 fractionalPart = (price / 1e6) % 100;
         string memory zero = fractionalPart < 10 ? "0" : "";
+
+        Tokens t = pfd.tokenTestSuite().tokenIndexes(token);
         string memory result = string.concat(
-            ERC20(token).symbol(), ": $", Strings.toString(integerPart), ".", zero, Strings.toString(fractionalPart)
+            pfd.tokenTestSuite().symbols(t),
+            ": $",
+            Strings.toString(integerPart),
+            ".",
+            zero,
+            Strings.toString(fractionalPart)
         );
         console.log(result);
     }
