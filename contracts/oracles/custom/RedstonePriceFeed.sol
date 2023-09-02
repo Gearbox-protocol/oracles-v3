@@ -18,6 +18,9 @@ uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS = 3 minutes;
 /// @dev Max period that the payload can be forward in time relative to the block
 uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 1 minutes;
 
+/// @dev Max number of authorized signers
+uint256 constant MAX_SIGNERS = 10;
+
 interface IRedstonePriceFeedExceptions {
     /// @notice Thrown when zero-address signers are passed or the signer set is smaller than allowed
     error InvalidSignerSetException();
@@ -32,6 +35,7 @@ interface IRedstonePriceFeedExceptions {
 
 interface IRedstonePriceFeedEvents {
     /// @notice Emitted when a successful price update is pushed
+    /// @param price New USD price of the token with 8 decimals
     event UpdatePrice(uint256 price);
 }
 
@@ -67,8 +71,8 @@ contract RedstonePriceFeed is
     address public immutable signerAddress8;
     address public immutable signerAddress9;
 
-    /// @notice Minimal number of unique signatures from authorized signers required to validate a payload
-    uint8 public immutable signersThreshold;
+    /// @dev Minimal number of unique signatures from authorized signers required to validate a payload
+    uint8 internal immutable _signersThreshold;
 
     /// @notice The last stored price value
     uint128 public lastPrice;
@@ -76,14 +80,16 @@ contract RedstonePriceFeed is
     /// @notice The timestamp of the last update's payload
     uint40 public lastPayloadTimestamp;
 
-    constructor(address _token, bytes32 _dataFeedId, address[10] memory _signers, uint8 _signersThreshold) {
-        if (_signersThreshold > 10) revert InvalidSignerSetException();
-        for (uint256 i = 0; i < _signersThreshold; ++i) {
-            if (_signers[i] == address(0)) revert InvalidSignerSetException();
+    constructor(address _token, bytes32 _dataFeedId, address[MAX_SIGNERS] memory _signers, uint8 signersThreshold) {
+        if (signersThreshold == 0 || signersThreshold > MAX_SIGNERS) revert InvalidSignerSetException();
+        unchecked {
+            for (uint256 i = 0; i < signersThreshold; ++i) {
+                if (_signers[i] == address(0)) revert InvalidSignerSetException();
+            }
         }
 
         token = _token;
-        dataFeedId = _dataFeedId;
+        dataFeedId = _dataFeedId; // U:[RPF-1]
 
         signerAddress0 = _signers[0];
         signerAddress1 = _signers[1];
@@ -96,22 +102,22 @@ contract RedstonePriceFeed is
         signerAddress8 = _signers[8];
         signerAddress9 = _signers[9];
 
-        signersThreshold = _signersThreshold;
+        _signersThreshold = signersThreshold; // U:[RPF-1]
     }
 
     /// @notice Price feed description
     function description() external view override returns (string memory) {
-        return string(abi.encodePacked(ERC20(token).symbol(), " / USD Redstone price feed"));
+        return string(abi.encodePacked(ERC20(token).symbol(), " / USD Redstone price feed")); // U:[RPF-1]
     }
 
-    /// @notice Returns the USD price of the token
+    /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
     function latestRoundData()
         external
         view
         override
         returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
     {
-        return (0, int256(uint256(lastPrice)), 0, lastPayloadTimestamp, 0);
+        return (0, int256(uint256(lastPrice)), 0, lastPayloadTimestamp, 0); // U:[RPF-2]
     }
 
     /// @notice Saves validated price retrieved from the passed Redstone payload
@@ -124,31 +130,33 @@ contract RedstonePriceFeed is
         // We want to minimize price update execution, in case, e.g., when several users submit
         // the same price update in a short span of time. So only updates with a larger payload timestamp
         // are fully validated and applied
-        if (expectedPayloadTimestamp <= lastPayloadTimestamp) return;
+        if (expectedPayloadTimestamp <= lastPayloadTimestamp) return; // U:[RPF-4]
 
         // We validate and set the payload timestamp here. Data packages' timestamps being equal
         // to the expected timestamp is checked in `validateTimestamp()`, which is called
         // from inside `getOracleNumericValueFromTxMsg`
         _validateExpectedPayloadTimestamp(expectedPayloadTimestamp);
-        lastPayloadTimestamp = uint40(expectedPayloadTimestamp);
+        lastPayloadTimestamp = uint40(expectedPayloadTimestamp); // U:[RPF-2,5]
 
-        uint256 priceValue = getOracleNumericValueFromTxMsg(dataFeedId);
+        uint256 priceValue = getOracleNumericValueFromTxMsg(dataFeedId); // U:[RPF-7]
 
-        if (priceValue == 0) revert IncorrectPriceException();
+        if (priceValue == 0) revert IncorrectPriceException(); // U:[RPF-8]
 
         if (priceValue != lastPrice) {
-            lastPrice = priceValue.toUint128();
-            emit UpdatePrice(priceValue);
+            lastPrice = priceValue.toUint128(); // U:[RPF-2,5]
+            emit UpdatePrice(priceValue); // U:[RPF-2,5]
         }
     }
 
     /// @notice Returns the number of unique signatures required to validate a payload
     function getUniqueSignersThreshold() public view virtual override returns (uint8) {
-        return signersThreshold;
+        return _signersThreshold;
     }
 
     /// @notice Returns the index of the provided signer or reverts if the address is not a signer
     function getAuthorisedSignerIndex(address signerAddress) public view virtual override returns (uint8) {
+        if (signerAddress == address(0)) revert SignerNotAuthorised(signerAddress);
+
         if (signerAddress == signerAddress0) return 0;
         if (signerAddress == signerAddress1) return 1;
         if (signerAddress == signerAddress2) return 2;
@@ -160,7 +168,7 @@ contract RedstonePriceFeed is
         if (signerAddress == signerAddress8) return 8;
         if (signerAddress == signerAddress9) return 9;
 
-        revert SignerNotAuthorised(signerAddress);
+        revert SignerNotAuthorised(signerAddress); // U:[RPF-6]
     }
 
     /// @notice Validates that a timestamp in a data package is valid
@@ -171,7 +179,7 @@ contract RedstonePriceFeed is
         uint256 receivedTimestampSeconds = receivedTimestampMilliseconds / 1000;
 
         if (receivedTimestampSeconds != lastPayloadTimestamp) {
-            revert DataPackageTimestampIncorrect();
+            revert DataPackageTimestampIncorrect(); // U:[RPF-3]
         }
     }
 
@@ -181,10 +189,10 @@ contract RedstonePriceFeed is
     function _validateExpectedPayloadTimestamp(uint256 expectedPayloadTimestamp) internal view {
         if ((block.timestamp < expectedPayloadTimestamp)) {
             if ((expectedPayloadTimestamp - block.timestamp) > DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
-                revert RedstonePayloadTimestampIncorrect();
+                revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
             }
         } else if ((block.timestamp - expectedPayloadTimestamp) > DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
-            revert RedstonePayloadTimestampIncorrect();
+            revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
         }
     }
 }

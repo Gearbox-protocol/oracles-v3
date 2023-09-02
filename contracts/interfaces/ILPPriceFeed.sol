@@ -13,8 +13,17 @@ interface ILPPriceFeedEvents {
     event SetUpdateBoundsAllowed(bool allowed);
 }
 
+interface ILPPriceFeedExceptions {
+    /// @notice Thrown when exchange rate falls below lower bound during price calculation
+    ///         or new boudns don't contain exchange rate during bounds update
+    error ExchangeRateOutOfBoundsException();
+
+    /// @notice Thrown when trying to call `updateBounds` while it's not allowed
+    error UpdateBoundsNotAllowedException();
+}
+
 /// @title LP price feed interface
-interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents {
+interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents, ILPPriceFeedExceptions {
     function priceOracle() external view returns (address);
 
     function lpToken() external view returns (address);
@@ -24,7 +33,7 @@ interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents {
     function upperBound() external view returns (uint256);
     function updateBoundsAllowed() external view returns (bool);
 
-    function getAggregatePrice() external view returns (int256 answer, uint256 updatedAt);
+    function getAggregatePrice() external view returns (int256 answer);
     function getLPExchangeRate() external view returns (uint256 exchangeRate);
     function getScale() external view returns (uint256 scale);
 

@@ -11,12 +11,12 @@ import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceF
 contract ZeroPriceFeed is IPriceFeed {
     PriceFeedType public constant override priceFeedType = PriceFeedType.ZERO_ORACLE;
     uint256 public constant override version = 3_00;
-    uint8 public constant override decimals = 8;
-    string public constant override description = "Zero price feed";
-    bool public constant override skipPriceCheck = true;
+    uint8 public constant override decimals = 8; // U:[ZPF-1]
+    string public constant override description = "Zero price feed"; // U:[ZPF-1]
+    bool public constant override skipPriceCheck = true; // U:[ZPF-1]
 
     /// @notice Returns zero price
-    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
-        return (0, 0, 0, block.timestamp, 0);
+    function latestRoundData() external pure override returns (uint80, int256 answer, uint256, uint256, uint80) {
+        return (0, 0, 0, 0, 0); // U:[ZPF-2]
     }
 }

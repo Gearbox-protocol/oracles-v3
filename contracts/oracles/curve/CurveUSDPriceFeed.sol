@@ -4,12 +4,9 @@
 pragma solidity ^0.8.17;
 
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
+import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
-
-interface IPool {
-    function price_oracle() external view returns (uint256);
-}
 
 /// @title crvUSD price feed
 /// @notice Computes crvUSD price as product of crvUSD-USDC stableswap pool exchange rate and USDC price feed.
@@ -20,16 +17,16 @@ contract CurveUSDPriceFeed is SingleAssetLPPriceFeed {
     PriceFeedType public constant override priceFeedType = PriceFeedType.CURVE_USD_ORACLE;
 
     constructor(address addressProvider, address _crvUSD, address _pool, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(addressProvider, _crvUSD, _pool, _priceFeed, _stalenessPeriod)
+        SingleAssetLPPriceFeed(addressProvider, _crvUSD, _pool, _priceFeed, _stalenessPeriod) // U:[CRV-D-1]
     {
-        _initLimiter();
+        _initLimiter(); // U:[CRV-D-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return IPool(lpContract).price_oracle();
+        return ICurvePool(lpContract).price_oracle(); // U:[CRV-D-1]
     }
 
     function getScale() public pure override returns (uint256) {
-        return WAD;
+        return WAD; // U:[CRV-D-1]
     }
 }
