@@ -1360,10 +1360,10 @@
   resolved "https://registry.yarnpkg.com/@gearbox-protocol/prettier-config/-/prettier-config-1.5.0.tgz#4df8e9fd2305fee6ab8c1417a02e31343836932a"
   integrity sha512-FUoprSsBdZyBjgxXCKL6mTkbeUJytaLzPJqIOoQpDmBRTX0seCc2o5I9PI9tySoRIlNnd/XXnKCXq1xHDEGbxw==
 
-"@gearbox-protocol/sdk-gov@^1.5.14":
-  version "1.5.14"
-  resolved "https://registry.yarnpkg.com/@gearbox-protocol/sdk-gov/-/sdk-gov-1.5.14.tgz#65b58616dd6630743c6c15e2475491423cf931c3"
-  integrity sha512-cd0t/F60YyYVxIYx9Tey/CZEi/apeHlQMMmvTBLmAW1nO+ap8XmiIob5fUBqyaPreg755A7aW264+R/FSGhIXQ==
+"@gearbox-protocol/sdk-gov@^1.5.15":
+  version "1.5.15"
+  resolved "https://registry.yarnpkg.com/@gearbox-protocol/sdk-gov/-/sdk-gov-1.5.15.tgz#a2f712bb6f2f075c39a2077f06d16a8270a98c1e"
+  integrity sha512-adNwlQvMTaYc2BQNV6UYv1bc9fXXT8VYQ6204l3h+D8Bklism/uutewTzLYOmnJnJR9c8fe3EWQLqILZlMYAAw==
   dependencies:
     "@gearbox-protocol/core-v2" "^1.21.0"
     "@gearbox-protocol/core-v3" "^1.34.1"
@@ -1372,6 +1372,7 @@
     "@gearbox-protocol/oracles-v3" "^1.7.3"
     "@gearbox-protocol/prettier-config" "^1.5.0"
     "@gearbox-protocol/sdk" "^2.1.32"
+    "@redstone-finance/evm-connector" "^0.2.5"
     "@types/chai" "^4.3.5"
     "@types/mocha" "^10.0.1"
     axios "^1.4.0"
@@ -1499,7 +1500,7 @@
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.3.3.tgz#ff6ee919fc2a1abaf72b22814bfb72ed129ec137"
   integrity sha512-tDBopO1c98Yk7Cv/PZlHqrvtVjlgK5R4J6jxLwoO7qxK4xqOiZG+zSkIvGFpPZ0ikc3QOED3plgdqjgNTnBc7g==
 
-"@redstone-finance/evm-connector@0.2.5":
+"@redstone-finance/evm-connector@0.2.5", "@redstone-finance/evm-connector@^0.2.5":
   version "0.2.5"
   resolved "https://registry.yarnpkg.com/@redstone-finance/evm-connector/-/evm-connector-0.2.5.tgz#8d3b64cd068dea73a9f2287c91672dfb652a4725"
   integrity sha512-JjMJVXbgmvmbKleIwzMOKu10mDXTABVoYmmfErF2M7M6pftPiKFIVH16gycU93aQVZeRQ74rieQ55Q691xPS8Q==

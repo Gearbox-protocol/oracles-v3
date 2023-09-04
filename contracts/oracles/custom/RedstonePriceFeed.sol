@@ -13,10 +13,10 @@ import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interface
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 /// @dev Max period that the payload can be backward in time relative to the block
-uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS = 3 minutes;
+uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS = 10 minutes;
 
 /// @dev Max period that the payload can be forward in time relative to the block
-uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 1 minutes;
+uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 10 minutes;
 
 /// @dev Max number of authorized signers
 uint256 constant MAX_SIGNERS = 10;

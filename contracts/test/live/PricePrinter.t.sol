@@ -39,6 +39,7 @@ contract PricePrinterTest is Test {
             SupportedContracts sc = new SupportedContracts(chainId);
 
             pfd = new PriceFeedDeployer(chainId, address(addressProvider), tokenTestSuite, sc);
+            pfd.updateRedstoneOraclePriceFeeds();
         }
     }
 
