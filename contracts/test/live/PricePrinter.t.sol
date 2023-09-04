@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
 
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
@@ -42,33 +42,17 @@ contract PricePrinterTest is Test {
         }
     }
 
-    function printUsdPrice(address token, uint256 price) public view {
-        uint256 integerPart = price / 1e8;
-        uint256 fractionalPart = (price / 1e6) % 100;
-        string memory zero = fractionalPart < 10 ? "0" : "";
-
-        Tokens t = pfd.tokenTestSuite().tokenIndexes(token);
-        string memory result = string.concat(
-            pfd.tokenTestSuite().symbols(t),
-            ": $",
-            Strings.toString(integerPart),
-            ".",
-            zero,
-            Strings.toString(fractionalPart)
-        );
-        console.log(result);
-    }
-
-    function test_print_all_prices() public view liveTestOnly {
+    function test_print_all_prices() public liveTestOnly {
         uint256 len = pfd.priceFeedConfigLength();
 
         console.log("Found: ", len, " tokens");
         for (uint256 i; i < len; ++i) {
             (address token, address priceFeed,) = pfd.priceFeedConfig(i);
+            Tokens t = pfd.tokenTestSuite().tokenIndexes(token);
 
-            (, int256 price,,,) = AggregatorV3Interface(priceFeed).latestRoundData();
+            (, int256 price,,,) = IPriceFeed(priceFeed).latestRoundData();
 
-            printUsdPrice(token, uint256(price));
+            emit log_named_decimal_int(pfd.tokenTestSuite().symbols(t), price, 8);
         }
     }
 }

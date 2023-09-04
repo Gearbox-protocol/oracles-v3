@@ -9,7 +9,7 @@ import {
     IRedstonePriceFeedExceptions,
     DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS,
     DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS
-} from "../../../oracles/custom/RedstonePriceFeed.sol";
+} from "../../../oracles/updatable/RedstonePriceFeed.sol";
 import {RedstoneConstants} from "@redstone-finance/evm-connector/contracts/core/RedstoneConstants.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 

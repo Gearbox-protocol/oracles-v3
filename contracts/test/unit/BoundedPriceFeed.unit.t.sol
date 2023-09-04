@@ -13,7 +13,7 @@ import {
 
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 
-import {BoundedPriceFeed} from "../../../oracles/custom/BoundedPriceFeed.sol";
+import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
 
 /// @title Bounded price feed unit test
 /// @notice U:[BPF]: Unit tests for bounded price feed
