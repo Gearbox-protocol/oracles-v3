@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
 
 import {Test} from "forge-std/Test.sol";
 
-import {ZeroPriceFeed} from "../../../oracles/custom/ZeroPriceFeed.sol";
+import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 
 /// @title Zero price feed unit test
 /// @notice U:[ZPF]: Unit tests for zero price feed

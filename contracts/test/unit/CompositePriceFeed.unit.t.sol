@@ -13,8 +13,8 @@ import {
 
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 
-import {PriceFeedParams} from "../../../oracles/PriceFeedParams.sol";
-import {CompositePriceFeed} from "../../../oracles/custom/CompositePriceFeed.sol";
+import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
+import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 
 /// @title Composite price feed unit test
 /// @notice U:[CPF]: Unit tests for composite price feed

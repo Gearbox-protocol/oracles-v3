@@ -40,10 +40,11 @@ import {WrappedAaveV2PriceFeed} from "../../oracles/aave/WrappedAaveV2PriceFeed.
 import {CompoundV2PriceFeed} from "../../oracles/compound/CompoundV2PriceFeed.sol";
 import {ERC4626PriceFeed} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
 
-import {ZeroPriceFeed} from "../../oracles/custom/ZeroPriceFeed.sol";
-import {CompositePriceFeed} from "../../oracles/custom/CompositePriceFeed.sol";
-import {BoundedPriceFeed} from "../../oracles/custom/BoundedPriceFeed.sol";
-import {RedstonePriceFeed} from "../../oracles/custom/RedstonePriceFeed.sol";
+import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
+import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
+import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
+
+import {RedstonePriceFeed} from "../../oracles/updatable/RedstonePriceFeed.sol";
 
 import {BPTStablePriceFeed} from "../../oracles/balancer/BPTStablePriceFeed.sol";
 import {BPTWeightedPriceFeed} from "../../oracles/balancer/BPTWeightedPriceFeed.sol";
