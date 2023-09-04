@@ -4,6 +4,7 @@
 pragma solidity ^0.8.10;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
@@ -54,12 +55,15 @@ import {IYVault} from "../../interfaces/yearn/IYVault.sol";
 import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 
 import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
+import "forge-std/console.sol";
 
 contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
     mapping(address => address) public priceFeeds;
     PriceFeedConfig[] public priceFeedConfig;
     mapping(address => uint32) public stalenessPeriods;
+
+    address[] public redStoneOracles;
     uint256 public priceFeedConfigLength;
     uint256 public immutable chainId;
 
@@ -575,6 +579,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     )
                 );
 
+                redstoneServiceIdByPriceFeed[pf] = redStonePriceFeedData.dataServiceId;
+
+                redStoneOracles.push(pf);
                 setPriceFeed(token, pf, 4 minutes);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
@@ -611,5 +618,30 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             vm.prank(root);
             PriceOracleV3(priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
         }
+    }
+
+    function updateRedstoneOraclePriceFeeds() public {
+        uint256 len = redStoneOracles.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                address pf = redStoneOracles[i];
+                bytes32 dataFeedId = RedstonePriceFeed(pf).dataFeedId();
+
+                string memory dataServiceId = redstoneServiceIdByPriceFeed[pf];
+                bytes memory payload = getRedstonePayload(string(abi.encodePacked(dataFeedId)), dataServiceId);
+                RedstonePriceFeed(pf).updatePrice(payload);
+            }
+        }
+    }
+
+    function getRedstonePayload(string memory dataFeedId, string memory dataSericeId) internal returns (bytes memory) {
+        string[] memory args = new string[](3);
+        args[0] = "npx";
+        args[1] = "ts-node";
+        args[2] = "./scripts/redstone.ts";
+        // args[3] = dataFeedId;
+        // args[4] = dataSericeId;
+
+        return vm.ffi(args);
     }
 }
