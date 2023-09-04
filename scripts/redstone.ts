@@ -3,10 +3,13 @@ import { ethers } from "ethers";
 import { arrayify } from "ethers/lib/utils";
 import { RedstonePayloadParser } from "redstone-protocol/dist/src/redstone-payload/RedstonePayloadParser";
 
-async function getRedstonePayloadForManualUsage(): Promise<string> {
+async function getRedstonePayloadForManualUsage(
+  dataServiceId: string,
+  dataFeed: string,
+): Promise<string> {
   const dataPayload = await new DataServiceWrapper({
-    dataServiceId: "redstone-main-demo",
-    dataFeeds: ["SHIB"],
+    dataServiceId, // : "redstone-main-demo",
+    dataFeeds: [dataFeed],
     uniqueSignersCount: 1,
   }).prepareRedstonePayload(true);
 
@@ -38,7 +41,14 @@ async function getRedstonePayloadForManualUsage(): Promise<string> {
   return result;
 }
 
-getRedstonePayloadForManualUsage()
+if (process.argv.length !== 4) {
+  console.error(
+    "Usage: npx node redstone.ts  <data-service-id> <data-feed-id>",
+  );
+  process.exit(1);
+}
+
+getRedstonePayloadForManualUsage(process.argv[2], process.argv[3])
   .then(payload => {
     console.log(`${payload}`);
   })

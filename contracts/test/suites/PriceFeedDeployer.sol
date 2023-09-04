@@ -628,20 +628,32 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 bytes32 dataFeedId = RedstonePriceFeed(pf).dataFeedId();
 
                 string memory dataServiceId = redstoneServiceIdByPriceFeed[pf];
-                bytes memory payload = getRedstonePayload(string(abi.encodePacked(dataFeedId)), dataServiceId);
+                bytes memory payload = getRedstonePayload(bytes32ToString((dataFeedId)), dataServiceId);
                 RedstonePriceFeed(pf).updatePrice(payload);
             }
         }
     }
 
     function getRedstonePayload(string memory dataFeedId, string memory dataSericeId) internal returns (bytes memory) {
-        string[] memory args = new string[](3);
+        string[] memory args = new string[](5);
         args[0] = "npx";
         args[1] = "ts-node";
         args[2] = "./scripts/redstone.ts";
-        // args[3] = dataFeedId;
-        // args[4] = dataSericeId;
+        args[3] = dataSericeId;
+        args[4] = dataFeedId;
 
         return vm.ffi(args);
+    }
+
+    function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+        uint8 i = 0;
+        while (i < 32 && _bytes32[i] != 0) {
+            i++;
+        }
+        bytes memory bytesArray = new bytes(i);
+        for (i = 0; i < 32 && _bytes32[i] != 0; i++) {
+            bytesArray[i] = _bytes32[i];
+        }
+        return string(bytesArray);
     }
 }
