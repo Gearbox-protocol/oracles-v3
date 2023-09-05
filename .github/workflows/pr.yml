@@ -33,8 +33,11 @@ jobs:
         with:
           version: nightly
 
-      - name: Run forge unit tests
-        run: forge test
+      - name: Run unit tests
+        run: forge test --match-test test_U -vvv
+
+      - name: Print mainnet prices
+        run: forge test --match-test print_all_prices -vvv --fork-url ${{ secrets.MAINNET_TESTS_FORK }}
 
       - name: Perform checks
         run: |
