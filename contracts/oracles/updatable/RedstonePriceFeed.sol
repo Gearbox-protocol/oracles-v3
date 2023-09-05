@@ -13,10 +13,10 @@ import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interface
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 /// @dev Max period that the payload can be backward in time relative to the block
-uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS = 10 minutes;
+uint256 constant MAX_DATA_TIMESTAMP_DELAY_SECONDS = 10 minutes;
 
 /// @dev Max period that the payload can be forward in time relative to the block
-uint256 constant DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 10 minutes;
+uint256 constant MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 1 minutes;
 
 /// @dev Max number of authorized signers
 uint256 constant MAX_SIGNERS = 10;
@@ -188,10 +188,10 @@ contract RedstonePriceFeed is
     /// @param expectedPayloadTimestamp Timestamp expected to be in all of the incoming payload's packages
     function _validateExpectedPayloadTimestamp(uint256 expectedPayloadTimestamp) internal view {
         if ((block.timestamp < expectedPayloadTimestamp)) {
-            if ((expectedPayloadTimestamp - block.timestamp) > DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
+            if ((expectedPayloadTimestamp - block.timestamp) > MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
                 revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
             }
-        } else if ((block.timestamp - expectedPayloadTimestamp) > DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
+        } else if ((block.timestamp - expectedPayloadTimestamp) > MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
             revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
         }
     }

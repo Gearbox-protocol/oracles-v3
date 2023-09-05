@@ -21,8 +21,6 @@ async function getRedstonePayloadForManualUsage(
   for (const signedDataPackage of signedDataPackages) {
     const newTimestamp =
       signedDataPackage.dataPackage.timestampMilliseconds / 1000;
-    console.error(`Data package: ${dataPackageIndex}`);
-    console.error(`Timestamp: ${newTimestamp}`);
 
     if (dataPackageIndex === 0) {
       ts = newTimestamp;

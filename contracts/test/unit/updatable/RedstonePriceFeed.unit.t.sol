@@ -7,8 +7,8 @@ import {
     RedstonePriceFeed,
     IRedstonePriceFeedEvents,
     IRedstonePriceFeedExceptions,
-    DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS,
-    DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS
+    MAX_DATA_TIMESTAMP_DELAY_SECONDS,
+    MAX_DATA_TIMESTAMP_AHEAD_SECONDS
 } from "../../../oracles/updatable/RedstonePriceFeed.sol";
 import {RedstoneConstants} from "@redstone-finance/evm-connector/contracts/core/RedstoneConstants.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
@@ -263,7 +263,7 @@ contract RedstonePriceFeedUnitTest is
 
     /// @notice U: [RPF-9]: updatePrice reverts if the payload timestamp is too far from block timestamp
     function test_U_RPF_09_updatePrice_fails_if_payload_timestamp_too_far_from_block() public {
-        uint256 expectedPayloadTimestamp = block.timestamp - DEFAULT_MAX_DATA_TIMESTAMP_DELAY_SECONDS - 1;
+        uint256 expectedPayloadTimestamp = block.timestamp - MAX_DATA_TIMESTAMP_DELAY_SECONDS - 1;
 
         bytes memory payload = _generateRedstonePayload(
             bytes32("USDC"), 100000000, uint48((expectedPayloadTimestamp) * 1000), 10, false, false
@@ -275,7 +275,7 @@ contract RedstonePriceFeedUnitTest is
 
         pf.updatePrice(data);
 
-        expectedPayloadTimestamp = block.timestamp + DEFAULT_MAX_DATA_TIMESTAMP_AHEAD_SECONDS + 1;
+        expectedPayloadTimestamp = block.timestamp + MAX_DATA_TIMESTAMP_AHEAD_SECONDS + 1;
 
         payload = _generateRedstonePayload(
             bytes32("USDC"), 100000000, uint48((expectedPayloadTimestamp) * 1000), 10, false, false
