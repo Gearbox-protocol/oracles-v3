@@ -629,6 +629,13 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 string memory dataServiceId = redstoneServiceIdByPriceFeed[pf];
                 bytes memory payload = getRedstonePayload(bytes32ToString((dataFeedId)), dataServiceId);
+
+                (uint256 expectedPayloadTimestamp,) = abi.decode(payload, (uint256, bytes));
+
+                if (expectedPayloadTimestamp > block.timestamp) {
+                    vm.warp(expectedPayloadTimestamp);
+                }
+
                 RedstonePriceFeed(pf).updatePrice(payload);
             }
         }
