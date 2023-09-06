@@ -105,46 +105,46 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         uint256[] memory weights = IBalancerWeightedPool(_pool).getNormalizedWeights();
         uint256[] memory indices = _sort(weights);
 
-        numAssets = weights.length; // F: [OBWLP-1]
-        vault = _vault; // F: [OBWLP-1]
-        poolId = IBalancerWeightedPool(_pool).getPoolId(); // F: [OBWLP-1]
+        numAssets = weights.length;
+        vault = _vault;
+        poolId = IBalancerWeightedPool(_pool).getPoolId();
 
-        index0 = indices[0]; // F: [OBWLP-1]
-        index1 = indices[1]; // F: [OBWLP-1]
-        index2 = numAssets >= 3 ? indices[2] : 0; // F: [OBWLP-1]
-        index3 = numAssets >= 4 ? indices[3] : 0; // F: [OBWLP-1]
-        index4 = numAssets >= 5 ? indices[4] : 0; // F: [OBWLP-1]
-        index5 = numAssets >= 6 ? indices[5] : 0; // F: [OBWLP-1]
-        index6 = numAssets >= 7 ? indices[6] : 0; // F: [OBWLP-1]
-        index7 = numAssets >= 8 ? indices[7] : 0; // F: [OBWLP-1]
+        index0 = indices[0];
+        index1 = indices[1];
+        index2 = numAssets >= 3 ? indices[2] : 0;
+        index3 = numAssets >= 4 ? indices[3] : 0;
+        index4 = numAssets >= 5 ? indices[4] : 0;
+        index5 = numAssets >= 6 ? indices[5] : 0;
+        index6 = numAssets >= 7 ? indices[6] : 0;
+        index7 = numAssets >= 8 ? indices[7] : 0;
 
-        weight0 = weights[0]; // F: [OBWLP-1]
-        weight1 = weights[1]; // F: [OBWLP-1]
-        weight2 = numAssets >= 3 ? weights[2] : 0; // F: [OBWLP-1]
-        weight3 = numAssets >= 4 ? weights[3] : 0; // F: [OBWLP-1]
-        weight4 = numAssets >= 5 ? weights[4] : 0; // F: [OBWLP-1]
-        weight5 = numAssets >= 6 ? weights[5] : 0; // F: [OBWLP-1]
-        weight6 = numAssets >= 7 ? weights[6] : 0; // F: [OBWLP-1]
-        weight7 = numAssets >= 8 ? weights[7] : 0; // F: [OBWLP-1]
+        weight0 = weights[0];
+        weight1 = weights[1];
+        weight2 = numAssets >= 3 ? weights[2] : 0;
+        weight3 = numAssets >= 4 ? weights[3] : 0;
+        weight4 = numAssets >= 5 ? weights[4] : 0;
+        weight5 = numAssets >= 6 ? weights[5] : 0;
+        weight6 = numAssets >= 7 ? weights[6] : 0;
+        weight7 = numAssets >= 8 ? weights[7] : 0;
 
         (address[] memory tokens,,) = IBalancerVault(_vault).getPoolTokens(poolId);
-        scale0 = _tokenScale(tokens[index0]); // F: [OBWLP-1]
-        scale1 = _tokenScale(tokens[index1]); // F: [OBWLP-1]
-        scale2 = numAssets >= 3 ? _tokenScale(tokens[index2]) : 0; // F: [OBWLP-1]
-        scale3 = numAssets >= 4 ? _tokenScale(tokens[index3]) : 0; // F: [OBWLP-1]
-        scale4 = numAssets >= 5 ? _tokenScale(tokens[index4]) : 0; // F: [OBWLP-1]
-        scale5 = numAssets >= 6 ? _tokenScale(tokens[index5]) : 0; // F: [OBWLP-1]
-        scale6 = numAssets >= 7 ? _tokenScale(tokens[index6]) : 0; // F: [OBWLP-1]
-        scale7 = numAssets >= 8 ? _tokenScale(tokens[index7]) : 0; // F: [OBWLP-1]
+        scale0 = _tokenScale(tokens[index0]);
+        scale1 = _tokenScale(tokens[index1]);
+        scale2 = numAssets >= 3 ? _tokenScale(tokens[index2]) : 0;
+        scale3 = numAssets >= 4 ? _tokenScale(tokens[index3]) : 0;
+        scale4 = numAssets >= 5 ? _tokenScale(tokens[index4]) : 0;
+        scale5 = numAssets >= 6 ? _tokenScale(tokens[index5]) : 0;
+        scale6 = numAssets >= 7 ? _tokenScale(tokens[index6]) : 0;
+        scale7 = numAssets >= 8 ? _tokenScale(tokens[index7]) : 0;
 
-        priceFeed0 = priceFeeds[index0].priceFeed; // F: [OBWLP-1]
-        priceFeed1 = priceFeeds[index1].priceFeed; // F: [OBWLP-1]
-        priceFeed2 = numAssets >= 3 ? priceFeeds[index2].priceFeed : address(0); // F: [OBWLP-1]
-        priceFeed3 = numAssets >= 4 ? priceFeeds[index3].priceFeed : address(0); // F: [OBWLP-1]
-        priceFeed4 = numAssets >= 5 ? priceFeeds[index4].priceFeed : address(0); // F: [OBWLP-1]
-        priceFeed5 = numAssets >= 6 ? priceFeeds[index5].priceFeed : address(0); // F: [OBWLP-1]
-        priceFeed6 = numAssets >= 7 ? priceFeeds[index6].priceFeed : address(0); // F: [OBWLP-1]
-        priceFeed7 = numAssets >= 8 ? priceFeeds[index7].priceFeed : address(0); // F: [OBWLP-1]
+        priceFeed0 = priceFeeds[index0].priceFeed;
+        priceFeed1 = priceFeeds[index1].priceFeed;
+        priceFeed2 = numAssets >= 3 ? priceFeeds[index2].priceFeed : address(0);
+        priceFeed3 = numAssets >= 4 ? priceFeeds[index3].priceFeed : address(0);
+        priceFeed4 = numAssets >= 5 ? priceFeeds[index4].priceFeed : address(0);
+        priceFeed5 = numAssets >= 6 ? priceFeeds[index5].priceFeed : address(0);
+        priceFeed6 = numAssets >= 7 ? priceFeeds[index6].priceFeed : address(0);
+        priceFeed7 = numAssets >= 8 ? priceFeeds[index7].priceFeed : address(0);
 
         stalenessPeriod0 = priceFeeds[index0].stalenessPeriod;
         stalenessPeriod1 = priceFeeds[index1].stalenessPeriod;
@@ -178,12 +178,12 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         uint256 currentBase = FixedPoint.ONE;
         for (uint256 i = 0; i < numAssets;) {
             (address priceFeed, uint32 stalenessPeriod, bool skipCheck) = _getPriceFeedParams(i);
-            answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // F: [OBWLP-3,4]
+            answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
             answer = answer * int256(WAD_OVER_USD_FEED_SCALE);
 
             currentBase = currentBase.mulDown(uint256(answer).divDown(weights[i]));
             if (i == numAssets - 1 || weights[i] != weights[i + 1]) {
-                weightedPrice = weightedPrice.mulDown(currentBase.powDown(weights[i])); // F: [OBWLP-3,4]
+                weightedPrice = weightedPrice.mulDown(currentBase.powDown(weights[i]));
                 currentBase = FixedPoint.ONE;
             }
 
@@ -215,7 +215,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         for (uint256 i = 0; i < len;) {
             currentBase = currentBase.mulDown(balances[i]);
             if (i == len - 1 || weights[i] != weights[i + 1]) {
-                k = k.mulDown(currentBase.powDown(weights[i])); // F: [OBWLP-3,4]
+                k = k.mulDown(currentBase.powDown(weights[i]));
                 currentBase = FixedPoint.ONE;
             }
 
