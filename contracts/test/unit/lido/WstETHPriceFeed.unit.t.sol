@@ -3,14 +3,14 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {PriceFeedTest} from "../PriceFeedTest.sol";
+import {PriceFeedUnitTest} from "../../suites/PriceFeedUnitTest.sol";
 
 import {WstETHMock} from "../../mocks/lido/WstETHMock.sol";
 
 import {IwstETH} from "../../../interfaces/lido/IwstETH.sol";
 import {WstETHPriceFeed} from "../../../oracles/lido/WstETHPriceFeed.sol";
 
-contract WstETHPriceFeedUnitTest is PriceFeedTest {
+contract WstETHPriceFeedUnitTest is PriceFeedUnitTest {
     WstETHPriceFeed priceFeed;
     WstETHMock wstETH;
 

@@ -3,14 +3,14 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {PriceFeedTest} from "../PriceFeedTest.sol";
+import {PriceFeedUnitTest} from "../../suites/PriceFeedUnitTest.sol";
 
 import {WATokenMock} from "../../mocks/aave/WATokenMock.sol";
 
 import {IWAToken} from "../../../interfaces/aave/IWAToken.sol";
 import {WrappedAaveV2PriceFeed} from "../../../oracles/aave/WrappedAaveV2PriceFeed.sol";
 
-contract WrappedAaveV2PriceFeedUnitTest is PriceFeedTest {
+contract WrappedAaveV2PriceFeedUnitTest is PriceFeedUnitTest {
     WrappedAaveV2PriceFeed priceFeed;
     WATokenMock waToken;
 
