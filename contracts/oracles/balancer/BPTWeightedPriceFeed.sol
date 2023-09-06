@@ -97,17 +97,17 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     uint256 immutable scale7;
 
     constructor(address addressProvider, address _vault, address _pool, PriceFeedParams[] memory priceFeeds)
-        LPPriceFeed(addressProvider, _pool, _pool)
-        nonZeroAddress(_vault)
-        nonZeroAddress(priceFeeds[0].priceFeed)
-        nonZeroAddress(priceFeeds[1].priceFeed)
+        LPPriceFeed(addressProvider, _pool, _pool) // U:[BAL-W-1]
+        nonZeroAddress(_vault) // U:[BAL-W-1]
+        nonZeroAddress(priceFeeds[0].priceFeed) // U:[BAL-W-2]
+        nonZeroAddress(priceFeeds[1].priceFeed) // U:[BAL-W-2]
     {
         uint256[] memory weights = IBalancerWeightedPool(_pool).getNormalizedWeights();
         uint256[] memory indices = _sort(weights);
 
-        numAssets = weights.length;
-        vault = _vault;
-        poolId = IBalancerWeightedPool(_pool).getPoolId();
+        numAssets = weights.length; // U:[BAL-W-2]
+        vault = _vault; // U:[BAL-W-1]
+        poolId = IBalancerWeightedPool(_pool).getPoolId(); // U:[BAL-W-1]
 
         index0 = indices[0];
         index1 = indices[1];
@@ -164,7 +164,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         skipCheck6 = numAssets >= 7 ? _validatePriceFeed(priceFeed6, stalenessPeriod6) : false;
         skipCheck7 = numAssets >= 8 ? _validatePriceFeed(priceFeed7, stalenessPeriod7) : false;
 
-        _initLimiter();
+        _initLimiter(); // U:[BAL-W-1]
     }
 
     // ------- //
@@ -192,15 +192,15 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
             }
         }
 
-        answer = int256(weightedPrice / WAD_OVER_USD_FEED_SCALE);
+        answer = int256(weightedPrice / WAD_OVER_USD_FEED_SCALE); // U:[BAL-W-2]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return _getBPTInvariant().divDown(_getBPTSupply());
+        return _getBPTInvariant().divDown(_getBPTSupply()); // U:[BAL-W-1]
     }
 
     function getScale() public pure override returns (uint256) {
-        return WAD;
+        return WAD; // U:[BAL-W-1]
     }
 
     /// @dev Returns BPT invariant
