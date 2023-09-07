@@ -11,7 +11,7 @@ import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/orac
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 
-contract PriceFeedTest is Test {
+contract PriceFeedUnitTestHelper is Test {
     address priceOracle;
     address configurator;
 
