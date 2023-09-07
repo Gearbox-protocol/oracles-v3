@@ -3,14 +3,14 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {PriceFeedUnitTest} from "../../suites/PriceFeedUnitTest.sol";
+import {PriceFeedTest} from "../PriceFeedTest.sol";
 
 import {CurvePoolMock} from "../../mocks/curve/CurvePoolMock.sol";
 
 import {ICurvePool} from "../../../interfaces/curve/ICurvePool.sol";
 import {CurveUSDPriceFeed} from "../../../oracles/curve/CurveUSDPriceFeed.sol";
 
-contract CurveUSDPriceFeedUnitTest is PriceFeedUnitTest {
+contract CurveUSDPriceFeedUnitTest is PriceFeedTest {
     CurveUSDPriceFeed priceFeed;
     CurvePoolMock curvePool;
     address crvUSD;

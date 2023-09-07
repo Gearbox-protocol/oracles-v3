@@ -3,14 +3,14 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {PriceFeedUnitTest} from "../../suites/PriceFeedUnitTest.sol";
+import {PriceFeedTest} from "../PriceFeedTest.sol";
 
 import {CTokenMock} from "../../mocks/compound/CTokenMock.sol";
 
 import {ICToken} from "../../../interfaces/compound/ICToken.sol";
 import {CompoundV2PriceFeed} from "../../../oracles/compound/CompoundV2PriceFeed.sol";
 
-contract CompoundV2PriceFeedUnitTest is PriceFeedUnitTest {
+contract CompoundV2PriceFeedUnitTest is PriceFeedTest {
     CompoundV2PriceFeed priceFeed;
     CTokenMock cToken;
 
