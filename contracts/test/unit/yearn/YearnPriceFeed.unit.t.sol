@@ -3,14 +3,14 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {PriceFeedUnitTest} from "../../suites/PriceFeedUnitTest.sol";
+import {PriceFeedTest} from "../PriceFeedTest.sol";
 
 import {YVaultMock} from "../../mocks/yearn/YVaultMock.sol";
 
 import {IYVault} from "../../../interfaces/yearn/IYVault.sol";
 import {YearnPriceFeed} from "../../../oracles/yearn/YearnPriceFeed.sol";
 
-contract YearnPriceFeedUnitTest is PriceFeedUnitTest {
+contract YearnPriceFeedUnitTest is PriceFeedTest {
     YearnPriceFeed priceFeed;
     YVaultMock yVault;
 

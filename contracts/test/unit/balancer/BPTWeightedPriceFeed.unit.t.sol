@@ -3,7 +3,7 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {PriceFeedUnitTest} from "../../suites/PriceFeedUnitTest.sol";
+import {PriceFeedTest} from "../PriceFeedTest.sol";
 
 import {BalancerVaultMock, PoolToken} from "../../mocks/balancer/BalancerVaultMock.sol";
 import {BalancerWeightedPoolMock} from "../../mocks/balancer/BalancerWeightedPoolMock.sol";
@@ -17,7 +17,7 @@ import {BPTWeightedPriceFeedHarness} from "./BPTWeightedPriceFeed.harness.sol";
 
 import {ZeroAddressException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
-contract BPTWeightedPriceFeedHarnessUnitTest is PriceFeedUnitTest {
+contract BPTWeightedPriceFeedUnitTest is PriceFeedTest {
     BPTWeightedPriceFeedHarness priceFeed;
     BalancerVaultMock balancerVault;
     BalancerWeightedPoolMock balancerPool;
