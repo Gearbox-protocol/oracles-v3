@@ -28,6 +28,7 @@ uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 ///      * Many variables saved as immutable which reduces the number of external calls and storage reads
 ///      * Variables are stored and processed in the order of ascending weights, which allows to reduce
 ///        the number of fixed point exponentiations in case some assets have identical weights
+/// @dev This contract must not be used to price managed pools that allow to change their weights/tokens
 contract BPTWeightedPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 

@@ -111,12 +111,7 @@ contract RedstonePriceFeed is
     }
 
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
-    function latestRoundData()
-        external
-        view
-        override
-        returns (uint80, int256 answer, uint256, uint256 updatedAt, uint80)
-    {
+    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         return (0, int256(uint256(lastPrice)), 0, lastPayloadTimestamp, 0); // U:[RPF-2]
     }
 

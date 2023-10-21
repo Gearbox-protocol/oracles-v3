@@ -101,6 +101,8 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     // ------------- //
 
     /// @notice Allows or forbids permissionless bounds update
+    /// @dev The reserve price feed used to calculate new bounds must be trusted to be practically impossible to
+    ///      manipulate, this contract only ensures that it is not self, which would be an immediate disaster
     function setUpdateBoundsAllowed(bool allowed)
         external
         override
@@ -128,6 +130,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
         if (!updateBoundsAllowed) revert UpdateBoundsNotAllowedException(); // U:[LPPF-7]
 
         address reserveFeed = IPriceOracleV3(priceOracle).priceFeedsRaw({token: lpToken, reserve: true}); // U:[LPPF-7]
+        if (reserveFeed == address(this)) revert ReserveFeedMustNotBeSelfException(); // U:[LPPF-7]
         try IUpdatablePriceFeed(reserveFeed).updatable() returns (bool updatable) {
             if (updatable) IUpdatablePriceFeed(reserveFeed).updatePrice(updateData); // U:[LPPF-7]
         } catch {}

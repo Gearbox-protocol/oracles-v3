@@ -20,6 +20,9 @@ interface ILPPriceFeedExceptions {
 
     /// @notice Thrown when trying to call `updateBounds` while it's not allowed
     error UpdateBoundsNotAllowedException();
+
+    /// @notice Thrown when price oracle's reserve price feed is the LP price feed itself
+    error ReserveFeedMustNotBeSelfException();
 }
 
 /// @title LP price feed interface
