@@ -160,13 +160,6 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
     /// @notice U:[LPPF-7]: `updateBounds` works as expected
     function test_U_LPPF_07_updateBoudns_works_as_expected() public {
-        vm.mockCall(
-            priceOracle, abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)), abi.encode(reserveFeed)
-        );
-        vm.mockCall(
-            priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.02e8)
-        );
-
         priceFeed.hackAggregatePrice(2e8);
         priceFeed.hackLPExchangeRate(1.02 ether);
         priceFeed.hackScale(1 ether);
@@ -175,6 +168,22 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         priceFeed.updateBounds("some data");
 
         priceFeed.hackUpdateBoundsAllowed(true);
+
+        vm.mockCall(
+            priceOracle,
+            abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)),
+            abi.encode(address(priceFeed))
+        );
+        vm.expectRevert(ReserveFeedMustNotBeSelfException.selector);
+        priceFeed.updateBounds("some data");
+
+        vm.mockCall(
+            priceOracle, abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)), abi.encode(reserveFeed)
+        );
+        vm.mockCall(
+            priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.02e8)
+        );
+
         for (uint256 i; i < 2; ++i) {
             bool isUpdatable = i == 1;
             if (isUpdatable) {
