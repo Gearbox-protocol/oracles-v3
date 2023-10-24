@@ -18,7 +18,10 @@ import {
 uint256 constant WINDOW_SIZE = 200;
 
 /// @dev Buffer size in bps, used to compute new lower bound given current exchange rate
-uint256 constant BUFFER_SIZE = 20;
+uint256 constant BUFFER_SIZE = 100;
+
+/// @dev Minimum interval between two permissionless bounds updates
+uint256 constant UPDATE_BOUNDS_COOLDOWN = 1 days;
 
 /// @title LP price feed
 /// @notice Abstract contract for LP token price feeds.
@@ -47,10 +50,15 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     /// @notice Whether permissionless bounds update is allowed
     bool public override updateBoundsAllowed;
 
+    /// @notice Timestamp of the last bounds update
+    uint40 public override lastBoundsUpdate;
+
     /// @notice Constructor
     /// @param _addressProvider Address provider contract address
     /// @param _lpToken  LP token for which the prices are computed
     /// @param _lpContract LP contract (can be different from LP token)
+    /// @dev Derived price feeds must call `_initLimiter` in their constructor after
+    ///      initializing all state variables needed for exchange rate calculation
     constructor(address _addressProvider, address _lpToken, address _lpContract)
         ACLNonReentrantTrait(_addressProvider) // U:[LPPF-1]
         nonZeroAddress(_lpToken) // U:[LPPF-1]
@@ -101,8 +109,6 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     // ------------- //
 
     /// @notice Allows permissionless bounds update
-    /// @dev The reserve price feed used to calculate new bounds must be trusted to be practically impossible to
-    ///      manipulate, this contract only ensures that it is not self, which would be an immediate disaster
     function allowBoundsUpdate()
         external
         override
@@ -140,6 +146,9 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     function updateBounds(bytes calldata updateData) external override {
         if (!updateBoundsAllowed) revert UpdateBoundsNotAllowedException(); // U:[LPPF-7]
 
+        if (block.timestamp < lastBoundsUpdate + UPDATE_BOUNDS_COOLDOWN) revert UpdateBoundsBeforeCooldownException(); // U:[LPPF-7]
+        lastBoundsUpdate = uint40(block.timestamp); // U:[LPPF-7]
+
         address reserveFeed = IPriceOracleV3(priceOracle).priceFeedsRaw({token: lpToken, reserve: true}); // U:[LPPF-7]
         if (reserveFeed == address(this)) revert ReserveFeedMustNotBeSelfException(); // U:[LPPF-7]
         try IUpdatablePriceFeed(reserveFeed).updatable() returns (bool updatable) {
@@ -149,12 +158,11 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
         uint256 reserveAnswer = IPriceOracleV3(priceOracle).getPriceRaw({token: lpToken, reserve: true}); // U:[LPPF-7]
         uint256 reserveExchangeRate = uint256(reserveAnswer * getScale() / uint256(getAggregatePrice())); // U:[LPPF-7]
 
+        _ensureValueInBounds(reserveExchangeRate, lowerBound); // U:[LPPF-7]
         _setLimiter(_calcLowerBound(reserveExchangeRate), getLPExchangeRate()); // U:[LPPF-7]
     }
 
     /// @dev Sets lower bound to the current LP token exhcange rate (with small buffer for downside movement)
-    /// @dev Derived price feeds MUST call this in the constructor after initializing all the state variables
-    ///      needed for exchange rate calculation
     function _initLimiter() internal {
         uint256 exchangeRate = getLPExchangeRate();
         _setLimiter(_calcLowerBound(exchangeRate), exchangeRate); // U:[LPPF-6]
@@ -162,8 +170,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
 
     /// @dev `setLimiter` implementation: sets new bounds, ensures that current value is within them, emits event
     function _setLimiter(uint256 lower, uint256 current) internal {
-        uint256 upper = _calcUpperBound(lower);
-        if (lower == 0 || current < lower || current > upper) revert ExchangeRateOutOfBoundsException(); // U:[LPPF-6]
+        uint256 upper = _ensureValueInBounds(current, lower); // U:[LPPF-6]
         lowerBound = lower; // U:[LPPF-6]
         emit SetBounds(lower, upper); // U:[LPPF-6]
     }
@@ -176,5 +183,12 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     /// @dev Computes lower bound as `exchangeRate * (1 - BUFFER_SIZE)`
     function _calcLowerBound(uint256 exchangeRate) internal pure returns (uint256) {
         return exchangeRate * (PERCENTAGE_FACTOR - BUFFER_SIZE) / PERCENTAGE_FACTOR; // U:[LPPF-6]
+    }
+
+    /// @dev Ensures that value is in bounds, returns upper bound computed from lower bound
+    function _ensureValueInBounds(uint256 value, uint256 lower) internal pure returns (uint256 upper) {
+        if (value < lower) revert ExchangeRateOutOfBoundsException();
+        upper = _calcUpperBound(lower);
+        if (value > upper) revert ExchangeRateOutOfBoundsException();
     }
 }

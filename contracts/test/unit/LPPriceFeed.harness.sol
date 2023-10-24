@@ -54,4 +54,8 @@ contract LPPriceFeedHarness is LPPriceFeed {
     function hackUpdateBoundsAllowed(bool value) external {
         updateBoundsAllowed = value;
     }
+
+    function hackLastBoundsUpdate(uint256 timestamp) external {
+        lastBoundsUpdate = uint40(timestamp);
+    }
 }

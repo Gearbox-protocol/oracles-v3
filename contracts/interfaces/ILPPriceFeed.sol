@@ -21,6 +21,9 @@ interface ILPPriceFeedExceptions {
     /// @notice Thrown when trying to call `updateBounds` while it's not allowed
     error UpdateBoundsNotAllowedException();
 
+    /// @notice Thrown when trying to call `updateBounds` before cooldown since the last update has passed
+    error UpdateBoundsBeforeCooldownException();
+
     /// @notice Thrown when price oracle's reserve price feed is the LP price feed itself
     error ReserveFeedMustNotBeSelfException();
 }
@@ -35,6 +38,7 @@ interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents, ILPPriceFeedExceptions
     function lowerBound() external view returns (uint256);
     function upperBound() external view returns (uint256);
     function updateBoundsAllowed() external view returns (bool);
+    function lastBoundsUpdate() external view returns (uint40);
 
     function getAggregatePrice() external view returns (int256 answer);
     function getLPExchangeRate() external view returns (uint256 exchangeRate);
