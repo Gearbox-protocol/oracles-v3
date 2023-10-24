@@ -40,7 +40,7 @@ contract ERC4626PriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(vault), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(vault), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.01796e6, "Incorrect lower bound"); // 1.02 * 0.998
+        assertEq(priceFeed.lowerBound(), 1.0098e6, "Incorrect lower bound"); // 1.02 * 0.99
 
         // overriden functions
         vm.expectCall(address(vault), abi.encodeCall(IERC4626.convertToAssets, (1e6)));

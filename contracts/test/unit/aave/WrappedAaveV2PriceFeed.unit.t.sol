@@ -35,7 +35,7 @@ contract WrappedAaveV2PriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(waToken), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(waToken), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.01796 ether, "Incorrect lower bound"); // 1.02 * 0.998
+        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
 
         // overriden functions
         vm.expectCall(address(waToken), abi.encodeCall(IWAToken.exchangeRate, ()));

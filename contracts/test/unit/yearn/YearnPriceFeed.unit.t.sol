@@ -35,7 +35,7 @@ contract YearnPriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(yVault), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(yVault), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.01796e6, "Incorrect lower bound"); // 1.02 * 0.998
+        assertEq(priceFeed.lowerBound(), 1.0098e6, "Incorrect lower bound"); // 1.02 * 0.99
 
         // overriden functions
         vm.expectCall(address(yVault), abi.encodeCall(IYVault.pricePerShare, ()));

@@ -63,7 +63,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         assertEq(priceFeed.vault(), address(balancerVault), "Incorrect vault");
         assertEq(priceFeed.lpToken(), address(balancerPool), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(balancerPool), "Incorrect lpToken");
-        assertApproxEqAbs(priceFeed.lowerBound(), 1.01796 ether, 1e6, "Incorrect lower bound"); // 1.02 * 0.998
+        assertApproxEqAbs(priceFeed.lowerBound(), 1.0098 ether, 1e6, "Incorrect lower bound"); // 1.02 * 0.99
 
         balancerVault.hackPoolTokens("TEST_POOL", _getPoolTokens(8, 1.03 ether));
         assertApproxEqAbs(priceFeed.getLPExchangeRate(), 1.03 ether, 1e6, "Incorrect getLPExchangeRate");
