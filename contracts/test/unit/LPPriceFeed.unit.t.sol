@@ -111,20 +111,33 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         }
     }
 
-    /// @notice U:[LPPF-5]: `setUpdateBoundsAllowed` works as expected
-    function test_U_LPPF_05_setUpdateBoundsAllowed_works_as_expected() public {
+    /// @notice U:[LPPF-5]: `allowBoundsUpdate` and `forbidBoundsUpdate` work as expected
+    function test_U_LPPF_05_allowBoundsUpdate_and_forbidBoundsUpdate_work_as_expected() public {
         // reverts if caller is not configurator
         vm.expectRevert(CallerNotConfiguratorException.selector);
-        priceFeed.setUpdateBoundsAllowed(true);
+        priceFeed.allowBoundsUpdate();
 
         // works as expected otherwise
         vm.expectEmit(false, false, false, true);
         emit SetUpdateBoundsAllowed(true);
 
         vm.prank(configurator);
-        priceFeed.setUpdateBoundsAllowed(true);
+        priceFeed.allowBoundsUpdate();
 
         assertTrue(priceFeed.updateBoundsAllowed(), "Incorrect updateBoundsAllowed");
+
+        // reverts if caller is not controller
+        vm.expectRevert(CallerNotControllerException.selector);
+        priceFeed.forbidBoundsUpdate();
+
+        // works as expected otherwise
+        vm.expectEmit(false, false, false, true);
+        emit SetUpdateBoundsAllowed(false);
+
+        vm.prank(configurator);
+        priceFeed.forbidBoundsUpdate();
+
+        assertFalse(priceFeed.updateBoundsAllowed(), "Incorrect updateBoundsAllowed");
     }
 
     /// @notice U:[LPPF-6]: `setLimiter` works as expected
