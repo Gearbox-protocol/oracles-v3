@@ -174,21 +174,23 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
     /// @notice U:[LPPF-7]: `updateBounds` works as expected
     function test_U_LPPF_07_updateBoudns_works_as_expected() public {
         priceFeed.hackAggregatePrice(2e8);
-        priceFeed.hackLowerBound(1.005 ether);
-        priceFeed.hackLPExchangeRate(1.015 ether);
+        priceFeed.hackLowerBound(1 ether);
         priceFeed.hackScale(1 ether);
-        priceFeed.hackLastBoundsUpdate(block.timestamp);
 
+        // permissionless bounds update is forbidden (oh the irony)
         vm.expectRevert(UpdateBoundsNotAllowedException.selector);
         priceFeed.updateBounds("some data");
 
         priceFeed.hackUpdateBoundsAllowed(true);
 
+        // cooldown hasn't passed
+        priceFeed.hackLastBoundsUpdate(block.timestamp);
         vm.expectRevert(UpdateBoundsBeforeCooldownException.selector);
         priceFeed.updateBounds("some data");
 
         priceFeed.hackLastBoundsUpdate(block.timestamp - 1 days);
 
+        // reserve feed is self
         vm.mockCall(
             priceOracle,
             abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)),
@@ -200,14 +202,24 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         vm.mockCall(
             priceOracle, abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)), abi.encode(reserveFeed)
         );
+
+        // reserve exchange rate is out of bounds
+        vm.mockCall(
+            priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.05e8)
+        );
+        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        priceFeed.updateBounds("some data");
+
         vm.mockCall(
             priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.02e8)
         );
 
+        // exchange rate is out of new bounds
+        priceFeed.hackLPExchangeRate(0.99 ether);
         vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
         priceFeed.updateBounds("some data");
 
-        priceFeed.hackLowerBound(1 ether);
+        priceFeed.hackLPExchangeRate(1.01 ether);
 
         for (uint256 i; i < 2; ++i) {
             bool isUpdatable = i == 1;

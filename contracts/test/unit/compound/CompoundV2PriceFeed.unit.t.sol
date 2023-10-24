@@ -35,7 +35,7 @@ contract CompoundV2PriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(cToken), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(cToken), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.01796 ether, "Incorrect lower bound"); // 1.02 * 0.998
+        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
 
         // overriden functions
         vm.expectCall(address(cToken), abi.encodeCall(ICToken.exchangeRateStored, ()));

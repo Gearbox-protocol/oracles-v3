@@ -44,7 +44,7 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         assertEq(priceFeed.lpToken(), address(balancerPool), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(balancerPool), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.01796 ether, "Incorrect lower bound"); // 1.02 * 0.998
+        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
 
         balancerPool.hackRate(1.03 ether);
         vm.expectCall(address(balancerPool), abi.encodeCall(IBalancerStablePool.getRate, ()));

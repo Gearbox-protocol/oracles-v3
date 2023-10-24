@@ -35,7 +35,7 @@ contract WstETHPriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(wstETH), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(wstETH), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.01796 ether, "Incorrect lower bound"); // 1.02 * 0.998
+        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
 
         // overriden functions
         vm.expectCall(address(wstETH), abi.encodeCall(IwstETH.stEthPerToken, ()));

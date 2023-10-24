@@ -56,7 +56,7 @@ contract CurveStableLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         assertEq(priceFeed.lpToken(), lpToken, "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(curvePool), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.01796 ether, "Incorrect lower bound"); // 1.02 * 0.998
+        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
 
         curvePool.hack_virtual_price(1.03 ether);
         vm.expectCall(address(curvePool), abi.encodeCall(ICurvePool.get_virtual_price, ()));
