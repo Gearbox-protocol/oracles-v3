@@ -165,22 +165,29 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         // also test `_initLimiter` and `_calcLowerBound`
         vm.expectEmit(false, false, false, true);
-        emit SetBounds(0.998 ether, 1.01796 ether);
+        emit SetBounds(0.99 ether, 1.0098 ether);
 
         priceFeed.initLimiterExposed();
-        assertEq(priceFeed.lowerBound(), 0.998 ether);
+        assertEq(priceFeed.lowerBound(), 0.99 ether);
     }
 
     /// @notice U:[LPPF-7]: `updateBounds` works as expected
     function test_U_LPPF_07_updateBoudns_works_as_expected() public {
         priceFeed.hackAggregatePrice(2e8);
-        priceFeed.hackLPExchangeRate(1.02 ether);
+        priceFeed.hackLowerBound(1.005 ether);
+        priceFeed.hackLPExchangeRate(1.015 ether);
         priceFeed.hackScale(1 ether);
+        priceFeed.hackLastBoundsUpdate(block.timestamp);
 
         vm.expectRevert(UpdateBoundsNotAllowedException.selector);
         priceFeed.updateBounds("some data");
 
         priceFeed.hackUpdateBoundsAllowed(true);
+
+        vm.expectRevert(UpdateBoundsBeforeCooldownException.selector);
+        priceFeed.updateBounds("some data");
+
+        priceFeed.hackLastBoundsUpdate(block.timestamp - 1 days);
 
         vm.mockCall(
             priceOracle,
@@ -196,6 +203,11 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         vm.mockCall(
             priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.02e8)
         );
+
+        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        priceFeed.updateBounds("some data");
+
+        priceFeed.hackLowerBound(1 ether);
 
         for (uint256 i; i < 2; ++i) {
             bool isUpdatable = i == 1;
@@ -216,11 +228,13 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
             vm.expectCall(priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)));
 
             vm.expectEmit(false, false, false, true);
-            // lower bound 1.00798 = 2.02 / 2 * 0.998; upper bound 1.0281396 = 1.00798 * 1.02
-            emit SetBounds(1.00798 ether, 1.0281396 ether);
+            // lower bound 0.9999 = 2.02 / 2 * 0.99; upper bound 1.019898 = 0.9999 * 1.02
+            emit SetBounds(0.9999 ether, 1.019898 ether);
 
             priceFeed.updateBounds("some data");
-            assertEq(priceFeed.lowerBound(), 1.00798 ether, "Incorrect lowerBound");
+            assertEq(priceFeed.lowerBound(), 0.9999 ether, "Incorrect lowerBound");
+
+            priceFeed.hackLastBoundsUpdate(block.timestamp - 1 days);
         }
     }
 }
