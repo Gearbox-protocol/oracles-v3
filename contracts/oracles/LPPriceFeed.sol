@@ -100,17 +100,28 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     // CONFIGURATION //
     // ------------- //
 
-    /// @notice Allows or forbids permissionless bounds update
+    /// @notice Allows permissionless bounds update
     /// @dev The reserve price feed used to calculate new bounds must be trusted to be practically impossible to
     ///      manipulate, this contract only ensures that it is not self, which would be an immediate disaster
-    function setUpdateBoundsAllowed(bool allowed)
+    function allowBoundsUpdate()
         external
         override
         configuratorOnly // U:[LPPF-5]
     {
-        if (updateBoundsAllowed == allowed) return;
-        updateBoundsAllowed = allowed; // U:[LPPF-5]
-        emit SetUpdateBoundsAllowed(allowed); // U:[LPPF-5]
+        if (updateBoundsAllowed) return;
+        updateBoundsAllowed = true; // U:[LPPF-5]
+        emit SetUpdateBoundsAllowed(true); // U:[LPPF-5]
+    }
+
+    /// @notice Forbids permissionless bounds update
+    function forbidBoundsUpdate()
+        external
+        override
+        controllerOnly // U:[LPPF-5]
+    {
+        if (!updateBoundsAllowed) return;
+        updateBoundsAllowed = false; // U:[LPPF-5]
+        emit SetUpdateBoundsAllowed(false); // U:[LPPF-5]
     }
 
     /// @notice Sets new lower and upper bounds for the LP token exchange rate

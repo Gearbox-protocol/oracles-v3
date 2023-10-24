@@ -44,7 +44,8 @@ interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents, ILPPriceFeedExceptions
     // CONFIGURATION //
     // ------------- //
 
-    function setUpdateBoundsAllowed(bool allowed) external;
+    function allowBoundsUpdate() external;
+    function forbidBoundsUpdate() external;
     function setLimiter(uint256 newLowerBound) external;
     function updateBounds(bytes calldata updateData) external;
 }
