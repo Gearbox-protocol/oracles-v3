@@ -1326,10 +1326,10 @@
   resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v3/-/core-v3-1.38.2.tgz#28de2cd40d417c3916948533f515b084e15bbae1"
   integrity sha512-G6pOD6/snW/4O5EbJNOd/Q5iYZ47wK4x8e9cdVW37U2wZ7GXuwrp8hw5cFr105j7NapFuNa+ybgGDOCM7+Hl/g==
 
-"@gearbox-protocol/core-v3@^1.43.0":
-  version "1.43.0"
-  resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v3/-/core-v3-1.43.0.tgz#dea40255ae773f4af6457c137948d1bb93bc5cae"
-  integrity sha512-KGgCfj1HUVTZqJusjHWRUMnjA7RMARs3QKFwnyd2siBR0DVulKVLzdBgbAQkXAliEnO+9AIpebpZcRBUCBzjRg==
+"@gearbox-protocol/core-v3@^1.44.0":
+  version "1.44.0"
+  resolved "https://registry.yarnpkg.com/@gearbox-protocol/core-v3/-/core-v3-1.44.0.tgz#751ba99ef7f92de5126038b52e114350c377ebc4"
+  integrity sha512-dJSdsCvu67ZM8hs4OrSCwAyqxDzg/BxMjBC/EIozlKR7IIZ0hK0/mtNy02yo3WEpr2qF9FZjLMsL4AW6BVpPKg==
 
 "@gearbox-protocol/eslint-config@^1.6.1":
   version "1.6.1"
