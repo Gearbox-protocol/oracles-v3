@@ -599,7 +599,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     function setPriceFeed(address token, address priceFeed, uint32 stalenessPeriod) internal {
         priceFeeds[token] = priceFeed;
         stalenessPeriods[token] = stalenessPeriod;
-        priceFeedConfig.push(PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod}));
+        priceFeedConfig.push(
+            PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod, trusted: false})
+        );
     }
 
     function getPriceFeeds() external view returns (PriceFeedConfig[] memory) {
@@ -616,7 +618,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             PriceFeedConfig memory pfc = priceFeedConfig[i];
             address token = pfc.token;
             vm.prank(root);
-            PriceOracleV3(priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
+            PriceOracleV3(priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod, pfc.trusted);
         }
     }
 

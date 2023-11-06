@@ -48,7 +48,7 @@ contract PricePrinterTest is Test {
 
         console.log("Found: ", len, " tokens");
         for (uint256 i; i < len; ++i) {
-            (address token, address priceFeed,) = pfd.priceFeedConfig(i);
+            (address token, address priceFeed,,) = pfd.priceFeedConfig(i);
             Tokens t = pfd.tokenTestSuite().tokenIndexes(token);
 
             (, int256 price,,,) = IPriceFeed(priceFeed).latestRoundData();
