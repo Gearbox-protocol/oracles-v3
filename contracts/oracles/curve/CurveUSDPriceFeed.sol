@@ -16,10 +16,17 @@ contract CurveUSDPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.CURVE_USD_ORACLE;
 
-    constructor(address addressProvider, address _crvUSD, address _pool, address _priceFeed, uint32 _stalenessPeriod)
+    constructor(
+        address addressProvider,
+        uint256 lowerBound,
+        address _crvUSD,
+        address _pool,
+        address _priceFeed,
+        uint32 _stalenessPeriod
+    )
         SingleAssetLPPriceFeed(addressProvider, _crvUSD, _pool, _priceFeed, _stalenessPeriod) // U:[CRV-D-1]
     {
-        _initLimiter(); // U:[CRV-D-1]
+        _setLimiter(lowerBound); // U:[CRV-D-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {

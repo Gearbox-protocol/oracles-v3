@@ -18,16 +18,15 @@ contract WrappedAaveV2PriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
 
         waToken = new WATokenMock();
-        waToken.hackExchangeRate(1.02 ether);
+        waToken.hackExchangeRate(1.03 ether);
 
         priceFeed = new WrappedAaveV2PriceFeed(
             address(addressProvider),
+            1.02 ether,
             address(waToken),
             address(underlyingPriceFeed),
             1 days
         );
-
-        waToken.hackExchangeRate(1.03 ether);
     }
 
     /// @notice U:[AAVE-1]: Price feed works as expected
@@ -35,7 +34,7 @@ contract WrappedAaveV2PriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(waToken), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(waToken), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
+        assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
         // overriden functions
         vm.expectCall(address(waToken), abi.encodeCall(IWAToken.exchangeRate, ()));

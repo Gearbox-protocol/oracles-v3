@@ -46,14 +46,19 @@ contract PricePrinterTest is Test {
     function test_print_all_prices() public liveTestOnly {
         uint256 len = pfd.priceFeedConfigLength();
 
-        console.log("Found: ", len, " tokens");
+        bool mustFail;
+        emit log_string(string.concat("Found ", vm.toString(len), " tokens"));
         for (uint256 i; i < len; ++i) {
-            (address token, address priceFeed,) = pfd.priceFeedConfig(i);
+            (address token, address priceFeed,,) = pfd.priceFeedConfig(i);
             Tokens t = pfd.tokenTestSuite().tokenIndexes(token);
 
-            (, int256 price,,,) = IPriceFeed(priceFeed).latestRoundData();
-
-            emit log_named_decimal_int(pfd.tokenTestSuite().symbols(t), price, 8);
+            try IPriceFeed(priceFeed).latestRoundData() returns (uint80, int256 price, uint256, uint256, uint80) {
+                emit log_named_decimal_int(pfd.tokenTestSuite().symbols(t), price, 8);
+            } catch {
+                emit log_string(string.concat(pfd.tokenTestSuite().symbols(t), ": REVERT"));
+                mustFail = true;
+            }
         }
+        if (mustFail) fail();
     }
 }

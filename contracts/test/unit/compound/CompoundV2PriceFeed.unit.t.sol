@@ -18,16 +18,15 @@ contract CompoundV2PriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
 
         cToken = new CTokenMock();
-        cToken.hackExchangeRateStored(1.02 ether);
+        cToken.hackExchangeRateStored(1.03 ether);
 
         priceFeed = new CompoundV2PriceFeed(
             address(addressProvider),
+            1.02 ether,
             address(cToken),
             address(underlyingPriceFeed),
             1 days
         );
-
-        cToken.hackExchangeRateStored(1.03 ether);
     }
 
     /// @notice U:[COMP-1]: Price feed works as expected
@@ -35,7 +34,7 @@ contract CompoundV2PriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(cToken), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(cToken), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
+        assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
         // overriden functions
         vm.expectCall(address(cToken), abi.encodeCall(ICToken.exchangeRateStored, ()));

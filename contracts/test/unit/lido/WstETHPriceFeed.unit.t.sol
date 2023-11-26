@@ -18,16 +18,15 @@ contract WstETHPriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
 
         wstETH = new WstETHMock(makeAddr("stETH"));
-        wstETH.hackStEthPerToken(1.02 ether);
+        wstETH.hackStEthPerToken(1.03 ether);
 
         priceFeed = new WstETHPriceFeed(
             address(addressProvider),
+            1.02 ether,
             address(wstETH),
             address(underlyingPriceFeed),
             1 days
         );
-
-        wstETH.hackStEthPerToken(1.03 ether);
     }
 
     /// @notice U:[LDO-1]: Price feed works as expected
@@ -35,7 +34,7 @@ contract WstETHPriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(wstETH), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(wstETH), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
+        assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
         // overriden functions
         vm.expectCall(address(wstETH), abi.encodeCall(IwstETH.stEthPerToken, ()));

@@ -13,10 +13,16 @@ contract WstETHPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.WSTETH_ORACLE;
 
-    constructor(address addressProvider, address _wstETH, address _priceFeed, uint32 _stalenessPeriod)
+    constructor(
+        address addressProvider,
+        uint256 lowerBound,
+        address _wstETH,
+        address _priceFeed,
+        uint32 _stalenessPeriod
+    )
         SingleAssetLPPriceFeed(addressProvider, _wstETH, _wstETH, _priceFeed, _stalenessPeriod) // U:[LDO-1]
     {
-        _initLimiter(); // U:[LDO-1]
+        _setLimiter(lowerBound); // U:[LDO-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {

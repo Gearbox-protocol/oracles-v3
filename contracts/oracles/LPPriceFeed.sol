@@ -57,7 +57,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     /// @param _addressProvider Address provider contract address
     /// @param _lpToken  LP token for which the prices are computed
     /// @param _lpContract LP contract (can be different from LP token)
-    /// @dev Derived price feeds must call `_initLimiter` in their constructor after
+    /// @dev Derived price feeds must call `_setLimiter` in their constructor after
     ///      initializing all state variables needed for exchange rate calculation
     constructor(address _addressProvider, address _lpToken, address _lpContract)
         ACLNonReentrantTrait(_addressProvider) // U:[LPPF-1]
@@ -137,7 +137,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
         override
         controllerOnly // U:[LPPF-6]
     {
-        _setLimiter(newLowerBound, getLPExchangeRate()); // U:[LPPF-6]
+        _setLimiter(newLowerBound); // U:[LPPF-6]
     }
 
     /// @notice Permissionlessly updates LP token's exchange rate bounds using answer from the reserve price feed.
@@ -159,18 +159,13 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
         uint256 reserveExchangeRate = uint256(reserveAnswer * getScale() / uint256(getAggregatePrice())); // U:[LPPF-7]
 
         _ensureValueInBounds(reserveExchangeRate, lowerBound); // U:[LPPF-7]
-        _setLimiter(_calcLowerBound(reserveExchangeRate), getLPExchangeRate()); // U:[LPPF-7]
-    }
-
-    /// @dev Sets lower bound to the current LP token exhcange rate (with small buffer for downside movement)
-    function _initLimiter() internal {
-        uint256 exchangeRate = getLPExchangeRate();
-        _setLimiter(_calcLowerBound(exchangeRate), exchangeRate); // U:[LPPF-6]
+        _setLimiter(_calcLowerBound(reserveExchangeRate)); // U:[LPPF-7]
     }
 
     /// @dev `setLimiter` implementation: sets new bounds, ensures that current value is within them, emits event
-    function _setLimiter(uint256 lower, uint256 current) internal {
-        uint256 upper = _ensureValueInBounds(current, lower); // U:[LPPF-6]
+    function _setLimiter(uint256 lower) internal {
+        if (lower == 0) revert LowerBoundCantBeZeroException(); // U:[LPPF-6]
+        uint256 upper = _ensureValueInBounds(getLPExchangeRate(), lower); // U:[LPPF-6]
         lowerBound = lower; // U:[LPPF-6]
         emit SetBounds(lower, upper); // U:[LPPF-6]
     }

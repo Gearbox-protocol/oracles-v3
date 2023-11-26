@@ -20,10 +20,11 @@ contract CurveUSDPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         crvUSD = makeAddr("crvUSD");
         curvePool = new CurvePoolMock();
-        curvePool.hack_price_oracle(1.02 ether);
+        curvePool.hack_price_oracle(1.03 ether);
 
         priceFeed = new CurveUSDPriceFeed(
             address(addressProvider),
+            1.02 ether,
             crvUSD,
             address(curvePool),
             address(underlyingPriceFeed),
@@ -36,10 +37,9 @@ contract CurveUSDPriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), crvUSD, "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(curvePool), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
+        assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
         // overriden functions
-        curvePool.hack_price_oracle(1.03 ether);
         vm.expectCall(address(curvePool), abi.encodeCall(ICurvePool.price_oracle, ()));
         assertEq(priceFeed.getLPExchangeRate(), 1.03 ether, "Incorrect getLPExchangeRate");
         assertEq(priceFeed.getScale(), 1 ether, "Incorrect getScale");

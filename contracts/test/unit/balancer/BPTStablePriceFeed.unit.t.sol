@@ -24,7 +24,7 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
 
         balancerPool = new BalancerStablePoolMock();
-        balancerPool.hackRate(1.02 ether);
+        balancerPool.hackRate(1.03 ether);
 
         for (uint256 i; i < 5; ++i) {
             underlyingPriceFeeds[i] = new PriceFeedMock(int256(1e6 * (100 - i)), 8);
@@ -36,17 +36,17 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
         vm.expectRevert(ZeroAddressException.selector);
         new BPTStablePriceFeed(
             address(addressProvider),
+            1.02 ether,
             address(0),
             _getUnderlyingPriceFeeds(5)
         );
 
-        priceFeed = _newBalancerPriceFeed(5);
+        priceFeed = _newBalancerPriceFeed(5, 1.02 ether);
 
         assertEq(priceFeed.lpToken(), address(balancerPool), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(balancerPool), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
+        assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
-        balancerPool.hackRate(1.03 ether);
         vm.expectCall(address(balancerPool), abi.encodeCall(IBalancerStablePool.getRate, ()));
         assertEq(priceFeed.getLPExchangeRate(), 1.03 ether, "Incorrect getLPExchangeRate");
         assertEq(priceFeed.getScale(), 1 ether, "Incorrect getScale");
@@ -57,11 +57,11 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
         for (uint256 numFeeds; numFeeds <= 5; ++numFeeds) {
             if (numFeeds < 2) {
                 vm.expectRevert(ZeroAddressException.selector);
-                _newBalancerPriceFeed(numFeeds);
+                _newBalancerPriceFeed(numFeeds, 1.02 ether);
                 continue;
             }
 
-            priceFeed = _newBalancerPriceFeed(numFeeds);
+            priceFeed = _newBalancerPriceFeed(numFeeds, 1.02 ether);
             assertEq(priceFeed.numAssets(), numFeeds, "Incorrect numAssets");
 
             int256 answer = priceFeed.getAggregatePrice();
@@ -73,9 +73,10 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
     // HELPERS //
     // ------- //
 
-    function _newBalancerPriceFeed(uint256 numFeeds) internal returns (BPTStablePriceFeed) {
+    function _newBalancerPriceFeed(uint256 numFeeds, uint256 lowerBound) internal returns (BPTStablePriceFeed) {
         return new BPTStablePriceFeed(
             address(addressProvider),
+            lowerBound,
             address(balancerPool),
             _getUnderlyingPriceFeeds(numFeeds)
         );

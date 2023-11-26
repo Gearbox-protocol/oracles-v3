@@ -7,9 +7,13 @@ import {PriceFeedParams} from "../../../oracles/PriceFeedParams.sol";
 import {BPTWeightedPriceFeed} from "../../../oracles/balancer/BPTWeightedPriceFeed.sol";
 
 contract BPTWeightedPriceFeedHarness is BPTWeightedPriceFeed {
-    constructor(address addressProvider, address _vault, address _pool, PriceFeedParams[] memory priceFeeds)
-        BPTWeightedPriceFeed(addressProvider, _vault, _pool, priceFeeds)
-    {}
+    constructor(
+        address addressProvider,
+        uint256 lowerBound,
+        address _vault,
+        address _pool,
+        PriceFeedParams[] memory priceFeeds
+    ) BPTWeightedPriceFeed(addressProvider, lowerBound, _vault, _pool, priceFeeds) {}
 
     function getWeightsArrayExposed() external view returns (uint256[] memory weights) {
         weights = _getWeightsArray();

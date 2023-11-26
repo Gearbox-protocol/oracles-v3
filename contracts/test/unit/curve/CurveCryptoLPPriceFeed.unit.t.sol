@@ -27,7 +27,7 @@ contract CurveCryptoLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
         lpToken = makeAddr("LP_TOKEN");
 
         curvePool = new CurvePoolMock();
-        curvePool.hack_virtual_price(1.02 ether);
+        curvePool.hack_virtual_price(1.03 ether);
 
         for (uint256 i; i < 3; ++i) {
             underlyingPriceFeeds[i] = new PriceFeedMock(int256(1e8 * 4 ** i), 8);
@@ -39,6 +39,7 @@ contract CurveCryptoLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
         vm.expectRevert(ZeroAddressException.selector);
         new CurveCryptoLPPriceFeed(
             address(addressProvider),
+            1.02 ether,
             address(0),
             address(curvePool),
             _getUnderlyingPriceFeeds(3)
@@ -47,16 +48,17 @@ contract CurveCryptoLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
         vm.expectRevert(ZeroAddressException.selector);
         new CurveCryptoLPPriceFeed(
             address(addressProvider),
+            1.02 ether,
             lpToken,
             address(0),
             _getUnderlyingPriceFeeds(3)
         );
 
-        priceFeed = _newCurvePriceFeed(3);
+        priceFeed = _newCurvePriceFeed(3, 1.02 ether);
 
         assertEq(priceFeed.lpToken(), lpToken, "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(curvePool), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.0098 ether, "Incorrect lower bound"); // 1.02 * 0.99
+        assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
         curvePool.hack_virtual_price(1.03 ether);
         vm.expectCall(address(curvePool), abi.encodeCall(ICurvePool.get_virtual_price, ()));
@@ -69,11 +71,11 @@ contract CurveCryptoLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
         for (uint256 numFeeds; numFeeds <= 3; ++numFeeds) {
             if (numFeeds < 2) {
                 vm.expectRevert(ZeroAddressException.selector);
-                _newCurvePriceFeed(numFeeds);
+                _newCurvePriceFeed(numFeeds, 1.02 ether);
                 continue;
             }
 
-            priceFeed = _newCurvePriceFeed(numFeeds);
+            priceFeed = _newCurvePriceFeed(numFeeds, 1.02 ether);
             assertEq(priceFeed.nCoins(), numFeeds, "Incorrect nCoins");
 
             int256 answer = priceFeed.getAggregatePrice();
@@ -85,9 +87,10 @@ contract CurveCryptoLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
     // HELPERS //
     // ------- //
 
-    function _newCurvePriceFeed(uint256 numFeeds) internal returns (CurveCryptoLPPriceFeed) {
+    function _newCurvePriceFeed(uint256 numFeeds, uint256 lowerBound) internal returns (CurveCryptoLPPriceFeed) {
         return new CurveCryptoLPPriceFeed(
             address(addressProvider),
+            lowerBound,
             lpToken,
             address(curvePool),
             _getUnderlyingPriceFeeds(numFeeds)

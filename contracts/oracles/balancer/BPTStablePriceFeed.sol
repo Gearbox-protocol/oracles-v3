@@ -37,7 +37,12 @@ contract BPTStablePriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod4;
     bool public immutable skipCheck4;
 
-    constructor(address addressProvider, address _balancerPool, PriceFeedParams[5] memory priceFeeds)
+    constructor(
+        address addressProvider,
+        uint256 lowerBound,
+        address _balancerPool,
+        PriceFeedParams[5] memory priceFeeds
+    )
         LPPriceFeed(addressProvider, _balancerPool, _balancerPool) // U:[BAL-S-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[BAL-S-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[BAL-S-2]
@@ -62,7 +67,7 @@ contract BPTStablePriceFeed is LPPriceFeed {
         skipCheck3 = numAssets > 3 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
         skipCheck4 = numAssets > 4 ? _validatePriceFeed(priceFeed4, stalenessPeriod4) : false;
 
-        _initLimiter(); // U:[BAL-S-1]
+        _setLimiter(lowerBound); // U:[BAL-S-1]
     }
 
     function getAggregatePrice() public view override returns (int256 answer) {

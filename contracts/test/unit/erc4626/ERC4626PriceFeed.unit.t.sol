@@ -23,16 +23,15 @@ contract ERC4626PriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         asset = new ERC20Mock("Test Token", "TEST", 6);
         vault = new ERC4626Mock(address(asset), "Test Token Vault", "vTEST");
-        vault.hackPricePerShare(1.02e6);
+        vault.hackPricePerShare(1.03e6);
 
         priceFeed = new ERC4626PriceFeed(
             address(addressProvider),
+            1.02e6,
             address(vault),
             address(underlyingPriceFeed),
             1 days
         );
-
-        vault.hackPricePerShare(1.03e6);
     }
 
     /// @notice U:[TV-1]: Price feed works as expected
@@ -40,7 +39,7 @@ contract ERC4626PriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(vault), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(vault), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.0098e6, "Incorrect lower bound"); // 1.02 * 0.99
+        assertEq(priceFeed.lowerBound(), 1.02e6, "Incorrect lower bound");
 
         // overriden functions
         vm.expectCall(address(vault), abi.encodeCall(IERC4626.convertToAssets, (1e6)));

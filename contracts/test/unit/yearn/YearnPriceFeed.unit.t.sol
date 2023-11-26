@@ -18,16 +18,15 @@ contract YearnPriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
 
         yVault = new YVaultMock(makeAddr("TOKEN"), 6);
-        yVault.hackPricePerShare(1.02e6);
+        yVault.hackPricePerShare(1.03e6);
 
         priceFeed = new YearnPriceFeed(
             address(addressProvider),
+            1.02e6,
             address(yVault),
             address(underlyingPriceFeed),
             1 days
         );
-
-        yVault.hackPricePerShare(1.03e6);
     }
 
     /// @notice U:[YFI-1]: Price feed works as expected
@@ -35,7 +34,7 @@ contract YearnPriceFeedUnitTest is PriceFeedUnitTestHelper {
         // constructor
         assertEq(priceFeed.lpToken(), address(yVault), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(yVault), "Incorrect lpToken");
-        assertEq(priceFeed.lowerBound(), 1.0098e6, "Incorrect lower bound"); // 1.02 * 0.99
+        assertEq(priceFeed.lowerBound(), 1.02e6, "Incorrect lower bound");
 
         // overriden functions
         vm.expectCall(address(yVault), abi.encodeCall(IYVault.pricePerShare, ()));

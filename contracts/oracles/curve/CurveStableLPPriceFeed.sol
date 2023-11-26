@@ -34,7 +34,13 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod3;
     bool public immutable skipCheck3;
 
-    constructor(address addressProvider, address _token, address _pool, PriceFeedParams[4] memory priceFeeds)
+    constructor(
+        address addressProvider,
+        uint256 lowerBound,
+        address _token,
+        address _pool,
+        PriceFeedParams[4] memory priceFeeds
+    )
         LPPriceFeed(addressProvider, _token, _pool) // U:[CRV-S-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-S-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-S-2]
@@ -60,7 +66,7 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
             ? PriceFeedType.CURVE_2LP_ORACLE
             : (nCoins == 3 ? PriceFeedType.CURVE_3LP_ORACLE : PriceFeedType.CURVE_4LP_ORACLE);
 
-        _initLimiter(); // U:[CRV-S-1]
+        _setLimiter(lowerBound); // U:[CRV-S-1]
     }
 
     function getAggregatePrice() public view override returns (int256 answer) {
