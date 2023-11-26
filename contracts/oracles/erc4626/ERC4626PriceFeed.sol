@@ -19,12 +19,18 @@ contract ERC4626PriceFeed is SingleAssetLPPriceFeed {
     /// @dev Amount of underlying asset comprising a single unit (accounting for decimals)
     uint256 immutable _assetUnit;
 
-    constructor(address addressProvider, address _vault, address _assetPriceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(addressProvider, _vault, _vault, _assetPriceFeed, _stalenessPeriod) // U:[TV-1]
+    constructor(
+        address addressProvider,
+        uint256 lowerBound,
+        address _vault,
+        address _priceFeed,
+        uint32 _stalenessPeriod
+    )
+        SingleAssetLPPriceFeed(addressProvider, _vault, _vault, _priceFeed, _stalenessPeriod) // U:[TV-1]
     {
         _shareUnit = 10 ** IERC4626(_vault).decimals();
         _assetUnit = 10 ** ERC20(IERC4626(_vault).asset()).decimals();
-        _initLimiter(); // U:[TV-1]
+        _setLimiter(lowerBound); // U:[TV-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {

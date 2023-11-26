@@ -22,7 +22,7 @@ uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 ///         BPTs are priced according to the formula `k * prod((p_i / w_i) ^ w_i) / S`, where `k` is pool's invariant,
 ///         `S` is pool's LP token total supply, `w_i` and `p_i` are `i`-th asset's weight and price respectively.
 ///         Pool's invariant, in turn, equals `prod(b_i ^ w_i)`, where `b_i` is pool's balance of `i`-th asset.
-///         Bounding logic is applied to `k / S` which can be considered BPT's exchange rate that should grow slowly
+///         Bounding logic is applied to `n * k / S` which can be considered BPT's exchange rate that should grow slowly
 ///         over time as fees accrue.
 /// @dev Severe gas optimizations have been made:
 ///      * Many variables saved as immutable which reduces the number of external calls and storage reads
@@ -97,7 +97,13 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     uint256 immutable scale6;
     uint256 immutable scale7;
 
-    constructor(address addressProvider, address _vault, address _pool, PriceFeedParams[] memory priceFeeds)
+    constructor(
+        address addressProvider,
+        uint256 lowerBound,
+        address _vault,
+        address _pool,
+        PriceFeedParams[] memory priceFeeds
+    )
         LPPriceFeed(addressProvider, _pool, _pool) // U:[BAL-W-1]
         nonZeroAddress(_vault) // U:[BAL-W-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[BAL-W-2]
@@ -165,7 +171,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         skipCheck6 = numAssets >= 7 ? _validatePriceFeed(priceFeed6, stalenessPeriod6) : false;
         skipCheck7 = numAssets >= 8 ? _validatePriceFeed(priceFeed7, stalenessPeriod7) : false;
 
-        _initLimiter(); // U:[BAL-W-1]
+        _setLimiter(lowerBound); // U:[BAL-W-1]
     }
 
     // ------- //
@@ -193,11 +199,11 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
             }
         }
 
-        answer = int256(weightedPrice / WAD_OVER_USD_FEED_SCALE); // U:[BAL-W-2]
+        answer = int256(weightedPrice / (numAssets * WAD_OVER_USD_FEED_SCALE)); // U:[BAL-W-2]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
-        return _getBPTInvariant().divDown(_getBPTSupply()); // U:[BAL-W-1]
+        return (numAssets * _getBPTInvariant()).divDown(_getBPTSupply()); // U:[BAL-W-1]
     }
 
     function getScale() public pure override returns (uint256) {

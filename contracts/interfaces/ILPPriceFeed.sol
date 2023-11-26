@@ -14,6 +14,9 @@ interface ILPPriceFeedEvents {
 }
 
 interface ILPPriceFeedExceptions {
+    /// @notice Thrown when trying to set exchange rate lower bound to zero
+    error LowerBoundCantBeZeroException();
+
     /// @notice Thrown when exchange rate falls below lower bound during price calculation
     ///         or new boudns don't contain exchange rate during bounds update
     error ExchangeRateOutOfBoundsException();

@@ -150,6 +150,10 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         vm.startPrank(configurator);
 
+        // reverts if lower bound is zero
+        vm.expectRevert(LowerBoundCantBeZeroException.selector);
+        priceFeed.setLimiter(0);
+
         // reverts if new bounds don't contain current exchange rate
         vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
         priceFeed.setLimiter(0.5 ether);
@@ -162,13 +166,6 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         priceFeed.setLimiter(0.99 ether);
 
         vm.stopPrank();
-
-        // also test `_initLimiter` and `_calcLowerBound`
-        vm.expectEmit(false, false, false, true);
-        emit SetBounds(0.99 ether, 1.0098 ether);
-
-        priceFeed.initLimiterExposed();
-        assertEq(priceFeed.lowerBound(), 0.99 ether);
     }
 
     /// @notice U:[LPPF-7]: `updateBounds` works as expected

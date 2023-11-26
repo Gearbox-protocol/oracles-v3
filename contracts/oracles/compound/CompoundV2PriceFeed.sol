@@ -13,10 +13,16 @@ contract CompoundV2PriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_00;
     PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOUND_V2_ORACLE;
 
-    constructor(address addressProvider, address _cToken, address _priceFeed, uint32 _stalenessPeriod)
+    constructor(
+        address addressProvider,
+        uint256 lowerBound,
+        address _cToken,
+        address _priceFeed,
+        uint32 _stalenessPeriod
+    )
         SingleAssetLPPriceFeed(addressProvider, _cToken, _cToken, _priceFeed, _stalenessPeriod) // U:[COMP-1]
     {
-        _initLimiter(); // U:[COMP-1]
+        _setLimiter(lowerBound); // U:[COMP-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {

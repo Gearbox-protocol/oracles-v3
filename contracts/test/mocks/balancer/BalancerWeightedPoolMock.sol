@@ -6,6 +6,7 @@ pragma solidity ^0.8.17;
 import {IBalancerWeightedPool} from "../../../interfaces/balancer/IBalancerWeightedPool.sol";
 
 contract BalancerWeightedPoolMock is IBalancerWeightedPool {
+    uint256 public override getRate;
     bytes32 public immutable override getPoolId;
     uint256 public immutable override totalSupply;
     bool public immutable actualSupplyEnabled;

@@ -39,11 +39,12 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
     /// @notice U:[BAL-W-1]: LP-related functionality works as expected
     function test_U_BAL_W_01_lp_related_functiontionality_works_as_expected() public {
-        _setupBalancerMocks(8);
+        _setupBalancerMocks(8, 1.03 ether / 8);
 
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
             address(addressProvider),
+            1.02 ether,
             address(0),
             address(balancerPool),
             _getUnderlyingPriceFeeds(8)
@@ -52,20 +53,20 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
             address(addressProvider),
+            1.02 ether,
             address(balancerVault),
             address(0),
             _getUnderlyingPriceFeeds(8)
         );
 
-        priceFeed = _newBalancerPriceFeed(8);
+        priceFeed = _newBalancerPriceFeed(8, 1.02 ether);
 
         assertEq(priceFeed.poolId(), "TEST_POOL", "Incorrect poolId");
         assertEq(priceFeed.vault(), address(balancerVault), "Incorrect vault");
         assertEq(priceFeed.lpToken(), address(balancerPool), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(balancerPool), "Incorrect lpToken");
-        assertApproxEqAbs(priceFeed.lowerBound(), 1.0098 ether, 1e6, "Incorrect lower bound"); // 1.02 * 0.99
+        assertApproxEqAbs(priceFeed.lowerBound(), 1.02 ether, 1e6, "Incorrect lower bound");
 
-        balancerVault.hackPoolTokens("TEST_POOL", _getPoolTokens(8, 1.03 ether));
         assertApproxEqAbs(priceFeed.getLPExchangeRate(), 1.03 ether, 1e6, "Incorrect getLPExchangeRate");
         assertEq(priceFeed.getScale(), 1 ether, "Incorrect getScale");
     }
@@ -73,19 +74,19 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
     /// @notice U:[BAL-W-2]: Underlying price feeds-related functionality works as expected
     function test_U_BAL_W_02_underlying_price_feeds_related_functiontionality_works_as_expected() public {
         for (uint256 numAssets = 2; numAssets <= 8; ++numAssets) {
-            _setupBalancerMocks(numAssets);
+            _setupBalancerMocks(numAssets, 1.03 ether / numAssets);
 
             if (numAssets < 2) {
                 vm.expectRevert(ZeroAddressException.selector);
-                _newBalancerPriceFeed(numAssets);
+                _newBalancerPriceFeed(numAssets, 1.02 ether);
                 continue;
             }
 
-            priceFeed = _newBalancerPriceFeed(numAssets);
+            priceFeed = _newBalancerPriceFeed(numAssets, 1.02 ether);
             assertEq(priceFeed.numAssets(), numAssets, "Incorrect numAssets");
 
             int256 answer = priceFeed.getAggregatePrice();
-            assertApproxEqAbs(answer, int256(numAssets * 1e8 * 2 ** (numAssets - 1)), 1, "Incorrect answer");
+            assertApproxEqAbs(answer, int256(1e8 * 2 ** (numAssets - 1)), 1, "Incorrect answer");
         }
     }
 
@@ -110,18 +111,18 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         balancerVault.hackPoolTokens("TEST_POOL", poolTokens);
 
         // underlying token prices are $1, $4, and $16
-        priceFeed = _newBalancerPriceFeed(3);
+        priceFeed = _newBalancerPriceFeed(3, 1.2 ether); // roughly 3 * 1 ** 0.2 * 0.5 ** 0.3 * 0.25 ** 0.5
 
         assertApproxEqAbs(
             priceFeed.getAggregatePrice(),
-            1697659589, // `(1 / 0.2) ** 0.2 * (4 / 0.3) ** 0.3 * (16 / 0.5) ** 0.5` with 8 decimals
+            565886529, // `(1 / 0.2) ** 0.2 * (4 / 0.3) ** 0.3 * (16 / 0.5) ** 0.5 / 3` with 8 decimals
             1,
             "Incorrect aggregate price"
         );
 
         assertApproxEqAbs(
             priceFeed.getLPExchangeRate(),
-            406126198178117824, // `1 ** 0.2 * 0.5 ** 0.3 * 0.25 ** 0.5` with 18 decimals
+            1218378594534353152, // `3 * 1 ** 0.2 * 0.5 ** 0.3 * 0.25 ** 0.5` with 18 decimals
             1e6,
             "Incorrect LP exchange rate"
         );
@@ -147,7 +148,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         balancerVault = new BalancerVaultMock();
         balancerVault.hackPoolTokens("TEST_POOL", poolTokens);
 
-        priceFeed = _newBalancerPriceFeed(3);
+        priceFeed = _newBalancerPriceFeed(3, 1.84 ether); // roughly 3 * 1 ** 0.5 * 0.5 ** 0.3 * 0.25 ** 0.2
 
         uint256[] memory expectedWeights = new uint256[](3);
         expectedWeights[0] = 0.2 ether;
@@ -174,15 +175,19 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
     // HELPERS //
     // ------- //
 
-    function _setupBalancerMocks(uint256 numAssets) internal {
+    function _setupBalancerMocks(uint256 numAssets, uint256 scaledBalance) internal {
         balancerVault = new BalancerVaultMock();
         balancerPool = new BalancerWeightedPoolMock("TEST_POOL", 1 ether, false, _getNormalizedWeights(numAssets));
-        balancerVault.hackPoolTokens("TEST_POOL", _getPoolTokens(numAssets, 1.02 ether));
+        balancerVault.hackPoolTokens("TEST_POOL", _getPoolTokens(numAssets, scaledBalance));
     }
 
-    function _newBalancerPriceFeed(uint256 numFeeds) internal returns (BPTWeightedPriceFeedHarness) {
+    function _newBalancerPriceFeed(uint256 numFeeds, uint256 lowerBound)
+        internal
+        returns (BPTWeightedPriceFeedHarness)
+    {
         return new BPTWeightedPriceFeedHarness(
             address(addressProvider),
+            lowerBound,
             address(balancerVault),
             address(balancerPool),
             _getUnderlyingPriceFeeds(numFeeds)

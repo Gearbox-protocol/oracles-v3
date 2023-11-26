@@ -47,10 +47,6 @@ contract LPPriceFeedHarness is LPPriceFeed {
         lowerBound = newLowerBound;
     }
 
-    function initLimiterExposed() external {
-        _initLimiter();
-    }
-
     function hackUpdateBoundsAllowed(bool value) external {
         updateBoundsAllowed = value;
     }

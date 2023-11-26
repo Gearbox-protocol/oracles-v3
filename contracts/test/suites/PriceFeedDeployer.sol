@@ -3,11 +3,12 @@
 // (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.10;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-
 import {Test} from "forge-std/Test.sol";
 import {console} from "forge-std/console.sol";
+
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 
 import {Tokens} from "@gearbox-protocol/sdk-gov/contracts/Tokens.sol";
 import {ISupportedContracts, Contracts} from "@gearbox-protocol/sdk-gov/contracts/SupportedContracts.sol";
@@ -32,30 +33,30 @@ import {IACL} from "@gearbox-protocol/core-v2/contracts/interfaces/IACL.sol";
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
 
-import {YearnPriceFeed} from "../../oracles/yearn/YearnPriceFeed.sol";
-import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
-import {CurveUSDPriceFeed} from "../../oracles/curve/CurveUSDPriceFeed.sol";
-import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
-import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
 import {WrappedAaveV2PriceFeed} from "../../oracles/aave/WrappedAaveV2PriceFeed.sol";
-import {CompoundV2PriceFeed} from "../../oracles/compound/CompoundV2PriceFeed.sol";
-import {ERC4626PriceFeed} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
-
-import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
-import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
-import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
-
-import {RedstonePriceFeed} from "../../oracles/updatable/RedstonePriceFeed.sol";
-
 import {BPTStablePriceFeed} from "../../oracles/balancer/BPTStablePriceFeed.sol";
 import {BPTWeightedPriceFeed} from "../../oracles/balancer/BPTWeightedPriceFeed.sol";
+import {CompoundV2PriceFeed} from "../../oracles/compound/CompoundV2PriceFeed.sol";
+import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
+import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
+import {CurveUSDPriceFeed} from "../../oracles/curve/CurveUSDPriceFeed.sol";
+import {ERC4626PriceFeed} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
+import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
+import {RedstonePriceFeed} from "../../oracles/updatable/RedstonePriceFeed.sol";
+import {YearnPriceFeed} from "../../oracles/yearn/YearnPriceFeed.sol";
+import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
+import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
+import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
+import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 
+import {IWAToken} from "../../interfaces/aave/IWAToken.sol";
+import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
+import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
+import {ICToken} from "../../interfaces/compound/ICToken.sol";
+import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
+import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
 import {IYVault} from "../../interfaces/yearn/IYVault.sol";
-import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
-
-import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
-import "forge-std/console.sol";
 
 contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
@@ -188,12 +189,14 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address token = tokenTestSuite.addressOf(t);
                     if (token == address(0)) continue;
 
+                    address pool = supportedContracts.addressOf(crvUSDPriceFeeds[i].pool);
                     address underlying = tokenTestSuite.addressOf(crvUSDPriceFeeds[i].underlying);
                     address pf = address(
                         new CurveUSDPriceFeed(
                             addressProvider,
+                            ICurvePool(pool).get_virtual_price() * 99 / 100,
                             token,
-                            supportedContracts.addressOf(crvUSDPriceFeeds[i].pool),
+                            pool,
                             priceFeeds[underlying],
                             stalenessPeriods[underlying]
                         )
@@ -241,6 +244,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         pf = address(
                             new CurveStableLPPriceFeed(
                                 addressProvider,
+                                ICurvePool(pool).get_virtual_price() * 99 / 100,
                                 tokenTestSuite.addressOf(lpToken),
                                 pool,
                                 [
@@ -294,6 +298,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     pf = address(
                         new CurveCryptoLPPriceFeed(
                             addressProvider,
+                            ICurvePool(pool).get_virtual_price() * 99 / 100,
                             tokenTestSuite.addressOf(lpToken),
                             pool,
                             [
@@ -331,6 +336,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address pf = address(
                         new WstETHPriceFeed(
                             addressProvider,
+                            IwstETH(wsteth).stEthPerToken() * 99 / 100,
                             wsteth,
                             priceFeeds[steth],
                             stalenessPeriods[steth]
@@ -352,11 +358,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
             unchecked {
                 for (uint256 i; i < len; ++i) {
-                    Tokens lpToken = balancerStableLPPriceFeeds[i].lpToken;
+                    Tokens t = balancerStableLPPriceFeeds[i].lpToken;
 
                     address pf;
+                    address lpToken = tokenTestSuite.addressOf(t);
 
-                    if (tokenTestSuite.addressOf(lpToken) != address(0)) {
+                    if (lpToken != address(0)) {
                         PriceFeedParams[5] memory pfParams;
 
                         uint256 nAssets = balancerStableLPPriceFeeds[i].assets.length;
@@ -370,14 +377,15 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                         pf = address(
                             new BPTStablePriceFeed(
-                            addressProvider,
-                            tokenTestSuite.addressOf(lpToken),
-                            pfParams
+                                addressProvider,
+                                IBalancerStablePool(lpToken).getRate() * 99 / 100,
+                                lpToken,
+                                pfParams
                             )
                         );
 
-                        setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
-                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
+                        setPriceFeed(lpToken, pf);
+                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t))));
                     }
                 }
             }
@@ -391,11 +399,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
             unchecked {
                 for (uint256 i; i < len; ++i) {
-                    Tokens lpToken = balancerWeightedLPPriceFeeds[i].lpToken;
+                    Tokens t = balancerWeightedLPPriceFeeds[i].lpToken;
 
                     address pf;
+                    address lpToken = tokenTestSuite.addressOf(t);
 
-                    if (tokenTestSuite.addressOf(lpToken) != address(0)) {
+                    if (lpToken != address(0)) {
                         uint256 nAssets = balancerWeightedLPPriceFeeds[i].assets.length;
 
                         PriceFeedParams[] memory pfParams = new PriceFeedParams[](nAssets);
@@ -411,15 +420,16 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                         pf = address(
                             new BPTWeightedPriceFeed(
-                            addressProvider,
-                            supportedContracts.addressOf(Contracts.BALANCER_VAULT),
-                            tokenTestSuite.addressOf(lpToken),
-                            pfParams
+                                addressProvider,
+                                IBalancerWeightedPool(lpToken).getRate() * 99 / 100,
+                                supportedContracts.addressOf(Contracts.BALANCER_VAULT),
+                                lpToken,
+                                pfParams
                             )
                         );
 
-                        setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
-                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
+                        setPriceFeed(lpToken, pf);
+                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t))));
                     }
                 }
             }
@@ -460,6 +470,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address pf = address(
                     new YearnPriceFeed(
                         addressProvider,
+                        IYVault(yVault).pricePerShare() * 99 / 100,
                         yVault,
                         priceFeeds[underlying],
                         stalenessPeriods[underlying]
@@ -487,6 +498,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address pf = address(
                         new WrappedAaveV2PriceFeed(
                             addressProvider,
+                            IWAToken(waToken).exchangeRate() * 99 / 100,
                             waToken,
                             priceFeeds[underlying],
                             stalenessPeriods[underlying]
@@ -518,6 +530,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address pf = address(
                     new CompoundV2PriceFeed(
                         addressProvider,
+                        ICToken(cToken).exchangeRateStored() * 99 / 100,
                         cToken,
                         priceFeeds[underlying],
                         stalenessPeriods[underlying]
@@ -548,6 +561,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address pf = address(
                     new ERC4626PriceFeed(
                         addressProvider,
+                        ERC4626(token).convertToAssets(10 ** ERC4626(token).decimals()) * 99 / 100,
                         token,
                         priceFeeds[underlying],
                         stalenessPeriods[underlying]
