@@ -95,6 +95,35 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
+        // REDSTONE PRICE FEEDS
+        unchecked {
+            RedStonePriceFeedData[] memory redStonePriceFeeds = redStonePriceFeedsByNetwork[chainId];
+            len = redStonePriceFeeds.length;
+            for (uint256 i; i < len; ++i) {
+                RedStonePriceFeedData memory redStonePriceFeedData = redStonePriceFeeds[i];
+                Tokens t = redStonePriceFeedData.token;
+                address token = tokenTestSuite.addressOf(t);
+
+                address pf = address(
+                    new RedstonePriceFeed(
+                        token,
+                        redStonePriceFeedData.dataFeedId,
+                        redStonePriceFeedData.signers,
+                        redStonePriceFeedData.signersThreshold
+                    )
+                );
+
+                redstoneServiceIdByPriceFeed[pf] = redStonePriceFeedData.dataServiceId;
+
+                redStoneOracles.push(pf);
+                setPriceFeed(token, pf, 4 minutes);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+            updateRedstoneOraclePriceFeeds();
+        }
+
         // BOUNDED PRICE FEEDS
         {
             BoundedPriceFeedData[] memory boundedPriceFeeds = boundedPriceFeedsByNetwork[chainId];
@@ -302,14 +331,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             tokenTestSuite.addressOf(lpToken),
                             pool,
                             [
-                                PriceFeedParams({
-                                    priceFeed: priceFeeds[asset0],
-                                    stalenessPeriod: stalenessPeriods[asset0]
-                                }),
-                                PriceFeedParams({
-                                    priceFeed: priceFeeds[asset1],
-                                    stalenessPeriod: stalenessPeriods[asset1]
-                                }),
+                                PriceFeedParams({priceFeed: priceFeeds[asset0], stalenessPeriod: stalenessPeriods[asset0]}),
+                                PriceFeedParams({priceFeed: priceFeeds[asset1], stalenessPeriod: stalenessPeriods[asset1]}),
                                 PriceFeedParams({
                                     priceFeed: (nCoins > 2) ? priceFeeds[asset2] : address(0),
                                     stalenessPeriod: stalenessPeriods[asset2]
@@ -377,10 +400,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                         pf = address(
                             new BPTStablePriceFeed(
-                                addressProvider,
-                                IBalancerStablePool(lpToken).getRate() * 99 / 100,
-                                lpToken,
-                                pfParams
+                                addressProvider, IBalancerStablePool(lpToken).getRate() * 99 / 100, lpToken, pfParams
                             )
                         );
 
@@ -575,34 +595,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
-        // REDSTONE PRICE FEEDS
-        RedStonePriceFeedData[] memory redStonePriceFeeds = redStonePriceFeedsByNetwork[chainId];
-        len = redStonePriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                RedStonePriceFeedData memory redStonePriceFeedData = redStonePriceFeeds[i];
-                Tokens t = redStonePriceFeedData.token;
-                address token = tokenTestSuite.addressOf(t);
-
-                address pf = address(
-                    new RedstonePriceFeed(
-                        token,
-                        redStonePriceFeedData.dataFeedId,
-                        redStonePriceFeedData.signers,
-                        redStonePriceFeedData.signersThreshold
-                    )
-                );
-
-                redstoneServiceIdByPriceFeed[pf] = redStonePriceFeedData.dataServiceId;
-
-                redStoneOracles.push(pf);
-                setPriceFeed(token, pf, 4 minutes);
-
-                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                vm.label(pf, description);
-            }
-        }
-
         priceFeedConfigLength = priceFeedConfig.length;
     }
 
@@ -637,14 +629,17 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     }
 
     function updateRedstoneOraclePriceFeeds() public {
+        uint256 initialTS = block.timestamp;
         uint256 len = redStoneOracles.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
                 address pf = redStoneOracles[i];
                 bytes32 dataFeedId = RedstonePriceFeed(pf).dataFeedId();
+                uint8 signersThreshold = RedstonePriceFeed(pf).getUniqueSignersThreshold();
 
                 string memory dataServiceId = redstoneServiceIdByPriceFeed[pf];
-                bytes memory payload = getRedstonePayload(bytes32ToString((dataFeedId)), dataServiceId);
+                bytes memory payload =
+                    getRedstonePayload(bytes32ToString((dataFeedId)), dataServiceId, Strings.toString(signersThreshold));
 
                 (uint256 expectedPayloadTimestamp,) = abi.decode(payload, (uint256, bytes));
 
@@ -655,15 +650,21 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 RedstonePriceFeed(pf).updatePrice(payload);
             }
         }
+
+        vm.warp(initialTS);
     }
 
-    function getRedstonePayload(string memory dataFeedId, string memory dataSericeId) internal returns (bytes memory) {
-        string[] memory args = new string[](5);
+    function getRedstonePayload(string memory dataFeedId, string memory dataSericeId, string memory signersThreshold)
+        internal
+        returns (bytes memory)
+    {
+        string[] memory args = new string[](6);
         args[0] = "npx";
         args[1] = "ts-node";
         args[2] = "./scripts/redstone.ts";
         args[3] = dataSericeId;
         args[4] = dataFeedId;
+        args[5] = signersThreshold;
 
         return vm.ffi(args);
     }

@@ -6,11 +6,12 @@ import { RedstonePayloadParser } from "redstone-protocol/dist/src/redstone-paylo
 async function getRedstonePayloadForManualUsage(
   dataServiceId: string,
   dataFeed: string,
+  signersCount: number,
 ): Promise<string> {
   const dataPayload = await new DataServiceWrapper({
     dataServiceId, // : "redstone-main-demo",
     dataFeeds: [dataFeed],
-    uniqueSignersCount: 1,
+    uniqueSignersCount: signersCount,
   }).prepareRedstonePayload(true);
 
   const parser = new RedstonePayloadParser(arrayify(`0x${dataPayload}`));
@@ -39,14 +40,18 @@ async function getRedstonePayloadForManualUsage(
   return result;
 }
 
-if (process.argv.length !== 4) {
+if (process.argv.length !== 5) {
   console.error(
-    "Usage: npx node redstone.ts  <data-service-id> <data-feed-id>",
+    "Usage: npx node redstone.ts  <data-service-id> <data-feed-id> <num-signers>",
   );
   process.exit(1);
 }
 
-getRedstonePayloadForManualUsage(process.argv[2], process.argv[3])
+getRedstonePayloadForManualUsage(
+  process.argv[2],
+  process.argv[3],
+  Number(process.argv[4]),
+)
   .then(payload => {
     console.log(`${payload}`);
   })
