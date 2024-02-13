@@ -62,6 +62,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
     mapping(address => address) public priceFeeds;
     PriceFeedConfig[] public priceFeedConfig;
+    PriceFeedConfig[] public priceFeedConfigReserve;
     mapping(address => uint32) public stalenessPeriods;
 
     address[] public redStoneOracles;
@@ -87,7 +88,13 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address token = tokenTestSuite.addressOf(t);
 
                 if (token != address(0) && pf != address(0)) {
-                    setPriceFeed(token, pf, chainlinkPriceFeeds[i].stalenessPeriod);
+                    setPriceFeed(
+                        token,
+                        pf,
+                        chainlinkPriceFeeds[i].stalenessPeriod,
+                        chainlinkPriceFeeds[i].trusted,
+                        chainlinkPriceFeeds[i].reserve
+                    );
 
                     string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                     vm.label(pf, description);
@@ -116,7 +123,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 redstoneServiceIdByPriceFeed[pf] = redStonePriceFeedData.dataServiceId;
 
                 redStoneOracles.push(pf);
-                setPriceFeed(token, pf, 4 minutes);
+                setPriceFeed(token, pf, 4 minutes, redStonePriceFeedData.trusted, redStonePriceFeedData.reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
@@ -143,7 +150,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             )
                         );
 
-                        setPriceFeed(token, pf);
+                        setPriceFeed(token, pf, boundedPriceFeeds[i].trusted, boundedPriceFeeds[i].reserve);
 
                         string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                         vm.label(pf, description);
@@ -181,7 +188,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             )
                         );
 
-                        setPriceFeed(token, pf);
+                        setPriceFeed(token, pf, compositePriceFeeds[i].trusted, compositePriceFeeds[i].reserve);
 
                         string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                         vm.label(pf, description);
@@ -200,7 +207,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     for (uint256 i; i < len; ++i) {
                         address token = tokenTestSuite.addressOf(zeroPriceFeeds[i].token);
                         if (token != address(0)) {
-                            setPriceFeed(token, zeroPF);
+                            setPriceFeed(token, zeroPF, zeroPriceFeeds[i].trusted, zeroPriceFeeds[i].reserve);
                         }
                     }
                 }
@@ -231,7 +238,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         )
                     );
 
-                    setPriceFeed(token, pf);
+                    setPriceFeed(token, pf, crvUSDPriceFeeds[i].trusted, crvUSDPriceFeeds[i].reserve);
 
                     string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                     vm.label(pf, description);
@@ -297,7 +304,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             )
                         );
 
-                        setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
+                        setPriceFeed(
+                            tokenTestSuite.addressOf(lpToken),
+                            pf,
+                            curvePriceFeeds[i].trusted,
+                            curvePriceFeeds[i].reserve
+                        );
                         vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
                     }
                 }
@@ -341,7 +353,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         )
                     );
 
-                    setPriceFeed(tokenTestSuite.addressOf(lpToken), pf);
+                    setPriceFeed(
+                        tokenTestSuite.addressOf(lpToken),
+                        pf,
+                        curveCryptoPriceFeeds[i].trusted,
+                        curveCryptoPriceFeeds[i].reserve
+                    );
                     vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
                 }
             }
@@ -366,7 +383,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         )
                     );
 
-                    setPriceFeed(wsteth, pf);
+                    setPriceFeed(
+                        wsteth, pf, wstethPriceFeedByNetwork[chainId].trusted, wstethPriceFeedByNetwork[chainId].reserve
+                    );
 
                     string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                     vm.label(pf, description);
@@ -404,7 +423,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             )
                         );
 
-                        setPriceFeed(lpToken, pf);
+                        setPriceFeed(
+                            lpToken, pf, balancerStableLPPriceFeeds[i].trusted, balancerStableLPPriceFeeds[i].reserve
+                        );
                         vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t))));
                     }
                 }
@@ -448,7 +469,12 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             )
                         );
 
-                        setPriceFeed(lpToken, pf);
+                        setPriceFeed(
+                            lpToken,
+                            pf,
+                            balancerWeightedLPPriceFeeds[i].trusted,
+                            balancerWeightedLPPriceFeeds[i].reserve
+                        );
                         vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t))));
                     }
                 }
@@ -466,7 +492,13 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address tokenHasSamePriceFeed = tokenTestSuite.addressOf(theSamePriceFeeds[i].tokenHasSamePriceFeed);
                     address pf = priceFeeds[tokenHasSamePriceFeed];
                     if (pf != address(0)) {
-                        setPriceFeed(token, pf, stalenessPeriods[tokenHasSamePriceFeed]);
+                        setPriceFeed(
+                            token,
+                            pf,
+                            stalenessPeriods[tokenHasSamePriceFeed],
+                            theSamePriceFeeds[i].trusted,
+                            theSamePriceFeeds[i].reserve
+                        );
                     } else {
                         console.log("WARNING: Price feed for ", ERC20(token).symbol(), " not found");
                     }
@@ -497,7 +529,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     )
                 );
 
-                setPriceFeed(yVault, pf);
+                setPriceFeed(yVault, pf, yearnPriceFeeds[i].trusted, yearnPriceFeeds[i].reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
@@ -525,7 +557,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         )
                     );
 
-                    setPriceFeed(waToken, pf);
+                    setPriceFeed(waToken, pf, wrappedAaveV2PriceFeeds[i].trusted, wrappedAaveV2PriceFeeds[i].reserve);
 
                     string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                     vm.label(pf, description);
@@ -557,7 +589,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     )
                 );
 
-                setPriceFeed(cToken, pf);
+                setPriceFeed(cToken, pf, compoundV2PriceFeeds[i].trusted, compoundV2PriceFeeds[i].reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
@@ -588,7 +620,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     )
                 );
 
-                setPriceFeed(token, pf);
+                setPriceFeed(token, pf, erc4626PriceFeeds[i].trusted, erc4626PriceFeeds[i].reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
@@ -598,33 +630,56 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         priceFeedConfigLength = priceFeedConfig.length;
     }
 
-    function setPriceFeed(address token, address priceFeed) internal {
-        setPriceFeed(token, priceFeed, 0);
+    function setPriceFeed(address token, address priceFeed, bool trusted, bool reserve) internal {
+        setPriceFeed(token, priceFeed, 0, trusted, reserve);
     }
 
-    function setPriceFeed(address token, address priceFeed, uint32 stalenessPeriod) internal {
+    function setPriceFeed(address token, address priceFeed, uint32 stalenessPeriod, bool trusted, bool reserve)
+        internal
+    {
         priceFeeds[token] = priceFeed;
         stalenessPeriods[token] = stalenessPeriod;
-        priceFeedConfig.push(
-            PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod, trusted: false})
-        );
+        if (reserve) {
+            priceFeedConfigReserve.push(
+                PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod, trusted: false})
+            );
+        } else {
+            priceFeedConfig.push(
+                PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod, trusted: trusted})
+            );
+        }
     }
 
     function getPriceFeeds() external view returns (PriceFeedConfig[] memory) {
         return priceFeedConfig;
     }
 
-    function addPriceFeeds(address priceOracle) external {
-        uint256 len = priceFeedConfig.length;
+    function getReservePriceFeeds() external view returns (PriceFeedConfig[] memory) {
+        return priceFeedConfigReserve;
+    }
 
+    function addPriceFeeds(address priceOracle) external {
         address acl = PriceOracleV3(priceOracle).acl();
         address root = IACL(acl).owner();
+
+        uint256 len = priceFeedConfig.length;
 
         for (uint256 i; i < len; ++i) {
             PriceFeedConfig memory pfc = priceFeedConfig[i];
             address token = pfc.token;
+
             vm.prank(root);
             PriceOracleV3(priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod, pfc.trusted);
+        }
+
+        len = priceFeedConfigReserve.length;
+
+        for (uint256 i; i < len; ++i) {
+            PriceFeedConfig memory pfc = priceFeedConfigReserve[i];
+            address token = pfc.token;
+
+            vm.prank(root);
+            PriceOracleV3(priceOracle).setReservePriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
         }
     }
 
