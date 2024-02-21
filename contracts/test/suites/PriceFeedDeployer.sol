@@ -141,6 +141,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                     address token = tokenTestSuite.addressOf(t);
 
+                    if (token == address(0)) continue;
+
                     if (token != address(0)) {
                         address pf = address(
                             new BoundedPriceFeed(
