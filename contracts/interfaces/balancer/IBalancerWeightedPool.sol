@@ -13,4 +13,6 @@ interface IBalancerWeightedPool {
     function getActualSupply() external view returns (uint256);
 
     function getPoolId() external view returns (bytes32);
+
+    function getVault() external view returns (address);
 }

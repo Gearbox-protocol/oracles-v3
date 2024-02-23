@@ -11,12 +11,14 @@ contract BalancerWeightedPoolMock is IBalancerWeightedPool {
     uint256 public immutable override totalSupply;
     bool public immutable actualSupplyEnabled;
     uint256[] _weights;
+    address public getVault;
 
-    constructor(bytes32 poolId, uint256 supply, bool enableActualSupply, uint256[] memory weights) {
+    constructor(bytes32 poolId, uint256 supply, bool enableActualSupply, uint256[] memory weights, address vault) {
         getPoolId = poolId;
         totalSupply = supply;
         _weights = weights;
         actualSupplyEnabled = enableActualSupply;
+        getVault = vault;
     }
 
     function getNormalizedWeights() external view override returns (uint256[] memory) {
