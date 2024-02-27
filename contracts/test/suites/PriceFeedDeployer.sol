@@ -111,6 +111,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 Tokens t = redStonePriceFeedData.token;
                 address token = tokenTestSuite.addressOf(t);
 
+                if (token == address(0)) continue;
+
                 address pf = address(
                     new RedstonePriceFeed(
                         token,
@@ -128,7 +130,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
             }
-            updateRedstoneOraclePriceFeeds();
         }
 
         // BOUNDED PRICE FEEDS
@@ -140,8 +141,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     Tokens t = boundedPriceFeeds[i].token;
 
                     address token = tokenTestSuite.addressOf(t);
-
-                    if (token == address(0)) continue;
 
                     if (token != address(0)) {
                         address pf = address(
@@ -172,18 +171,61 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address token = tokenTestSuite.addressOf(t);
 
                     if (
-                        token != address(0) && compositePriceFeeds[i].targetToBaseFeed != address(0)
-                            && compositePriceFeeds[i].baseToUSDFeed != address(0)
+                        token != address(0)
+                            && (
+                                compositePriceFeeds[i].targetToBaseFeed != address(0)
+                                    || compositePriceFeeds[i].isTargetRedstone
+                            )
+                            && (
+                                compositePriceFeeds[i].baseToUSDFeed != address(0) || compositePriceFeeds[i].isBaseComposite
+                            )
                     ) {
+                        address targetToBaseFeed;
+                        if (compositePriceFeeds[i].isTargetRedstone) {
+                            targetToBaseFeed = address(
+                                new RedstonePriceFeed(
+                                    token,
+                                    compositePriceFeeds[i].redstoneTargetToBaseData.dataFeedId,
+                                    compositePriceFeeds[i].redstoneTargetToBaseData.signers,
+                                    compositePriceFeeds[i].redstoneTargetToBaseData.signersThreshold
+                                )
+                            );
+                            redstoneServiceIdByPriceFeed[targetToBaseFeed] =
+                                compositePriceFeeds[i].redstoneTargetToBaseData.dataServiceId;
+                            redStoneOracles.push(targetToBaseFeed);
+                        } else {
+                            targetToBaseFeed = compositePriceFeeds[i].targetToBaseFeed;
+                        }
+
+                        address baseToUSDFeed;
+                        if (compositePriceFeeds[i].isBaseComposite) {
+                            baseToUSDFeed = address(
+                                new CompositePriceFeed(
+                                    [
+                                        PriceFeedParams({
+                                            priceFeed: compositePriceFeeds[i].compositeBaseToUSDData.targetToBaseFeed,
+                                            stalenessPeriod: compositePriceFeeds[i].compositeBaseToUSDData.targetStalenessPeriod
+                                        }),
+                                        PriceFeedParams({
+                                            priceFeed: compositePriceFeeds[i].compositeBaseToUSDData.baseToUSDFeed,
+                                            stalenessPeriod: compositePriceFeeds[i].compositeBaseToUSDData.baseStalenessPeriod
+                                        })
+                                    ]
+                                )
+                            );
+                        } else {
+                            baseToUSDFeed = compositePriceFeeds[i].baseToUSDFeed;
+                        }
+
                         address pf = address(
                             new CompositePriceFeed(
                                 [
                                     PriceFeedParams({
-                                        priceFeed: compositePriceFeeds[i].targetToBaseFeed,
+                                        priceFeed: targetToBaseFeed,
                                         stalenessPeriod: compositePriceFeeds[i].targetStalenessPeriod
                                     }),
                                     PriceFeedParams({
-                                        priceFeed: compositePriceFeeds[i].baseToUSDFeed,
+                                        priceFeed: baseToUSDFeed,
                                         stalenessPeriod: compositePriceFeeds[i].baseStalenessPeriod
                                     })
                                 ]
@@ -197,6 +239,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     }
                 }
             }
+            updateRedstoneOraclePriceFeeds();
         }
 
         // ZERO PRICE FEEDS
