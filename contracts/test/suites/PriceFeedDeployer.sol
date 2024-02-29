@@ -111,6 +111,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 Tokens t = redStonePriceFeedData.token;
                 address token = tokenTestSuite.addressOf(t);
 
+                if (token == address(0)) continue;
+
                 address pf = address(
                     new RedstonePriceFeed(
                         token,
@@ -140,8 +142,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     Tokens t = boundedPriceFeeds[i].token;
 
                     address token = tokenTestSuite.addressOf(t);
-
-                    if (token == address(0)) continue;
 
                     if (token != address(0)) {
                         address pf = address(
