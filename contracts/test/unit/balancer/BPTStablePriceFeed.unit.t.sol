@@ -6,9 +6,10 @@ pragma solidity ^0.8.17;
 import {PriceFeedUnitTestHelper} from "../PriceFeedUnitTestHelper.sol";
 
 import {BalancerStablePoolMock} from "../../mocks/balancer/BalancerStablePoolMock.sol";
+import {BalancerVaultMock, PoolToken} from "../../mocks/balancer/BalancerVaultMock.sol";
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 
-import {IBalancerStablePool} from "../../../interfaces/balancer/IBalancerStablePool.sol";
+import {IBalancerStablePool, IBalancerRateProvider} from "../../../interfaces/balancer/IBalancerStablePool.sol";
 import {PriceFeedParams} from "../../../oracles/PriceFeedParams.sol";
 import {BPTStablePriceFeed} from "../../../oracles/balancer/BPTStablePriceFeed.sol";
 
@@ -17,29 +18,31 @@ import {ZeroAddressException} from "@gearbox-protocol/core-v3/contracts/interfac
 contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
     BPTStablePriceFeed priceFeed;
     BalancerStablePoolMock balancerPool;
+    BalancerVaultMock balancerVault;
 
     PriceFeedMock[5] underlyingPriceFeeds;
 
     function setUp() public {
         _setUp();
 
-        balancerPool = new BalancerStablePoolMock();
+        balancerVault = new BalancerVaultMock();
+        balancerPool = new BalancerStablePoolMock(address(balancerVault), bytes32(uint256(1)));
         balancerPool.hackRate(1.03 ether);
+
+        uint256[] memory rates = new uint256[](5);
 
         for (uint256 i; i < 5; ++i) {
             underlyingPriceFeeds[i] = new PriceFeedMock(int256(1e6 * (100 - i)), 8);
+            rates[i] = 1e18 * (100 + i) / 100;
         }
+
+        balancerPool.hackRateProviders(rates);
     }
 
     /// @notice U:[BAL-S-1]: LP-related functionality works as expected
     function test_U_BAL_S_01_lp_related_functiontionality_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new BPTStablePriceFeed(
-            address(addressProvider),
-            1.02 ether,
-            address(0),
-            _getUnderlyingPriceFeeds(5)
-        );
+        new BPTStablePriceFeed(address(addressProvider), 1.02 ether, address(0), _getUnderlyingPriceFeeds(5));
 
         priceFeed = _newBalancerPriceFeed(5, 1.02 ether);
 
@@ -47,7 +50,7 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
         assertEq(priceFeed.lpContract(), address(balancerPool), "Incorrect lpToken");
         assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
-        vm.expectCall(address(balancerPool), abi.encodeCall(IBalancerStablePool.getRate, ()));
+        vm.expectCall(address(balancerPool), abi.encodeCall(IBalancerRateProvider.getRate, ()));
         assertEq(priceFeed.getLPExchangeRate(), 1.03 ether, "Incorrect getLPExchangeRate");
         assertEq(priceFeed.getScale(), 1 ether, "Incorrect getScale");
     }
@@ -57,7 +60,9 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
         for (uint256 numFeeds; numFeeds <= 5; ++numFeeds) {
             if (numFeeds < 2) {
                 vm.expectRevert(ZeroAddressException.selector);
-                _newBalancerPriceFeed(numFeeds, 1.02 ether);
+                new BPTStablePriceFeed(
+                    address(addressProvider), 1.02 ether, address(balancerPool), _getUnderlyingPriceFeeds(numFeeds)
+                );
                 continue;
             }
 
@@ -65,7 +70,7 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
             assertEq(priceFeed.numAssets(), numFeeds, "Incorrect numAssets");
 
             int256 answer = priceFeed.getAggregatePrice();
-            assertEq(answer, int256(1e6 * (101 - numFeeds)), "Incorrect answer");
+            assertEq(answer, int256(1e8 * (101 - numFeeds) / (99 + numFeeds)), "Incorrect answer");
         }
     }
 
@@ -74,11 +79,19 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
     // ------- //
 
     function _newBalancerPriceFeed(uint256 numFeeds, uint256 lowerBound) internal returns (BPTStablePriceFeed) {
+        uint256[] memory rates = new uint256[](numFeeds);
+        PoolToken[] memory poolTokens = new PoolToken[](numFeeds);
+
+        for (uint256 i = 0; i < numFeeds; ++i) {
+            rates[i] = 1e18 * (100 + i) / 100;
+            poolTokens[i] = PoolToken({token: makeAddr(string(abi.encodePacked("TOKEN", i))), balance: 1e18});
+        }
+
+        balancerPool.hackRateProviders(rates);
+        balancerVault.hackPoolTokens(bytes32(uint256(1)), poolTokens);
+
         return new BPTStablePriceFeed(
-            address(addressProvider),
-            lowerBound,
-            address(balancerPool),
-            _getUnderlyingPriceFeeds(numFeeds)
+            address(addressProvider), lowerBound, address(balancerPool), _getUnderlyingPriceFeeds(numFeeds)
         );
     }
 

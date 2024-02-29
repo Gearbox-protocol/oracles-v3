@@ -29,9 +29,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
         for (uint256 i; i < 8; ++i) {
             underlyings[i] = new ERC20Mock(
-                string.concat("Test Token ", vm.toString(i)),
-                string.concat("TEST", vm.toString(i)),
-                uint8(18 - i)
+                string.concat("Test Token ", vm.toString(i)), string.concat("TEST", vm.toString(i)), uint8(18 - i)
             );
             underlyingPriceFeeds[i] = new PriceFeedMock(int256(1e8 * 4 ** i), 8);
         }
@@ -43,20 +41,12 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
-            address(addressProvider),
-            1.02 ether,
-            address(0),
-            address(balancerPool),
-            _getUnderlyingPriceFeeds(8)
+            address(addressProvider), 1.02 ether, address(0), address(balancerPool), _getUnderlyingPriceFeeds(8)
         );
 
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
-            address(addressProvider),
-            1.02 ether,
-            address(balancerVault),
-            address(0),
-            _getUnderlyingPriceFeeds(8)
+            address(addressProvider), 1.02 ether, address(balancerVault), address(0), _getUnderlyingPriceFeeds(8)
         );
 
         priceFeed = _newBalancerPriceFeed(8, 1.02 ether);
@@ -99,7 +89,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         weights[2] = 0.5 ether;
 
         // total supply of the pool is 1
-        balancerPool = new BalancerWeightedPoolMock("TEST_POOL", 1 ether, false, weights);
+        balancerPool = new BalancerWeightedPoolMock("TEST_POOL", 1 ether, false, weights, address(0));
 
         // token balances are 1, 0.5 and 0.25
         PoolToken[] memory poolTokens = new PoolToken[](3);
@@ -137,7 +127,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         weights[2] = 0.2 ether;
 
         // total supply of the pool is 1
-        balancerPool = new BalancerWeightedPoolMock("TEST_POOL", 1 ether, false, weights);
+        balancerPool = new BalancerWeightedPoolMock("TEST_POOL", 1 ether, false, weights, address(0));
 
         // token balances are 1, 0.5 and 0.25
         PoolToken[] memory poolTokens = new PoolToken[](3);
@@ -177,7 +167,9 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
     function _setupBalancerMocks(uint256 numAssets, uint256 scaledBalance) internal {
         balancerVault = new BalancerVaultMock();
-        balancerPool = new BalancerWeightedPoolMock("TEST_POOL", 1 ether, false, _getNormalizedWeights(numAssets));
+        balancerPool = new BalancerWeightedPoolMock(
+            "TEST_POOL", 1 ether, false, _getNormalizedWeights(numAssets), address(balancerVault)
+        );
         balancerVault.hackPoolTokens("TEST_POOL", _getPoolTokens(numAssets, scaledBalance));
     }
 
