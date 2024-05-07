@@ -23,7 +23,8 @@ import {
     GenericLPPriceFeedData,
     TheSamePriceFeedData,
     BalancerLPPriceFeedData,
-    RedStonePriceFeedData
+    RedStonePriceFeedData,
+    PythPriceFeedData
 } from "@gearbox-protocol/sdk-gov/contracts/PriceFeedDataLive.sol";
 import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
 import {PriceOracleV3} from "@gearbox-protocol/core-v3/contracts/core/PriceOracleV3.sol";
@@ -48,6 +49,7 @@ import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
 import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
+import {PythPriceFeed} from "../../oracles/updatable/PythPriceFeed.sol";
 
 import {IWAToken} from "../../interfaces/aave/IWAToken.sol";
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
@@ -66,7 +68,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     mapping(address => uint32) public stalenessPeriods;
 
     address[] public redStoneOracles;
+    address[] public pythOracles;
     uint256 public priceFeedConfigLength;
+    uint256 public priceFeedConfigReserveLength;
     uint256 public immutable chainId;
 
     constructor(
@@ -111,8 +115,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 Tokens t = redStonePriceFeedData.token;
                 address token = tokenTestSuite.addressOf(t);
 
-                if (token == address(0)) continue;
-
                 address pf = address(
                     new RedstonePriceFeed(
                         token,
@@ -130,6 +132,33 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
             }
+            updateRedstoneOraclePriceFeeds();
+        }
+
+        // PYTH PRICE FEEDS
+        unchecked {
+            PythPriceFeedData[] memory pythPriceFeeds = pythPriceFeedsByNetwork[chainId];
+            len = pythPriceFeeds.length;
+            for (uint256 i; i < len; ++i) {
+                PythPriceFeedData memory pythPriceFeedData = pythPriceFeeds[i];
+                Tokens t = pythPriceFeedData.token;
+                address token = tokenTestSuite.addressOf(t);
+
+                address pf = address(
+                    new PythPriceFeed(
+                        token, pythPriceFeedData.priceFeedId, pythPriceFeedData.pyth, pythPriceFeedData.ticker
+                    )
+                );
+
+                vm.deal(pf, 100000);
+
+                pythOracles.push(pf);
+                setPriceFeed(token, pf, 4 minutes, pythPriceFeedData.trusted, pythPriceFeedData.reserve);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+            updatePythOraclePriceFeeds();
         }
 
         // BOUNDED PRICE FEEDS
@@ -673,6 +702,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         }
 
         priceFeedConfigLength = priceFeedConfig.length;
+        priceFeedConfigReserveLength = priceFeedConfigReserve.length;
     }
 
     function setPriceFeed(address token, address priceFeed, bool trusted, bool reserve) internal {
@@ -754,6 +784,39 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         vm.warp(initialTS);
     }
 
+    function updatePythOraclePriceFeeds() public {
+        uint256 initialTS = block.timestamp;
+        uint256 len = pythOracles.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                address payable pf = payable(pythOracles[i]);
+                bytes32 priceFeedId = PythPriceFeed(pf).priceFeedId();
+
+                bytes memory payload = getPythPayload(toHex(priceFeedId));
+
+                (uint256 expectedPayloadTimestamp,) = abi.decode(payload, (uint256, bytes));
+
+                if (expectedPayloadTimestamp > block.timestamp) {
+                    vm.warp(expectedPayloadTimestamp);
+                }
+
+                PythPriceFeed(pf).updatePrice(payload);
+            }
+        }
+
+        vm.warp(initialTS);
+    }
+
+    function getPythPayload(string memory priceFeedId) internal returns (bytes memory) {
+        string[] memory args = new string[](4);
+        args[0] = "npx";
+        args[1] = "ts-node";
+        args[2] = "./scripts/pyth.ts";
+        args[3] = priceFeedId;
+
+        return vm.ffi(args);
+    }
+
     function getRedstonePayload(string memory dataFeedId, string memory dataSericeId, string memory signersThreshold)
         internal
         returns (bytes memory)
@@ -779,5 +842,29 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             bytesArray[i] = _bytes32[i];
         }
         return string(bytesArray);
+    }
+
+    function toHex16(bytes16 data) internal pure returns (bytes32 result) {
+        result = bytes32(data) & 0xFFFFFFFFFFFFFFFF000000000000000000000000000000000000000000000000
+            | (bytes32(data) & 0x0000000000000000FFFFFFFFFFFFFFFF00000000000000000000000000000000) >> 64;
+        result = result & 0xFFFFFFFF000000000000000000000000FFFFFFFF000000000000000000000000
+            | (result & 0x00000000FFFFFFFF000000000000000000000000FFFFFFFF0000000000000000) >> 32;
+        result = result & 0xFFFF000000000000FFFF000000000000FFFF000000000000FFFF000000000000
+            | (result & 0x0000FFFF000000000000FFFF000000000000FFFF000000000000FFFF00000000) >> 16;
+        result = result & 0xFF000000FF000000FF000000FF000000FF000000FF000000FF000000FF000000
+            | (result & 0x00FF000000FF000000FF000000FF000000FF000000FF000000FF000000FF0000) >> 8;
+        result = (result & 0xF000F000F000F000F000F000F000F000F000F000F000F000F000F000F000F000) >> 4
+            | (result & 0x0F000F000F000F000F000F000F000F000F000F000F000F000F000F000F000F00) >> 8;
+        result = bytes32(
+            0x3030303030303030303030303030303030303030303030303030303030303030 + uint256(result)
+                + (
+                    uint256(result) + 0x0606060606060606060606060606060606060606060606060606060606060606 >> 4
+                        & 0x0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F
+                ) * 7
+        );
+    }
+
+    function toHex(bytes32 data) public pure returns (string memory) {
+        return string(abi.encodePacked("0x", toHex16(bytes16(data)), toHex16(bytes16(data << 128))));
     }
 }
