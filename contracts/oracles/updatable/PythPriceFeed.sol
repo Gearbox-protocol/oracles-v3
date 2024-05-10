@@ -25,14 +25,14 @@ interface IPythExtended {
     function latestPriceInfoPublishTime(bytes32 priceFeedId) external view returns (uint64);
 }
 
-interface IPythPriceFeedErrors {
+interface IPythPriceFeedExceptions {
     /// @notice Thrown when the timestamp sent with the payload for early stop does not match
     ///         the payload's internal timestamp
     error IncorrectExpectedPublishTimestamp();
 }
 
 /// @title Pyth price feed
-contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedErrors {
+contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     using SafeCast for uint256;
 
     PriceFeedType public constant override priceFeedType = PriceFeedType.PYTH_ORACLE;
@@ -50,19 +50,14 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedErrors {
     /// @notice Address of the Pyth main contract instance
     address public immutable pyth;
 
-    /// @dev Price feed ticker for description
-    bytes32 immutable descriptionTicker;
+    /// @dev Price feed description
+    string public description;
 
-    constructor(address _token, bytes32 _priceFeedId, address _pyth, bytes32 _descriptionTicker) {
+    constructor(address _token, bytes32 _priceFeedId, address _pyth, string memory _descriptionTicker) {
         token = _token;
         priceFeedId = _priceFeedId;
         pyth = _pyth;
-        descriptionTicker = bytes32(_descriptionTicker);
-    }
-
-    /// @notice Price feed description
-    function description() external view override returns (string memory) {
-        return string(abi.encodePacked(descriptionTicker, " Pyth price feed"));
+        description = string(abi.encodePacked(_descriptionTicker, " Pyth price feed"));
     }
 
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
