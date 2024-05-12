@@ -21,11 +21,7 @@ contract YearnPriceFeedUnitTest is PriceFeedUnitTestHelper {
         yVault.hackPricePerShare(1.03e6);
 
         priceFeed = new YearnPriceFeed(
-            address(addressProvider),
-            1.02e6,
-            address(yVault),
-            address(underlyingPriceFeed),
-            1 days
+            address(addressProvider), priceOracle, 1.02e6, address(yVault), address(underlyingPriceFeed), 1 days
         );
     }
 

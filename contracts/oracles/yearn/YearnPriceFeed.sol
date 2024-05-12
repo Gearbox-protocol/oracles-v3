@@ -16,13 +16,14 @@ contract YearnPriceFeed is SingleAssetLPPriceFeed {
     uint256 immutable _scale;
 
     constructor(
-        address addressProvider,
+        address _acl,
+        address _priceOracle,
         uint256 lowerBound,
         address _yVault,
         address _priceFeed,
         uint32 _stalenessPeriod
     )
-        SingleAssetLPPriceFeed(addressProvider, _yVault, _yVault, _priceFeed, _stalenessPeriod) // U:[YFI-1]
+        SingleAssetLPPriceFeed(_acl, _priceOracle, _yVault, _yVault, _priceFeed, _stalenessPeriod) // U:[YFI-1]
     {
         _scale = 10 ** IYVault(_yVault).decimals();
         _setLimiter(lowerBound); // U:[YFI-1]

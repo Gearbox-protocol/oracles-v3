@@ -10,9 +10,6 @@ import {ACLNonReentrantTrait} from "@gearbox-protocol/core-v3/contracts/traits/A
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
-import {
-    IAddressProviderV3, AP_PRICE_ORACLE
-} from "@gearbox-protocol/core-v3/contracts/interfaces/IAddressProviderV3.sol";
 
 /// @dev Window size in bps, used to compute upper bound given lower bound
 uint256 constant WINDOW_SIZE = 200;
@@ -54,17 +51,19 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     uint40 public override lastBoundsUpdate;
 
     /// @notice Constructor
-    /// @param _addressProvider Address provider contract address
+    /// @param _acl Address of the ACL contract
+    /// @param _priceOracle Address of the price oracle
     /// @param _lpToken  LP token for which the prices are computed
     /// @param _lpContract LP contract (can be different from LP token)
     /// @dev Derived price feeds must call `_setLimiter` in their constructor after
     ///      initializing all state variables needed for exchange rate calculation
-    constructor(address _addressProvider, address _lpToken, address _lpContract)
-        ACLNonReentrantTrait(_addressProvider) // U:[LPPF-1]
+    constructor(address _acl, address _priceOracle, address _lpToken, address _lpContract)
+        ACLNonReentrantTrait(_acl) // U:[LPPF-1]
+        nonZeroAddress(_priceOracle) // U:[LPPF-1]
         nonZeroAddress(_lpToken) // U:[LPPF-1]
         nonZeroAddress(_lpContract) // U:[LPPF-1]
     {
-        priceOracle = IAddressProviderV3(_addressProvider).getAddressOrRevert(AP_PRICE_ORACLE, 3_00); // U:[LPPF-1]
+        priceOracle = _priceOracle; // U:[LPPF-1]
         lpToken = _lpToken; // U:[LPPF-1]
         lpContract = _lpContract; // U:[LPPF-1]
     }
@@ -149,13 +148,13 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
         if (block.timestamp < lastBoundsUpdate + UPDATE_BOUNDS_COOLDOWN) revert UpdateBoundsBeforeCooldownException(); // U:[LPPF-7]
         lastBoundsUpdate = uint40(block.timestamp); // U:[LPPF-7]
 
-        address reserveFeed = IPriceOracleV3(priceOracle).priceFeedsRaw({token: lpToken, reserve: true}); // U:[LPPF-7]
+        address reserveFeed = IPriceOracleV3(priceOracle).reservePriceFeeds({token: lpToken}); // U:[LPPF-7]
         if (reserveFeed == address(this)) revert ReserveFeedMustNotBeSelfException(); // U:[LPPF-7]
         try IUpdatablePriceFeed(reserveFeed).updatable() returns (bool updatable) {
             if (updatable) IUpdatablePriceFeed(reserveFeed).updatePrice(updateData); // U:[LPPF-7]
         } catch {}
 
-        uint256 reserveAnswer = IPriceOracleV3(priceOracle).getPriceRaw({token: lpToken, reserve: true}); // U:[LPPF-7]
+        uint256 reserveAnswer = IPriceOracleV3(priceOracle).getReservePrice({token: lpToken}); // U:[LPPF-7]
         uint256 reserveExchangeRate = uint256(reserveAnswer * getScale() / uint256(getAggregatePrice())); // U:[LPPF-7]
 
         _ensureValueInBounds(reserveExchangeRate, lowerBound); // U:[LPPF-7]

@@ -53,19 +53,22 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         addressProvider.setAddress("PRICE_ORACLE", priceOracle, true);
         vm.stopPrank();
 
-        priceFeed = new LPPriceFeedHarness(address(addressProvider), address(lpToken), lpContract);
+        priceFeed = new LPPriceFeedHarness(address(addressProvider), priceOracle, address(lpToken), lpContract);
     }
 
     /// @notice U:[LPPF-1]: Constructor works as expected
     function test_U_LPPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new LPPriceFeedHarness(address(0), address(lpToken), lpContract);
+        new LPPriceFeedHarness(address(0), priceOracle, address(lpToken), lpContract);
 
         vm.expectRevert(ZeroAddressException.selector);
-        new LPPriceFeedHarness(address(addressProvider), address(0), lpContract);
+        new LPPriceFeedHarness(address(addressProvider), address(0), address(lpToken), lpContract);
 
         vm.expectRevert(ZeroAddressException.selector);
-        new LPPriceFeedHarness(address(addressProvider), address(lpToken), address(0));
+        new LPPriceFeedHarness(address(addressProvider), address(priceOracle), address(0), lpContract);
+
+        vm.expectRevert(ZeroAddressException.selector);
+        new LPPriceFeedHarness(address(addressProvider), address(priceOracle), address(lpToken), address(0));
 
         assertEq(priceFeed.priceOracle(), priceOracle, "Incorrect priceOracle");
         assertEq(priceFeed.lpToken(), address(lpToken), "Incorrect lpToken");
@@ -190,26 +193,22 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         // reserve feed is self
         vm.mockCall(
             priceOracle,
-            abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)),
+            abi.encodeCall(IPriceOracleV3.reservePriceFeeds, (address(lpToken))),
             abi.encode(address(priceFeed))
         );
         vm.expectRevert(ReserveFeedMustNotBeSelfException.selector);
         priceFeed.updateBounds("some data");
 
         vm.mockCall(
-            priceOracle, abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)), abi.encode(reserveFeed)
+            priceOracle, abi.encodeCall(IPriceOracleV3.reservePriceFeeds, (address(lpToken))), abi.encode(reserveFeed)
         );
 
         // reserve exchange rate is out of bounds
-        vm.mockCall(
-            priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.05e8)
-        );
+        vm.mockCall(priceOracle, abi.encodeCall(IPriceOracleV3.getReservePrice, (address(lpToken))), abi.encode(2.05e8));
         vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
         priceFeed.updateBounds("some data");
 
-        vm.mockCall(
-            priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.02e8)
-        );
+        vm.mockCall(priceOracle, abi.encodeCall(IPriceOracleV3.getReservePrice, (address(lpToken))), abi.encode(2.02e8));
 
         // exchange rate is out of new bounds
         priceFeed.hackLPExchangeRate(0.99 ether);
@@ -233,8 +232,8 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
                 );
             }
 
-            vm.expectCall(priceOracle, abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)));
-            vm.expectCall(priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)));
+            vm.expectCall(priceOracle, abi.encodeCall(IPriceOracleV3.reservePriceFeeds, (address(lpToken))));
+            vm.expectCall(priceOracle, abi.encodeCall(IPriceOracleV3.getReservePrice, (address(lpToken))));
 
             vm.expectEmit(false, false, false, true);
             // lower bound 0.9999 = 2.02 / 2 * 0.99; upper bound 1.019898 = 0.9999 * 1.02

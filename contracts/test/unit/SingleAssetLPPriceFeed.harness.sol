@@ -12,12 +12,13 @@ contract SingleAssetLPPriceFeedHarness is SingleAssetLPPriceFeed {
     uint256 public constant override version = 0;
 
     constructor(
-        address addressProvider,
+        address _acl,
+        address _priceOracle,
         address _lpToken,
         address _lpContract,
         address _priceFeed,
         uint32 _stalenessPeriod
-    ) SingleAssetLPPriceFeed(addressProvider, _lpToken, _lpContract, _priceFeed, _stalenessPeriod) {}
+    ) SingleAssetLPPriceFeed(_acl, _priceOracle, _lpToken, _lpContract, _priceFeed, _stalenessPeriod) {}
 
     function getLPExchangeRate() public view override returns (uint256 exchangeRate) {}
 

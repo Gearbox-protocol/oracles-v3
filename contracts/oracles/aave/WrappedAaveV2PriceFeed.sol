@@ -14,13 +14,14 @@ contract WrappedAaveV2PriceFeed is SingleAssetLPPriceFeed {
     PriceFeedType public constant override priceFeedType = PriceFeedType.WRAPPED_AAVE_V2_ORACLE;
 
     constructor(
-        address addressProvider,
+        address _acl,
+        address _priceOracle,
         uint256 lowerBound,
         address _waToken,
         address _priceFeed,
         uint32 _stalenessPeriod
     )
-        SingleAssetLPPriceFeed(addressProvider, _waToken, _waToken, _priceFeed, _stalenessPeriod) // U:[AAVE-1]
+        SingleAssetLPPriceFeed(_acl, _priceOracle, _waToken, _waToken, _priceFeed, _stalenessPeriod) // U:[AAVE-1]
     {
         _setLimiter(lowerBound); // U:[AAVE-1]
     }

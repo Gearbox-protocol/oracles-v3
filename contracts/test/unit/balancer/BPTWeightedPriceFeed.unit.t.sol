@@ -29,9 +29,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
         for (uint256 i; i < 8; ++i) {
             underlyings[i] = new ERC20Mock(
-                string.concat("Test Token ", vm.toString(i)),
-                string.concat("TEST", vm.toString(i)),
-                uint8(18 - i)
+                string.concat("Test Token ", vm.toString(i)), string.concat("TEST", vm.toString(i)), uint8(18 - i)
             );
             underlyingPriceFeeds[i] = new PriceFeedMock(int256(1e8 * 4 ** i), 8);
         }
@@ -44,6 +42,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
             address(addressProvider),
+            priceOracle,
             1.02 ether,
             address(0),
             address(balancerPool),
@@ -53,6 +52,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
             address(addressProvider),
+            priceOracle,
             1.02 ether,
             address(balancerVault),
             address(0),
@@ -187,6 +187,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
     {
         return new BPTWeightedPriceFeedHarness(
             address(addressProvider),
+            priceOracle,
             lowerBound,
             address(balancerVault),
             address(balancerPool),

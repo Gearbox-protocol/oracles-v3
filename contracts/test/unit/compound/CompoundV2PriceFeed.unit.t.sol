@@ -21,11 +21,7 @@ contract CompoundV2PriceFeedUnitTest is PriceFeedUnitTestHelper {
         cToken.hackExchangeRateStored(1.03 ether);
 
         priceFeed = new CompoundV2PriceFeed(
-            address(addressProvider),
-            1.02 ether,
-            address(cToken),
-            address(underlyingPriceFeed),
-            1 days
+            address(addressProvider), priceOracle, 1.02 ether, address(cToken), address(underlyingPriceFeed), 1 days
         );
     }
 

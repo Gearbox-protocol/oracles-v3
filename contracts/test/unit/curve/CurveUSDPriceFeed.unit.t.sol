@@ -24,6 +24,7 @@ contract CurveUSDPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         priceFeed = new CurveUSDPriceFeed(
             address(addressProvider),
+            priceOracle,
             1.02 ether,
             crvUSD,
             address(curvePool),

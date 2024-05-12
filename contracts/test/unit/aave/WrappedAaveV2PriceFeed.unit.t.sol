@@ -21,11 +21,7 @@ contract WrappedAaveV2PriceFeedUnitTest is PriceFeedUnitTestHelper {
         waToken.hackExchangeRate(1.03 ether);
 
         priceFeed = new WrappedAaveV2PriceFeed(
-            address(addressProvider),
-            1.02 ether,
-            address(waToken),
-            address(underlyingPriceFeed),
-            1 days
+            address(addressProvider), priceOracle, 1.02 ether, address(waToken), address(underlyingPriceFeed), 1 days
         );
     }
 
