@@ -8,12 +8,13 @@ import {BPTWeightedPriceFeed} from "../../../oracles/balancer/BPTWeightedPriceFe
 
 contract BPTWeightedPriceFeedHarness is BPTWeightedPriceFeed {
     constructor(
-        address addressProvider,
+        address _acl,
+        address _priceOracle,
         uint256 lowerBound,
         address _vault,
         address _pool,
         PriceFeedParams[] memory priceFeeds
-    ) BPTWeightedPriceFeed(addressProvider, lowerBound, _vault, _pool, priceFeeds) {}
+    ) BPTWeightedPriceFeed(_acl, _priceOracle, lowerBound, _vault, _pool, priceFeeds) {}
 
     function getWeightsArrayExposed() external view returns (uint256[] memory weights) {
         weights = _getWeightsArray();

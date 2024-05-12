@@ -26,11 +26,7 @@ contract ERC4626PriceFeedUnitTest is PriceFeedUnitTestHelper {
         vault.hackPricePerShare(1.03e6);
 
         priceFeed = new ERC4626PriceFeed(
-            address(addressProvider),
-            1.02e6,
-            address(vault),
-            address(underlyingPriceFeed),
-            1 days
+            address(addressProvider), priceOracle, 1.02e6, address(vault), address(underlyingPriceFeed), 1 days
         );
     }
 

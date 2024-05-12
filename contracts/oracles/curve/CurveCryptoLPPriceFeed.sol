@@ -36,13 +36,14 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     bool public immutable skipCheck2;
 
     constructor(
-        address addressProvider,
+        address _acl,
+        address _priceOracle,
         uint256 lowerBound,
         address _token,
         address _pool,
         PriceFeedParams[3] memory priceFeeds
     )
-        LPPriceFeed(addressProvider, _token, _pool) // U:[CRV-C-1]
+        LPPriceFeed(_acl, _priceOracle, _token, _pool) // U:[CRV-C-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-C-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-C-2]
     {

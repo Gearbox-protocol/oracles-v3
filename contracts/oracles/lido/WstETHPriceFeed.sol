@@ -14,13 +14,14 @@ contract WstETHPriceFeed is SingleAssetLPPriceFeed {
     PriceFeedType public constant override priceFeedType = PriceFeedType.WSTETH_ORACLE;
 
     constructor(
-        address addressProvider,
+        address _acl,
+        address _priceOracle,
         uint256 lowerBound,
         address _wstETH,
         address _priceFeed,
         uint32 _stalenessPeriod
     )
-        SingleAssetLPPriceFeed(addressProvider, _wstETH, _wstETH, _priceFeed, _stalenessPeriod) // U:[LDO-1]
+        SingleAssetLPPriceFeed(_acl, _priceOracle, _wstETH, _wstETH, _priceFeed, _stalenessPeriod) // U:[LDO-1]
     {
         _setLimiter(lowerBound); // U:[LDO-1]
     }

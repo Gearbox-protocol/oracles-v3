@@ -5,3 +5,4 @@ forge-std/=lib/forge-std/src/
 @gearbox-protocol=node_modules/@gearbox-protocol/
 @redstone-finance=node_modules/@redstone-finance/
 @1inch=node_modules/@1inch/
+@pythnetwork=node_modules/@pythnetwork

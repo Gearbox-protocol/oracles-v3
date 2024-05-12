@@ -43,6 +43,7 @@ contract SingleAssetLPPriceFeedUnitTest is Test {
 
         priceFeed = new SingleAssetLPPriceFeedHarness(
             address(addressProvider),
+            priceOracle,
             address(lpToken),
             address(lpContract),
             address(underlyingPriceFeed),
@@ -54,17 +55,14 @@ contract SingleAssetLPPriceFeedUnitTest is Test {
     function test_U_SAPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
         new SingleAssetLPPriceFeedHarness(
-            address(addressProvider),
-            address(lpToken),
-            address(lpContract),
-            address(0),
-            1 days
+            address(addressProvider), priceOracle, address(lpToken), address(lpContract), address(0), 1 days
         );
 
         PriceFeedMock invalidPriceFeed = new PriceFeedMock(1 ether, 18);
         vm.expectRevert(IncorrectPriceFeedException.selector);
         new SingleAssetLPPriceFeedHarness(
             address(addressProvider),
+            priceOracle,
             address(lpToken),
             address(lpContract),
             address(invalidPriceFeed),

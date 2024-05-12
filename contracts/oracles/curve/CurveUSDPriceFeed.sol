@@ -17,14 +17,15 @@ contract CurveUSDPriceFeed is SingleAssetLPPriceFeed {
     PriceFeedType public constant override priceFeedType = PriceFeedType.CURVE_USD_ORACLE;
 
     constructor(
-        address addressProvider,
+        address _acl,
+        address _priceOracle,
         uint256 lowerBound,
         address _crvUSD,
         address _pool,
         address _priceFeed,
         uint32 _stalenessPeriod
     )
-        SingleAssetLPPriceFeed(addressProvider, _crvUSD, _pool, _priceFeed, _stalenessPeriod) // U:[CRV-D-1]
+        SingleAssetLPPriceFeed(_acl, _priceOracle, _crvUSD, _pool, _priceFeed, _stalenessPeriod) // U:[CRV-D-1]
     {
         _setLimiter(lowerBound); // U:[CRV-D-1]
     }
