@@ -710,8 +710,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         return priceFeedConfigReserve;
     }
 
-    function addPriceFeeds(address priceOracle) external {
-        address acl = PriceOracleV3(priceOracle).acl();
+    function addPriceFeeds(address _priceOracle) external {
+        address _acl = PriceOracleV3(_priceOracle).acl();
         address root = IACL(acl).owner();
 
         uint256 len = priceFeedConfig.length;
@@ -721,7 +721,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             address token = pfc.token;
 
             vm.prank(root);
-            PriceOracleV3(priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
+            PriceOracleV3(_priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
         }
 
         len = priceFeedConfigReserve.length;
@@ -731,7 +731,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             address token = pfc.token;
 
             vm.prank(root);
-            PriceOracleV3(priceOracle).setReservePriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
+            PriceOracleV3(_priceOracle).setReservePriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
         }
     }
 
