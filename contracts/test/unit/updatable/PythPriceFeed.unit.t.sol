@@ -131,5 +131,15 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
         (, price,,,) = pf.latestRoundData();
 
         assertEq(price, 100 * 10 ** 8, "Incorrect price when pyth decimals are 0");
+
+        pyth.setPriceData(bytes32(uint256(1)), 100, 0, 2, block.timestamp);
+
+        vm.expectRevert(IncorrectPriceDecimals.selector);
+        pf.latestRoundData();
+
+        pyth.setPriceData(bytes32(uint256(1)), 100, 0, -257, block.timestamp);
+
+        vm.expectRevert(IncorrectPriceDecimals.selector);
+        pf.latestRoundData();
     }
 }

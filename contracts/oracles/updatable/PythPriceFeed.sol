@@ -29,6 +29,9 @@ interface IPythPriceFeedExceptions {
     /// @notice Thrown when the timestamp sent with the payload for early stop does not match
     ///         the payload's internal timestamp
     error IncorrectExpectedPublishTimestamp();
+
+    /// @notice Thrown when the decimals returned by Pyth are outside sane boundaries
+    error IncorrectPriceDecimals();
 }
 
 /// @title Pyth price feed
@@ -99,6 +102,7 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
         int256 price = int256(priceData.price);
 
         if (priceData.expo != -8) {
+            if (priceData.expo > 0 || priceData.expo < -255) revert IncorrectPriceDecimals();
             int256 pythDecimals = int256(10 ** uint32(-priceData.expo));
             price = price * DECIMALS / pythDecimals;
         }
