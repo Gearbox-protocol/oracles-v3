@@ -7,7 +7,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
@@ -19,7 +19,7 @@ uint256 constant MAX_DATA_TIMESTAMP_DELAY_SECONDS = 10 minutes;
 /// @dev Max period that the payload can be forward in time relative to the block
 uint256 constant MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 1 minutes;
 
-uint256 constant DECIMALS = 10 ** 8;
+int256 constant DECIMALS = 10 ** 8;
 
 interface IPythExtended {
     function latestPriceInfoPublishTime(bytes32 priceFeedId) external view returns (uint64);
@@ -29,6 +29,9 @@ interface IPythPriceFeedExceptions {
     /// @notice Thrown when the timestamp sent with the payload for early stop does not match
     ///         the payload's internal timestamp
     error IncorrectExpectedPublishTimestamp();
+
+    /// @notice Thrown when the decimals returned by Pyth are outside sane boundaries
+    error IncorrectPriceDecimals();
 }
 
 /// @title Pyth price feed
@@ -99,11 +102,9 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
         int256 price = int256(priceData.price);
 
         if (priceData.expo != -8) {
-            if (priceData.expo >= 0) {
-                price = price * int256(10 ** (uint256(int256(priceData.expo)) + 8));
-            } else {
-                price = price * int256(DECIMALS) / int256((10 ** uint256(int256(-priceData.expo))));
-            }
+            if (priceData.expo > 0 || priceData.expo < -255) revert IncorrectPriceDecimals();
+            int256 pythDecimals = int256(uint256(10) ** uint32(-priceData.expo));
+            price = price * DECIMALS / pythDecimals;
         }
 
         return price;
