@@ -28,7 +28,7 @@ import {
 } from "@gearbox-protocol/sdk-gov/contracts/PriceFeedDataLive.sol";
 import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
 import {PriceOracleV3} from "@gearbox-protocol/core-v3/contracts/core/PriceOracleV3.sol";
-import {IACL} from "@gearbox-protocol/core-v2/contracts/interfaces/IACL.sol";
+import {IACL} from "@gearbox-protocol/core-v3/contracts/interfaces/IACL.sol";
 
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";

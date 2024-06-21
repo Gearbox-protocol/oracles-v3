@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
+// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.17;
 
-import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {PriceFeedParams} from "../PriceFeedParams.sol";
-import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
+import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
+import {LPPriceFeed} from "../LPPriceFeed.sol";
+import {PriceFeedParams} from "../PriceFeedParams.sol";
 
 /// @title Balancer stable pool token price feed
 /// @dev Similarly to Curve stableswap, aggregate function is minimum of underlying tokens prices
