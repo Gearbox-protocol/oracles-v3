@@ -69,14 +69,14 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
 
         bytes memory updateData = abi.encode(block.timestamp + 64000, payloads);
 
-        vm.expectRevert(IncorrectExpectedPublishTimestamp.selector);
+        vm.expectRevert(PriceTimestampTooFarAhead.selector);
         pf.updatePrice(updateData);
 
         pyth.setPriceData(bytes32(uint256(1)), 10 ** 8, 0, -8, block.timestamp - 64001);
 
         updateData = abi.encode(block.timestamp - 64000, payloads);
 
-        vm.expectRevert(IncorrectExpectedPublishTimestamp.selector);
+        vm.expectRevert(PriceTimestampTooFarBehind.selector);
         pf.updatePrice(updateData);
     }
 
