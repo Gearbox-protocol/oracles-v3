@@ -32,6 +32,9 @@ interface IPythPriceFeedExceptions {
 
     /// @notice Thrown when the decimals returned by Pyth are outside sane boundaries
     error IncorrectPriceDecimals();
+
+    /// @notice Thrown when a retrieved price's publish time is too far ahead in the future
+    error PriceTimestampTooFarAhead();
 }
 
 /// @title Pyth price feed
@@ -66,6 +69,12 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         PythStructs.Price memory priceData = IPyth(pyth).getPriceUnsafe(priceFeedId);
+
+        if ((block.timestamp < priceData.publishTime)) {
+            if ((priceData.publishTime - block.timestamp) > MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
+                revert PriceTimestampTooFarAhead();
+            }
+        }
 
         int256 price = _getDecimalAdjustedPrice(priceData);
 
