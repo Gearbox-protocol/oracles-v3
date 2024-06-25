@@ -35,6 +35,9 @@ interface IPythPriceFeedExceptions {
 
     /// @notice Thrown when a retrieved price's publish time is too far ahead in the future
     error PriceTimestampTooFarAhead();
+
+    /// @notice Thrown when a retrieved price's publish time is too far behind the curent block timestamp
+    error PriceTimestampTooFarBehind();
 }
 
 /// @title Pyth price feed
@@ -70,11 +73,7 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         PythStructs.Price memory priceData = IPyth(pyth).getPriceUnsafe(priceFeedId);
 
-        if ((block.timestamp < priceData.publishTime)) {
-            if ((priceData.publishTime - block.timestamp) > MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
-                revert PriceTimestampTooFarAhead();
-            }
-        }
+        _validatePublishTimestamp(priceData.publishTime);
 
         int256 price = _getDecimalAdjustedPrice(priceData);
 
@@ -95,7 +94,7 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
         // are sent to Pyth. While Pyth technically performs an early stop by not writing a new price for outdated payloads,
         // it still performs payload validation before that, which is expensive
         if (expectedPublishTimestamp <= lastPublishTimestamp) return;
-        _validateExpectedPublishTimestamp(expectedPublishTimestamp);
+        _validatePublishTimestamp(expectedPublishTimestamp);
 
         uint256 fee = IPyth(pyth).getUpdateFee(updateData);
         IPyth(pyth).updatePriceFeeds{value: fee}(updateData);
@@ -110,6 +109,8 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     function _getDecimalAdjustedPrice(PythStructs.Price memory priceData) internal pure returns (int256) {
         int256 price = int256(priceData.price);
 
+        if (price == 0) revert IncorrectPriceException();
+
         if (priceData.expo != -8) {
             if (priceData.expo > 0 || priceData.expo < -255) revert IncorrectPriceDecimals();
             int256 pythDecimals = int256(uint256(10) ** uint32(-priceData.expo));
@@ -119,15 +120,15 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
         return price;
     }
 
-    /// @dev Validates that the expected payload timestamp is not too far from the current block's
-    /// @param expectedPublishTimestamp Expected timestamp after the current price update
-    function _validateExpectedPublishTimestamp(uint256 expectedPublishTimestamp) internal view {
-        if ((block.timestamp < expectedPublishTimestamp)) {
-            if ((expectedPublishTimestamp - block.timestamp) > MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
-                revert IncorrectExpectedPublishTimestamp();
+    /// @dev Validates that the timestamp is not too far from the current block's
+    /// @param publishTimestamp The payload's publish timestamp
+    function _validatePublishTimestamp(uint256 publishTimestamp) internal view {
+        if ((block.timestamp < publishTimestamp)) {
+            if ((publishTimestamp - block.timestamp) > MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
+                revert PriceTimestampTooFarAhead();
             }
-        } else if ((block.timestamp - expectedPublishTimestamp) > MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
-            revert IncorrectExpectedPublishTimestamp();
+        } else if ((block.timestamp - publishTimestamp) > MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
+            revert PriceTimestampTooFarBehind();
         }
     }
 
