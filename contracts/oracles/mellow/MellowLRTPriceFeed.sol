@@ -4,6 +4,7 @@
 pragma solidity ^0.8.17;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IStateSerializer} from "../../interfaces/IStateSerializer.sol";
 import {IMellowVault} from "../../interfaces/mellow/IMellowVault.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
@@ -37,5 +38,20 @@ contract MellowLRTPriceFeed is SingleAssetLPPriceFeed {
 
     function getScale() public view override returns (uint256) {
         return _baseTokenUnit;
+    }
+
+    function serialize() public view returns (bytes memory serializedData) {
+        return abi.encode(
+            priceOracle,
+            lpToken,
+            lpContract,
+            lowerBound,
+            _calcUpperBound(lowerBound),
+            updateBoundsAllowed,
+            lastBoundsUpdate,
+            priceFeed,
+            stalenessPeriod,
+            skipCheck
+        );
     }
 }
