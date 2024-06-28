@@ -142,7 +142,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pf = address(
                     new PythPriceFeed(
-                        token, pythPriceFeedData.priceFeedId, pythPriceFeedData.pyth, pythPriceFeedData.ticker
+                        token, pythPriceFeedData.priceFeedId, pythPriceFeedData.pyth, pythPriceFeedData.ticker, 10000000
                     )
                 );
 
