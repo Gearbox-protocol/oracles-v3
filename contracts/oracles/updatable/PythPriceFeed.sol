@@ -12,6 +12,7 @@ import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/inter
 
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
+import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 /// @dev Max period that the payload can be backward in time relative to the block
 uint256 constant MAX_DATA_TIMESTAMP_DELAY_SECONDS = 10 minutes;
@@ -28,13 +29,16 @@ interface IPythExtended {
 interface IPythPriceFeedExceptions {
     /// @notice Thrown when the timestamp sent with the payload for early stop does not match
     ///         the payload's internal timestamp
-    error IncorrectExpectedPublishTimestamp();
+    error IncorrectExpectedPublishTimestampException();
 
     /// @notice Thrown when a retrieved price's publish time is too far ahead in the future
-    error PriceTimestampTooFarAhead();
+    error PriceTimestampTooFarAheadException();
 
     /// @notice Thrown when a retrieved price's publish time is too far behind the curent block timestamp
-    error PriceTimestampTooFarBehind();
+    error PriceTimestampTooFarBehindException();
+
+    /// @notice Thrown when the the ratio between the confidence interval and price is higher than max allowed
+    error ConfToPriceRatioTooHighException();
 }
 
 /// @title Pyth price feed
@@ -59,16 +63,30 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     /// @dev Price feed description
     string public description;
 
-    constructor(address _token, bytes32 _priceFeedId, address _pyth, string memory _descriptionTicker) {
+    /// @notice The max ratio of p.conf to p.price that would trigger the price feed to revert
+    uint256 public immutable maxConfToPriceRatio;
+
+    constructor(
+        address _token,
+        bytes32 _priceFeedId,
+        address _pyth,
+        string memory _descriptionTicker,
+        uint256 _maxConfToPriceRatio
+    ) {
         token = _token;
         priceFeedId = _priceFeedId;
         pyth = _pyth;
         description = string(abi.encodePacked(_descriptionTicker, " Pyth price feed"));
+        maxConfToPriceRatio = _maxConfToPriceRatio;
     }
 
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         PythStructs.Price memory priceData = IPyth(pyth).getPriceUnsafe(priceFeedId);
+
+        if (uint256(priceData.conf) * PERCENTAGE_FACTOR > uint256(int256(priceData.price)) * maxConfToPriceRatio) {
+            revert ConfToPriceRatioTooHighException();
+        }
 
         _validatePublishTimestamp(priceData.publishTime);
 
@@ -98,7 +116,7 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
 
         PythStructs.Price memory priceData = IPyth(pyth).getPriceUnsafe(priceFeedId);
 
-        if (priceData.publishTime != expectedPublishTimestamp) revert IncorrectExpectedPublishTimestamp();
+        if (priceData.publishTime != expectedPublishTimestamp) revert IncorrectExpectedPublishTimestampException();
         if (priceData.price == 0) revert IncorrectPriceException();
     }
 
@@ -121,10 +139,10 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     function _validatePublishTimestamp(uint256 publishTimestamp) internal view {
         if ((block.timestamp < publishTimestamp)) {
             if ((publishTimestamp - block.timestamp) > MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
-                revert PriceTimestampTooFarAhead();
+                revert PriceTimestampTooFarAheadException();
             }
         } else if ((block.timestamp - publishTimestamp) > MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
-            revert PriceTimestampTooFarBehind();
+            revert PriceTimestampTooFarBehindException();
         }
     }
 
