@@ -34,10 +34,8 @@ import {IACL} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IACL.sol
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
 
-import {WrappedAaveV2PriceFeed} from "../../oracles/aave/WrappedAaveV2PriceFeed.sol";
 import {BPTStablePriceFeed} from "../../oracles/balancer/BPTStablePriceFeed.sol";
 import {BPTWeightedPriceFeed} from "../../oracles/balancer/BPTWeightedPriceFeed.sol";
-import {CompoundV2PriceFeed} from "../../oracles/compound/CompoundV2PriceFeed.sol";
 import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
 import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
 import {CurveUSDPriceFeed} from "../../oracles/curve/CurveUSDPriceFeed.sol";
@@ -51,10 +49,8 @@ import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 import {PythPriceFeed} from "../../oracles/updatable/PythPriceFeed.sol";
 
-import {IWAToken} from "../../interfaces/aave/IWAToken.sol";
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
-import {ICToken} from "../../interfaces/compound/ICToken.sol";
 import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
@@ -587,68 +583,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
-        // WRAPPED AAVE V2 PRICE FEEDS
-        GenericLPPriceFeedData[] memory wrappedAaveV2PriceFeeds = wrappedAaveV2PriceFeedsByNetwork[chainId];
-        len = wrappedAaveV2PriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                Tokens t = wrappedAaveV2PriceFeeds[i].lpToken;
-                address waToken = tokenTestSuite.addressOf(t);
-
-                if (waToken != address(0)) {
-                    address underlying = tokenTestSuite.addressOf(wrappedAaveV2PriceFeeds[i].underlying);
-
-                    address pf = address(
-                        new WrappedAaveV2PriceFeed(
-                            acl,
-                            priceOracle,
-                            IWAToken(waToken).exchangeRate() * 99 / 100,
-                            waToken,
-                            priceFeeds[underlying],
-                            stalenessPeriods[underlying]
-                        )
-                    );
-
-                    setPriceFeed(waToken, pf, wrappedAaveV2PriceFeeds[i].reserve);
-
-                    string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                    vm.label(pf, description);
-                }
-            }
-        }
-
-        // COMPOUND V2 PRICE FEEDS
-        GenericLPPriceFeedData[] memory compoundV2PriceFeeds = compoundV2PriceFeedsByNetwork[chainId];
-        len = compoundV2PriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                Tokens t = compoundV2PriceFeeds[i].lpToken;
-                address cToken = tokenTestSuite.addressOf(t);
-
-                if (cToken == address(0)) {
-                    continue;
-                }
-
-                address underlying = tokenTestSuite.addressOf(compoundV2PriceFeeds[i].underlying);
-
-                address pf = address(
-                    new CompoundV2PriceFeed(
-                        acl,
-                        priceOracle,
-                        ICToken(cToken).exchangeRateStored() * 99 / 100,
-                        cToken,
-                        priceFeeds[underlying],
-                        stalenessPeriods[underlying]
-                    )
-                );
-
-                setPriceFeed(cToken, pf, compoundV2PriceFeeds[i].reserve);
-
-                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                vm.label(pf, description);
-            }
-        }
-
         // ERC4626 PRICE FEEDS
         GenericLPPriceFeedData[] memory erc4626PriceFeeds = erc4626PriceFeedsByNetwork[chainId];
         len = erc4626PriceFeeds.length;
@@ -713,7 +647,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
     function addPriceFeeds(address _priceOracle) external {
         address _acl = PriceOracleV3(_priceOracle).acl();
-        address root = Ownable(acl).owner();
+        address root = Ownable(_acl).owner();
 
         uint256 len = priceFeedConfig.length;
 
