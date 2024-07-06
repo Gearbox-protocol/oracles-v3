@@ -14,7 +14,7 @@ import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 /// @dev Older pools may be decoupled from their LP token, so constructor accepts both token and pool
 contract CurveStableLPPriceFeed is LPPriceFeed {
     uint256 public constant override version = 3_00;
-    bytes32 public immutable override contractType;
+    bytes32 public immutable contractType;
 
     PriceFeedType public immutable override priceFeedType;
 

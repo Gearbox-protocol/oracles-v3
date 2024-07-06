@@ -38,7 +38,7 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     PriceFeedType public constant override priceFeedType = PriceFeedType.PYTH_ORACLE;
 
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_PYTH_ORACLE";
+    bytes32 public constant contractType = "PF_PYTH_ORACLE";
     uint8 public constant override decimals = 8;
     bool public constant override skipPriceCheck = false;
     bool public constant override updatable = true;
