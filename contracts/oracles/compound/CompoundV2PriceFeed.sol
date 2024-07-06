@@ -12,7 +12,6 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 contract CompoundV2PriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_00;
     bytes32 public constant contractType = "PF_COMPOUND_V2_ORACLE";
-    PriceFeedType public constant priceFeedType = PriceFeedType.COMPOUND_V2_ORACLE;
 
     constructor(
         address _acl,
