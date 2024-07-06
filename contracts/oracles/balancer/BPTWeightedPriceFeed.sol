@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
+import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
@@ -35,7 +35,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     uint256 public constant override version = 3_00;
     bytes32 public constant contractType = "PF_BALANCER_WEIGHTED_LP_ORACLE";
 
-    PriceFeedType public constant override priceFeedType = PriceFeedType.BALANCER_WEIGHTED_LP_ORACLE;
+    PriceFeedType public constant priceFeedType = PriceFeedType.BALANCER_WEIGHTED_LP_ORACLE;
 
     /// @notice Balancer vault address
     address public immutable vault;

@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
 
-import {IVersion} from "@gearbox-protocol/core-v2/contracts/interfaces/IVersion.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IVersion} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IVersion.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
 import {ILPPriceFeedEvents, ILPPriceFeedExceptions} from "../../interfaces/ILPPriceFeed.sol";
 
 import {
     CallerNotConfiguratorException,
-    CallerNotControllerException,
+    CallerNotControllerOrConfiguratorException,
     ZeroAddressException
 } from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
@@ -130,7 +130,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         assertTrue(priceFeed.updateBoundsAllowed(), "Incorrect updateBoundsAllowed");
 
         // reverts if caller is not controller
-        vm.expectRevert(CallerNotControllerException.selector);
+        vm.expectRevert(CallerNotControllerOrConfiguratorException.selector);
         priceFeed.forbidBoundsUpdate();
 
         // works as expected otherwise
@@ -148,7 +148,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         priceFeed.hackLPExchangeRate(1 ether);
 
         // reverts if caller is not controller
-        vm.expectRevert(CallerNotControllerException.selector);
+        vm.expectRevert(CallerNotControllerOrConfiguratorException.selector);
         priceFeed.setLimiter(0);
 
         vm.startPrank(configurator);

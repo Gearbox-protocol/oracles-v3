@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {AggregatorV2V3Interface} from "../interfaces/chainlink/AggregatorV2V3Interface.sol";
 
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 
@@ -20,8 +20,10 @@ interface ChainlinkReadableAggregator {
 /// @notice Can be used to provide upper-bounded answers for assets that are
 ///         expected to have the price in a certain range, e.g. stablecoins
 contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityCheckTrait, PriceFeedValidationTrait {
-    PriceFeedType public constant override priceFeedType = PriceFeedType.BOUNDED_ORACLE;
-    uint256 public constant override version = 3_00;
+    PriceFeedType public constant priceFeedType = PriceFeedType.BOUNDED_ORACLE;
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PF_BOUNDED_ORACLE";
+
     uint8 public constant override decimals = 8; // U:[BPF-2]
     bool public constant override skipPriceCheck = true; // U:[BPF-2]
 
