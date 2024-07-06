@@ -5,13 +5,13 @@ pragma solidity ^0.8.10;
 
 import {
     RedstonePriceFeed,
-    IRedstonePriceFeedEvents,
     IRedstonePriceFeedExceptions,
     MAX_DATA_TIMESTAMP_DELAY_SECONDS,
     MAX_DATA_TIMESTAMP_AHEAD_SECONDS
 } from "../../../oracles/updatable/RedstonePriceFeed.sol";
 import {RedstoneConstants} from "@redstone-finance/evm-connector/contracts/core/RedstoneConstants.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 
 // TEST
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
@@ -19,12 +19,7 @@ import {TestHelper} from "@gearbox-protocol/core-v3/contracts/test/lib/helper.so
 
 /// @title Redstone price feed unit test
 /// @notice U:[RPF]: Unit tests for Redstone price feed
-contract RedstonePriceFeedUnitTest is
-    TestHelper,
-    IRedstonePriceFeedExceptions,
-    IRedstonePriceFeedEvents,
-    RedstoneConstants
-{
+contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, RedstoneConstants {
     RedstonePriceFeed pf;
     address[10] signers;
     uint256[10] signerKeys;
@@ -34,12 +29,7 @@ contract RedstonePriceFeedUnitTest is
     function setUp() public {
         _generateSigners(10);
 
-        pf = new RedstonePriceFeed(
-            address(new ERC20Mock("USD Coin", "USDC", 6)),
-            bytes32("USDC"),
-            signers,
-            10
-        );
+        pf = new RedstonePriceFeed(address(new ERC20Mock("USD Coin", "USDC", 6)), bytes32("USDC"), signers, 10);
     }
 
     function _generateSigners(uint8 _numSigners) internal {
@@ -137,7 +127,7 @@ contract RedstonePriceFeedUnitTest is
 
         vm.expectEmit(false, false, false, true);
 
-        emit UpdatePrice(100000000);
+        emit IUpdatablePriceFeed.UpdatePrice(100000000);
 
         pf.updatePrice(data);
 

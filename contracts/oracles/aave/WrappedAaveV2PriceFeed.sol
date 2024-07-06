@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
-import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
+import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {IWAToken} from "../../interfaces/aave/IWAToken.sol";
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
@@ -13,7 +13,7 @@ contract WrappedAaveV2PriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
     bytes32 public constant contractType = "PF_WRAPPED_AAVE_V2_ORACLE";
 
-    PriceFeedType public constant override priceFeedType = PriceFeedType.WRAPPED_AAVE_V2_ORACLE;
+    PriceFeedType public constant priceFeedType = PriceFeedType.WRAPPED_AAVE_V2_ORACLE;
 
     constructor(
         address _acl,

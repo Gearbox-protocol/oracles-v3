@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -9,7 +9,7 @@ import {RedstoneConsumerNumericBase} from
     "@redstone-finance/evm-connector/contracts/core/RedstoneConsumerNumericBase.sol";
 
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 /// @dev Max period that the payload can be backward in time relative to the block
@@ -39,23 +39,13 @@ interface IRedstonePriceFeedExceptions {
     error DataPackageTimestampIncorrect();
 }
 
-interface IRedstonePriceFeedEvents {
-    /// @notice Emitted when a successful price update is pushed
-    /// @param price New USD price of the token with 8 decimals
-    event UpdatePrice(uint256 price);
-}
-
 /// @title Redstone price feed
-contract RedstonePriceFeed is
-    IUpdatablePriceFeed,
-    IRedstonePriceFeedExceptions,
-    IRedstonePriceFeedEvents,
-    RedstoneConsumerNumericBase
-{
+contract RedstonePriceFeed is IUpdatablePriceFeed, IRedstonePriceFeedExceptions, RedstoneConsumerNumericBase {
     using SafeCast for uint256;
 
-    PriceFeedType public constant override priceFeedType = PriceFeedType.REDSTONE_ORACLE;
-    uint256 public constant override version = 3_00;
+    PriceFeedType public constant priceFeedType = PriceFeedType.REDSTONE_ORACLE;
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PF_REDSTONE_ORACLE";
     uint8 public constant override decimals = 8;
     bool public constant override skipPriceCheck = false;
     bool public constant override updatable = true;

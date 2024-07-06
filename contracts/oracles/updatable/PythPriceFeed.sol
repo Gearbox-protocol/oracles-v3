@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
@@ -35,7 +35,7 @@ interface IPythPriceFeedExceptions {
 contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     using SafeCast for uint256;
 
-    PriceFeedType public constant override priceFeedType = PriceFeedType.PYTH_ORACLE;
+    PriceFeedType public constant priceFeedType = PriceFeedType.PYTH_ORACLE;
 
     uint256 public constant override version = 3_10;
     bytes32 public constant contractType = "PF_PYTH_ORACLE";

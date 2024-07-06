@@ -9,6 +9,7 @@ import {console} from "forge-std/console.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {Tokens} from "@gearbox-protocol/sdk-gov/contracts/Tokens.sol";
 import {ISupportedContracts, Contracts} from "@gearbox-protocol/sdk-gov/contracts/SupportedContracts.sol";
@@ -28,7 +29,7 @@ import {
 } from "@gearbox-protocol/sdk-gov/contracts/PriceFeedDataLive.sol";
 import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
 import {PriceOracleV3} from "@gearbox-protocol/core-v3/contracts/core/PriceOracleV3.sol";
-import {IACL} from "@gearbox-protocol/core-v2/contracts/interfaces/IACL.sol";
+import {IACL} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IACL.sol";
 
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
@@ -712,7 +713,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
     function addPriceFeeds(address priceOracle) external {
         address acl = PriceOracleV3(priceOracle).acl();
-        address root = IACL(acl).owner();
+        address root = Ownable(acl).owner();
 
         uint256 len = priceFeedConfig.length;
 
