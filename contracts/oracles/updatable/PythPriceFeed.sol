@@ -36,7 +36,9 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     using SafeCast for uint256;
 
     PriceFeedType public constant override priceFeedType = PriceFeedType.PYTH_ORACLE;
-    uint256 public constant override version = 3_00;
+
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PF_PYTH_ORACLE";
     uint8 public constant override decimals = 8;
     bool public constant override skipPriceCheck = false;
     bool public constant override updatable = true;
@@ -57,7 +59,7 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
         token = _token;
         priceFeedId = _priceFeedId;
         pyth = _pyth;
-        description = string(abi.encodePacked(_descriptionTicker, " Pyth price feed"));
+        description = string.concat(_descriptionTicker, " Pyth price feed");
     }
 
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
