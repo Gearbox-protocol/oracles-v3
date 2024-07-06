@@ -29,16 +29,13 @@
     "redstone-protocol": "^1.0.5"
   },
   "devDependencies": {
-    "@chainlink/contracts": "^0.4.0",
     "@commitlint/cli": "^17.1.2",
     "@commitlint/config-conventional": "^17.1.0",
     "@gearbox-protocol/core-v3": "^1.50.0-next.14",
     "@gearbox-protocol/eslint-config": "^1.6.1",
     "@gearbox-protocol/prettier-config": "^1.5.0",
-    "@gearbox-protocol/sdk-gov": "^2.9.0",
-    "@openzeppelin/contracts": "4.9.3",
+    "@gearbox-protocol/sdk-gov": "^2.2.5",
     "@redstone-finance/evm-connector": "0.2.5",
-    "@typechain/ethers-v5": "^10.1.0",
     "dotenv": "^16.0.3",
     "eslint": "^8.25.0",
     "ethers": "5.4.4",

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2023.
+pragma solidity ^0.8.23;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
@@ -38,8 +38,9 @@ interface IPythPriceFeedExceptions {
 contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     using SafeCast for uint256;
 
-    PriceFeedType public constant override priceFeedType = PriceFeedType.PYTH_ORACLE;
-    uint256 public constant override version = 3_00;
+    uint256 public constant override version = 3_10;
+    bytes32 public constant contractType = "PF_PYTH_ORACLE";
+
     uint8 public constant override decimals = 8;
     bool public constant override skipPriceCheck = false;
     bool public constant override updatable = true;
@@ -60,7 +61,7 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
         token = _token;
         priceFeedId = _priceFeedId;
         pyth = _pyth;
-        description = string(abi.encodePacked(_descriptionTicker, " Pyth price feed"));
+        description = string.concat(_descriptionTicker, " Pyth price feed");
     }
 
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp

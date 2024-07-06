@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2023.
+pragma solidity ^0.8.23;
 
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
@@ -9,6 +9,10 @@ import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {FixedPoint} from "../../libraries/FixedPoint.sol";
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedParams} from "../PriceFeedParams.sol";
+import {FixedPoint} from "../../libraries/FixedPoint.sol";
+import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
+import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
+import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 
@@ -19,7 +23,7 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
     uint256 public constant override version = 3_00;
-    PriceFeedType public constant override priceFeedType = PriceFeedType.CURVE_CRYPTO_ORACLE;
+    bytes32 public constant contractType = "PF_CURVE_CRYPTO_ORACLE";
 
     uint16 public immutable nCoins;
 
