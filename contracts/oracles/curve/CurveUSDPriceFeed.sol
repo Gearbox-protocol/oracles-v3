@@ -15,7 +15,6 @@ import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 contract CurveUSDPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
     bytes32 public constant override contractType = "PF_CURVE_USD_ORACLE";
-    PriceFeedType public constant priceFeedType = PriceFeedType.CURVE_USD_ORACLE;
 
     constructor(
         address _acl,

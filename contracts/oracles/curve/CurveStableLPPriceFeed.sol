@@ -13,10 +13,8 @@ import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 /// @dev For stableswap pools, aggregate is simply the minimum of underlying tokens prices
 /// @dev Older pools may be decoupled from their LP token, so constructor accepts both token and pool
 contract CurveStableLPPriceFeed is LPPriceFeed {
-    uint256 public constant override version = 3_00;
+    uint256 public constant override version = 3_10;
     bytes32 public immutable override contractType;
-
-    PriceFeedType public immutable priceFeedType;
 
     uint16 public immutable nCoins;
 
@@ -64,10 +62,6 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
         skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
         skipCheck2 = nCoins > 2 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
         skipCheck3 = nCoins > 3 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
-
-        priceFeedType = nCoins == 2
-            ? PriceFeedType.CURVE_2LP_ORACLE
-            : (nCoins == 3 ? PriceFeedType.CURVE_3LP_ORACLE : PriceFeedType.CURVE_4LP_ORACLE);
 
         contractType = nCoins == 2
             ? bytes32("PF_CURVE_2LP_ORACLE")

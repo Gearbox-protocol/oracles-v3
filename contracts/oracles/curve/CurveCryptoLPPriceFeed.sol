@@ -21,8 +21,6 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     uint256 public constant override version = 3_00;
     bytes32 public constant contractType = "PF_CURVE_CRYPTO_ORACLE";
 
-    PriceFeedType public constant priceFeedType = PriceFeedType.CURVE_CRYPTO_ORACLE;
-
     uint16 public immutable nCoins;
 
     address public immutable priceFeed0;

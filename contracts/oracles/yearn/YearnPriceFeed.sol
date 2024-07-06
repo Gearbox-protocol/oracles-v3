@@ -11,7 +11,6 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 contract YearnPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
     bytes32 public constant override contractType = "PF_YEARN_ORACLE";
-    PriceFeedType public constant priceFeedType = PriceFeedType.YEARN_ORACLE;
 
     /// @dev Scale of yVault's pricePerShare
     uint256 immutable _scale;

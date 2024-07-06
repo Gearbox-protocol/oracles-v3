@@ -13,8 +13,6 @@ contract WrappedAaveV2PriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
     bytes32 public constant contractType = "PF_WRAPPED_AAVE_V2_ORACLE";
 
-    PriceFeedType public constant priceFeedType = PriceFeedType.WRAPPED_AAVE_V2_ORACLE;
-
     constructor(
         address _acl,
         address _priceOracle,

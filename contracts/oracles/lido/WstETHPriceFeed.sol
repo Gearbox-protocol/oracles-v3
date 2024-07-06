@@ -12,7 +12,6 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 contract WstETHPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
     bytes32 public constant override contractType = "PF_WSTETH_ORACLE";
-    PriceFeedType public constant priceFeedType = PriceFeedType.WSTETH_ORACLE;
 
     constructor(
         address _acl,

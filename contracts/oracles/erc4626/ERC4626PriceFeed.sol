@@ -12,7 +12,6 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 contract ERC4626PriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_00;
     bytes32 public constant override contractType = "PF_ERC4626_ORACLE";
-    PriceFeedType public constant priceFeedType = PriceFeedType.ERC4626_VAULT_ORACLE;
 
     /// @dev Amount of shares comprising a single unit (accounting for decimals)
     uint256 immutable _shareUnit;

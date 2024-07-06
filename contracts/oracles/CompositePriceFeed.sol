@@ -12,7 +12,6 @@ import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/Sanit
 /// @title Composite price feed
 /// @notice Computes target asset USD price as product of target/base price times base/USD price
 contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheckTrait {
-    PriceFeedType public constant priceFeedType = PriceFeedType.COMPOSITE_ORACLE;
     uint256 public constant override version = 3_10;
     bytes32 public constant override contractType = "PF_COMPOSITE_ORACLE";
 

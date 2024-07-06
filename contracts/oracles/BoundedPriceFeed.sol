@@ -20,7 +20,6 @@ interface ChainlinkReadableAggregator {
 /// @notice Can be used to provide upper-bounded answers for assets that are
 ///         expected to have the price in a certain range, e.g. stablecoins
 contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityCheckTrait, PriceFeedValidationTrait {
-    PriceFeedType public constant priceFeedType = PriceFeedType.BOUNDED_ORACLE;
     uint256 public constant override version = 3_10;
     bytes32 public constant override contractType = "PF_BOUNDED_ORACLE";
 
