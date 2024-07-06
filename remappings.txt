@@ -1,8 +1,11 @@
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
-@openzeppelin/=node_modules/@openzeppelin/
-@chainlink/=node_modules/@chainlink/
-@gearbox-protocol=node_modules/@gearbox-protocol/
+@gearbox-protocol/sdk-gov/=lib/gearbox-sdk-gov/
+@gearbox-protocol/core-v3/=lib/gearbox-core-v3/
+
 @redstone-finance=node_modules/@redstone-finance/
 @1inch=node_modules/@1inch/
 @pythnetwork=node_modules/@pythnetwork
+
+@openzeppelin/=lib/openzeppelin-contracts/
+@1inch/solidity-utils/=lib/solidity-utils/
