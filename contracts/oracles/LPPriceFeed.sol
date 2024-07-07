@@ -5,8 +5,9 @@ pragma solidity ^0.8.23;
 
 import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
-import {ACLTrait} from "@gearbox-protocol/core-v3/contracts/traits/ACLTrait.sol";
+import {ControlledTrait} from "@gearbox-protocol/core-v3/contracts/traits/ControlledTrait.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
@@ -25,7 +26,7 @@ uint256 constant UPDATE_BOUNDS_COOLDOWN = 1 days;
 ///         It is assumed that the price of an LP token is the product of its exchange rate and some aggregate function
 ///         of underlying tokens prices. This contract simplifies creation of such price feeds and provides standard
 ///         validation of the LP token exchange rate that protects against price manipulation.
-abstract contract LPPriceFeed is ILPPriceFeed, ACLTrait, PriceFeedValidationTrait {
+abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait, PriceFeedValidationTrait {
     /// @notice Answer precision (always 8 decimals for USD price feeds)
     uint8 public constant override decimals = 8; // U:[LPPF-2]
 
@@ -58,7 +59,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLTrait, PriceFeedValidationTrai
     /// @dev Derived price feeds must call `_setLimiter` in their constructor after
     ///      initializing all state variables needed for exchange rate calculation
     constructor(address _acl, address _priceOracle, address _lpToken, address _lpContract)
-        ACLTrait(_acl) // U:[LPPF-1]
+        ControlledTrait(_acl) // U:[LPPF-1]
         nonZeroAddress(_priceOracle) // U:[LPPF-1]
         nonZeroAddress(_lpToken) // U:[LPPF-1]
         nonZeroAddress(_lpContract) // U:[LPPF-1]

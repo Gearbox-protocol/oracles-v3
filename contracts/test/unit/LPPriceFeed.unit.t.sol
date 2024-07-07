@@ -8,8 +8,7 @@ import {Test} from "forge-std/Test.sol";
 import {IVersion} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IVersion.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
-import {ILPPriceFeedEvents, ILPPriceFeedExceptions} from "../../interfaces/ILPPriceFeed.sol";
-
+import {ILPPriceFeed} from "../../interfaces/ILPPriceFeed.sol";
 import {
     CallerNotConfiguratorException,
     CallerNotControllerOrConfiguratorException,
@@ -25,7 +24,7 @@ import {LPPriceFeedHarness} from "./LPPriceFeed.harness.sol";
 
 /// @title LP price feed unit test
 /// @notice U:[LPPF]: Unit tests for LP price feed
-contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions {
+contract LPPriceFeedUnitTest is Test {
     LPPriceFeedHarness priceFeed;
 
     address configurator;
@@ -90,7 +89,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         // reverts if exchange rate below lower bound
         priceFeed.hackLPExchangeRate(1 ether - 1);
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        vm.expectRevert(ILPPriceFeed.ExchangeRateOutOfBoundsException.selector);
         priceFeed.latestRoundData();
 
         // computes normally if exchange rate within bounds
@@ -122,7 +121,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         // works as expected otherwise
         vm.expectEmit(false, false, false, true);
-        emit SetUpdateBoundsAllowed(true);
+        emit ILPPriceFeed.SetUpdateBoundsAllowed(true);
 
         vm.prank(configurator);
         priceFeed.allowBoundsUpdate();
@@ -135,7 +134,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         // works as expected otherwise
         vm.expectEmit(false, false, false, true);
-        emit SetUpdateBoundsAllowed(false);
+        emit ILPPriceFeed.SetUpdateBoundsAllowed(false);
 
         vm.prank(configurator);
         priceFeed.forbidBoundsUpdate();
@@ -154,18 +153,18 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         vm.startPrank(configurator);
 
         // reverts if lower bound is zero
-        vm.expectRevert(LowerBoundCantBeZeroException.selector);
+        vm.expectRevert(ILPPriceFeed.LowerBoundCantBeZeroException.selector);
         priceFeed.setLimiter(0);
 
         // reverts if new bounds don't contain current exchange rate
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        vm.expectRevert(ILPPriceFeed.ExchangeRateOutOfBoundsException.selector);
         priceFeed.setLimiter(0.5 ether);
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        vm.expectRevert(ILPPriceFeed.ExchangeRateOutOfBoundsException.selector);
         priceFeed.setLimiter(2 ether);
 
         // works as expected otherwise
         vm.expectEmit(false, false, false, true);
-        emit SetBounds(0.99 ether, 1.0098 ether);
+        emit ILPPriceFeed.SetBounds(0.99 ether, 1.0098 ether);
         priceFeed.setLimiter(0.99 ether);
 
         vm.stopPrank();
@@ -178,14 +177,14 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         priceFeed.hackScale(1 ether);
 
         // permissionless bounds update is forbidden (oh the irony)
-        vm.expectRevert(UpdateBoundsNotAllowedException.selector);
+        vm.expectRevert(ILPPriceFeed.UpdateBoundsNotAllowedException.selector);
         priceFeed.updateBounds("some data");
 
         priceFeed.hackUpdateBoundsAllowed(true);
 
         // cooldown hasn't passed
         priceFeed.hackLastBoundsUpdate(block.timestamp);
-        vm.expectRevert(UpdateBoundsBeforeCooldownException.selector);
+        vm.expectRevert(ILPPriceFeed.UpdateBoundsBeforeCooldownException.selector);
         priceFeed.updateBounds("some data");
 
         priceFeed.hackLastBoundsUpdate(block.timestamp - 1 days);
@@ -196,7 +195,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
             abi.encodeCall(IPriceOracleV3.reservePriceFeeds, (address(lpToken))),
             abi.encode(address(priceFeed))
         );
-        vm.expectRevert(ReserveFeedMustNotBeSelfException.selector);
+        vm.expectRevert(ILPPriceFeed.ReserveFeedMustNotBeSelfException.selector);
         priceFeed.updateBounds("some data");
 
         vm.mockCall(
@@ -205,14 +204,14 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         // reserve exchange rate is out of bounds
         vm.mockCall(priceOracle, abi.encodeCall(IPriceOracleV3.getReservePrice, (address(lpToken))), abi.encode(2.05e8));
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        vm.expectRevert(ILPPriceFeed.ExchangeRateOutOfBoundsException.selector);
         priceFeed.updateBounds("some data");
 
         vm.mockCall(priceOracle, abi.encodeCall(IPriceOracleV3.getReservePrice, (address(lpToken))), abi.encode(2.02e8));
 
         // exchange rate is out of new bounds
         priceFeed.hackLPExchangeRate(0.99 ether);
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        vm.expectRevert(ILPPriceFeed.ExchangeRateOutOfBoundsException.selector);
         priceFeed.updateBounds("some data");
 
         priceFeed.hackLPExchangeRate(1.01 ether);
@@ -237,7 +236,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
             vm.expectEmit(false, false, false, true);
             // lower bound 0.9999 = 2.02 / 2 * 0.99; upper bound 1.019898 = 0.9999 * 1.02
-            emit SetBounds(0.9999 ether, 1.019898 ether);
+            emit ILPPriceFeed.SetBounds(0.9999 ether, 1.019898 ether);
 
             priceFeed.updateBounds("some data");
             assertEq(priceFeed.lowerBound(), 0.9999 ether, "Incorrect lowerBound");
