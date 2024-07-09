@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 interface IBalancerVault {
     function getPoolTokens(bytes32 poolId)

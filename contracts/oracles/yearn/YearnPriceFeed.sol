@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {IYVault} from "../../interfaces/yearn/IYVault.sol";
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title Yearn price feed
 contract YearnPriceFeed is SingleAssetLPPriceFeed {
-    uint256 public constant override version = 3_00;
-    PriceFeedType public constant override priceFeedType = PriceFeedType.YEARN_ORACLE;
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PF_YEARN_ORACLE";
 
     /// @dev Scale of yVault's pricePerShare
     uint256 immutable _scale;

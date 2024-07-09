@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {PriceFeedParams} from "./PriceFeedParams.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 
 /// @title Composite price feed
 /// @notice Computes target asset USD price as product of target/base price times base/USD price
 contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheckTrait {
-    PriceFeedType public constant override priceFeedType = PriceFeedType.COMPOSITE_ORACLE;
-    uint256 public constant override version = 3_00;
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PF_COMPOSITE_ORACLE";
+
     uint8 public constant override decimals = 8; // U:[CPF-2]
     bool public constant override skipPriceCheck = true; // U:[CPF-2]
 
