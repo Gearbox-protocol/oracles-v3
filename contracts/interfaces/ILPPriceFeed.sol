@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
 
 interface ILPPriceFeedEvents {
     /// @notice Emitted when new LP token exchange rate bounds are set

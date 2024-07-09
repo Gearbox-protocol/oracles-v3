@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
-import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
+import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
+import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
+import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 /// @title crvUSD price feed
 /// @notice Computes crvUSD price as product of crvUSD-USDC stableswap pool exchange rate and USDC price feed.

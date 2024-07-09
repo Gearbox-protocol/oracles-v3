@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -8,9 +8,9 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {RedstoneConsumerNumericBase} from
     "@redstone-finance/evm-connector/contracts/core/RedstoneConsumerNumericBase.sol";
 
-import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 /// @dev Max period that the payload can be backward in time relative to the block
 uint256 constant MAX_DATA_TIMESTAMP_DELAY_SECONDS = 10 minutes;

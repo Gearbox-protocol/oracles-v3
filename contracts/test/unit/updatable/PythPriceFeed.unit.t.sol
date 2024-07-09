@@ -29,7 +29,7 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
         pyth = new PythMock();
         token = address(new ERC20Mock("USD Coin", "USDC", 6));
 
-        pf = new PythPriceFeed(token, bytes32(uint256(1)), address(pyth), "USDC/USD", 5000);
+        pf = new PythPriceFeed(token, bytes32(uint256(1)), address(pyth), "USDC/USD");
         vm.deal(address(pf), 100000);
     }
 
@@ -69,14 +69,14 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
 
         bytes memory updateData = abi.encode(block.timestamp + 64000, payloads);
 
-        vm.expectRevert(PriceTimestampTooFarAheadException.selector);
+        vm.expectRevert(IncorrectExpectedPublishTimestamp.selector);
         pf.updatePrice(updateData);
 
         pyth.setPriceData(bytes32(uint256(1)), 10 ** 8, 0, -8, block.timestamp - 64001);
 
         updateData = abi.encode(block.timestamp - 64000, payloads);
 
-        vm.expectRevert(PriceTimestampTooFarBehindException.selector);
+        vm.expectRevert(IncorrectExpectedPublishTimestamp.selector);
         pf.updatePrice(updateData);
     }
 
@@ -98,7 +98,7 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
 
         bytes memory updateData = abi.encode(block.timestamp, payloads);
 
-        vm.expectRevert(IncorrectExpectedPublishTimestampException.selector);
+        vm.expectRevert(IncorrectExpectedPublishTimestamp.selector);
         pf.updatePrice(updateData);
     }
 
@@ -131,12 +131,15 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
         (, price,,,) = pf.latestRoundData();
 
         assertEq(price, 100 * 10 ** 8, "Incorrect price when pyth decimals are 0");
-    }
 
-    function test_U_PYPF_08_latestRoundData_reverts_on_too_high_conf_to_price_ratio() public {
-        pyth.setPriceData(bytes32(uint256(1)), 10 ** 8, 10000000000000000000, -8, block.timestamp - 64001);
+        pyth.setPriceData(bytes32(uint256(1)), 100, 0, 2, block.timestamp);
 
-        vm.expectRevert(ConfToPriceRatioTooHighException.selector);
+        vm.expectRevert(IncorrectPriceDecimals.selector);
+        pf.latestRoundData();
+
+        pyth.setPriceData(bytes32(uint256(1)), 100, 0, -257, block.timestamp);
+
+        vm.expectRevert(IncorrectPriceDecimals.selector);
         pf.latestRoundData();
     }
 }

@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2023.
 pragma solidity ^0.8.17;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
+import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
+
+import {LPPriceFeed} from "../LPPriceFeed.sol";
+import {PriceFeedParams} from "../PriceFeedParams.sol";
+import {FixedPoint} from "../../libraries/FixedPoint.sol";
 
 import {IBalancerVault} from "../../interfaces/balancer/IBalancerVault.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
-import {FixedPoint} from "../../libraries/FixedPoint.sol";
-import {LPPriceFeed} from "../LPPriceFeed.sol";
-import {PriceFeedParams} from "../PriceFeedParams.sol";
 
 uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 
