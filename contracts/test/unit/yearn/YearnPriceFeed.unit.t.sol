@@ -20,9 +20,8 @@ contract YearnPriceFeedUnitTest is PriceFeedUnitTestHelper {
         yVault = new YVaultMock(makeAddr("TOKEN"), 6);
         yVault.hackPricePerShare(1.03e6);
 
-        priceFeed = new YearnPriceFeed(
-            address(addressProvider), priceOracle, 1.02e6, address(yVault), address(underlyingPriceFeed), 1 days
-        );
+        priceFeed =
+            new YearnPriceFeed(address(addressProvider), 1.02e6, address(yVault), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[YFI-1]: Price feed works as expected

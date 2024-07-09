@@ -9,7 +9,6 @@ import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/Sanit
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 import {ControlledTrait} from "@gearbox-protocol/core-v3/contracts/traits/ControlledTrait.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
-import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 
 /// @dev Window size in bps, used to compute upper bound given lower bound
@@ -33,9 +32,6 @@ abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait
     /// @notice Indicates that price oracle can skip checks for this price feed's answers
     bool public constant override skipPriceCheck = true; // U:[LPPF-2]
 
-    /// @notice Price oracle contract
-    address public immutable override priceOracle;
-
     /// @notice LP token for which the prices are computed
     address public immutable override lpToken;
 
@@ -45,26 +41,17 @@ abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait
     /// @notice Lower bound for the LP token exchange rate
     uint256 public override lowerBound;
 
-    /// @notice Whether permissionless bounds update is allowed
-    bool public override updateBoundsAllowed;
-
-    /// @notice Timestamp of the last bounds update
-    uint40 public override lastBoundsUpdate;
-
     /// @notice Constructor
     /// @param _acl Address of the ACL contract
-    /// @param _priceOracle Address of the price oracle
     /// @param _lpToken  LP token for which the prices are computed
     /// @param _lpContract LP contract (can be different from LP token)
     /// @dev Derived price feeds must call `_setLimiter` in their constructor after
     ///      initializing all state variables needed for exchange rate calculation
-    constructor(address _acl, address _priceOracle, address _lpToken, address _lpContract)
+    constructor(address _acl, address _lpToken, address _lpContract)
         ControlledTrait(_acl) // U:[LPPF-1]
-        nonZeroAddress(_priceOracle) // U:[LPPF-1]
         nonZeroAddress(_lpToken) // U:[LPPF-1]
         nonZeroAddress(_lpContract) // U:[LPPF-1]
     {
-        priceOracle = _priceOracle; // U:[LPPF-1]
         lpToken = _lpToken; // U:[LPPF-1]
         lpContract = _lpContract; // U:[LPPF-1]
     }
@@ -108,28 +95,6 @@ abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait
     // CONFIGURATION //
     // ------------- //
 
-    /// @notice Allows permissionless bounds update
-    function allowBoundsUpdate()
-        external
-        override
-        configuratorOnly // U:[LPPF-5]
-    {
-        if (updateBoundsAllowed) return;
-        updateBoundsAllowed = true; // U:[LPPF-5]
-        emit SetUpdateBoundsAllowed(true); // U:[LPPF-5]
-    }
-
-    /// @notice Forbids permissionless bounds update
-    function forbidBoundsUpdate()
-        external
-        override
-        controllerOrConfiguratorOnly // U:[LPPF-5]
-    {
-        if (!updateBoundsAllowed) return;
-        updateBoundsAllowed = false; // U:[LPPF-5]
-        emit SetUpdateBoundsAllowed(false); // U:[LPPF-5]
-    }
-
     /// @notice Sets new lower and upper bounds for the LP token exchange rate
     /// @param newLowerBound New lower bound value
     function setLimiter(uint256 newLowerBound)
@@ -140,27 +105,9 @@ abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait
         _setLimiter(newLowerBound); // U:[LPPF-6]
     }
 
-    /// @notice Permissionlessly updates LP token's exchange rate bounds using answer from the reserve price feed.
-    ///         Lower bound is set to the induced reserve exchange rate (with small buffer for downside movement).
-    /// @param updateData Data to update the reserve price feed with before querying its answer if it is updatable
-    function updateBounds(bytes calldata updateData) external override {
-        if (!updateBoundsAllowed) revert UpdateBoundsNotAllowedException(); // U:[LPPF-7]
-
-        if (block.timestamp < lastBoundsUpdate + UPDATE_BOUNDS_COOLDOWN) revert UpdateBoundsBeforeCooldownException(); // U:[LPPF-7]
-        lastBoundsUpdate = uint40(block.timestamp); // U:[LPPF-7]
-
-        address reserveFeed = IPriceOracleV3(priceOracle).reservePriceFeeds({token: lpToken}); // U:[LPPF-7]
-        if (reserveFeed == address(this)) revert ReserveFeedMustNotBeSelfException(); // U:[LPPF-7]
-        try IUpdatablePriceFeed(reserveFeed).updatable() returns (bool updatable) {
-            if (updatable) IUpdatablePriceFeed(reserveFeed).updatePrice(updateData); // U:[LPPF-7]
-        } catch {}
-
-        uint256 reserveAnswer = IPriceOracleV3(priceOracle).getReservePrice({token: lpToken}); // U:[LPPF-7]
-        uint256 reserveExchangeRate = uint256(reserveAnswer * getScale() / uint256(getAggregatePrice())); // U:[LPPF-7]
-
-        _ensureValueInBounds(reserveExchangeRate, lowerBound); // U:[LPPF-7]
-        _setLimiter(_calcLowerBound(reserveExchangeRate)); // U:[LPPF-7]
-    }
+    // --------- //
+    // INTERNALS //
+    // --------- //
 
     /// @dev `setLimiter` implementation: sets new bounds, ensures that current value is within them, emits event
     function _setLimiter(uint256 lower) internal {

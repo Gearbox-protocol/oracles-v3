@@ -38,9 +38,7 @@ contract PricePrinterTest is Test {
             AddressProviderV3ACLMock addressProvider = new AddressProviderV3ACLMock();
             SupportedContracts sc = new SupportedContracts(chainId);
 
-            address priceOracle = makeAddr("PRICE_ORACLE");
-
-            pfd = new PriceFeedDeployer(chainId, address(addressProvider), priceOracle, tokenTestSuite, sc);
+            pfd = new PriceFeedDeployer(chainId, address(addressProvider), tokenTestSuite, sc);
             pfd.updateRedstoneOraclePriceFeeds();
         }
     }

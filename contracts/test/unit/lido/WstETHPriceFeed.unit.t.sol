@@ -21,7 +21,7 @@ contract WstETHPriceFeedUnitTest is PriceFeedUnitTestHelper {
         wstETH.hackStEthPerToken(1.03 ether);
 
         priceFeed = new WstETHPriceFeed(
-            address(addressProvider), priceOracle, 1.02 ether, address(wstETH), address(underlyingPriceFeed), 1 days
+            address(addressProvider), 1.02 ether, address(wstETH), address(underlyingPriceFeed), 1 days
         );
     }
 

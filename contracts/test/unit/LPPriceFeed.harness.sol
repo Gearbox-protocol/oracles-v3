@@ -13,9 +13,7 @@ contract LPPriceFeedHarness is LPPriceFeed {
     uint256 _exchangeRate;
     uint256 _scale;
 
-    constructor(address _acl, address _priceOracle, address _lpToken, address _lpContract)
-        LPPriceFeed(_acl, _priceOracle, _lpToken, _lpContract)
-    {}
+    constructor(address _acl, address _lpToken, address _lpContract) LPPriceFeed(_acl, _lpToken, _lpContract) {}
 
     function hackAggregatePrice(int256 answer) external {
         _answer = answer;
@@ -43,13 +41,5 @@ contract LPPriceFeedHarness is LPPriceFeed {
 
     function hackLowerBound(uint256 newLowerBound) external {
         lowerBound = newLowerBound;
-    }
-
-    function hackUpdateBoundsAllowed(bool value) external {
-        updateBoundsAllowed = value;
-    }
-
-    function hackLastBoundsUpdate(uint256 timestamp) external {
-        lastBoundsUpdate = uint40(timestamp);
     }
 }

@@ -33,15 +33,8 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod3;
     bool public immutable skipCheck3;
 
-    constructor(
-        address _acl,
-        address _priceOracle,
-        uint256 lowerBound,
-        address _token,
-        address _pool,
-        PriceFeedParams[4] memory priceFeeds
-    )
-        LPPriceFeed(_acl, _priceOracle, _token, _pool) // U:[CRV-S-1]
+    constructor(address _acl, uint256 lowerBound, address _token, address _pool, PriceFeedParams[4] memory priceFeeds)
+        LPPriceFeed(_acl, _token, _pool) // U:[CRV-S-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-S-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-S-2]
     {
