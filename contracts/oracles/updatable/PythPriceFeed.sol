@@ -118,6 +118,8 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
 
         if (priceData.publishTime != expectedPublishTimestamp) revert IncorrectExpectedPublishTimestampException();
         if (priceData.price == 0) revert IncorrectPriceException();
+
+        emit UpdatePrice(uint64(priceData.price));
     }
 
     /// @dev Returns price adjusted to 8 decimals (if Pyth returns different precision)

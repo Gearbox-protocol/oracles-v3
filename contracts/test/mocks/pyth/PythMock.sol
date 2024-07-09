@@ -9,7 +9,7 @@ contract PythMock {
     bool incorrectPublishTime;
     mapping(bytes32 => PythStructs.Price) public priceData;
 
-    function getUpdateFee(bytes[] memory updateData) external view returns (uint256) {
+    function getUpdateFee(bytes[] memory updateData) external pure returns (uint256) {
         return updateData.length;
     }
 

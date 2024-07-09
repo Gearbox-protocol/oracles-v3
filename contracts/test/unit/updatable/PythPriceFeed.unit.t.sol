@@ -11,6 +11,7 @@ import {
     IPythExtended
 } from "../../../oracles/updatable/PythPriceFeed.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
 // TEST
@@ -86,6 +87,10 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
         payloads[0] = abi.encode(int64(10 ** 8), block.timestamp, int32(-8), bytes32(uint256(1)));
 
         bytes memory updateData = abi.encode(block.timestamp, payloads);
+
+        vm.expectEmit(false, false, false, true);
+
+        emit IUpdatablePriceFeed.UpdatePrice(100000000);
 
         vm.expectCall(address(pyth), abi.encodeCall(IPyth.updatePriceFeeds, (payloads)), 1);
         pf.updatePrice(updateData);
