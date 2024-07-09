@@ -3,12 +3,9 @@
 // (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-
 import {LPPriceFeed} from "../../oracles/LPPriceFeed.sol";
 
 contract LPPriceFeedHarness is LPPriceFeed {
-    PriceFeedType public constant priceFeedType = PriceFeedType.ZERO_ORACLE;
     bytes32 public constant override contractType = "PF_ZERO_ORACLE";
     uint256 public constant override version = 0;
 

@@ -4,7 +4,6 @@
 pragma solidity ^0.8.23;
 
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 

@@ -6,7 +6,6 @@ pragma solidity ^0.8.23;
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedParams} from "../PriceFeedParams.sol";
 import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 /// @title Curve stable LP price feed
