@@ -31,11 +31,8 @@
   "devDependencies": {
     "@commitlint/cli": "^17.1.2",
     "@commitlint/config-conventional": "^17.1.0",
-    "@gearbox-protocol/core-v2": "1.19.0-base.14",
-    "@gearbox-protocol/core-v3": "^1.50.0-next.11",
     "@gearbox-protocol/eslint-config": "^1.6.1",
     "@gearbox-protocol/prettier-config": "^1.5.0",
-    "@gearbox-protocol/sdk-gov": "^2.2.5",
     "@redstone-finance/evm-connector": "0.2.5",
     "dotenv": "^16.0.3",
     "eslint": "^8.25.0",
