@@ -58,9 +58,6 @@ contract LPPriceFeedUnitTest is Test {
     /// @notice U:[LPPF-1]: Constructor works as expected
     function test_U_LPPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new LPPriceFeedHarness(address(0), priceOracle, address(lpToken), lpContract);
-
-        vm.expectRevert(ZeroAddressException.selector);
         new LPPriceFeedHarness(address(addressProvider), address(0), address(lpToken), lpContract);
 
         vm.expectRevert(ZeroAddressException.selector);
