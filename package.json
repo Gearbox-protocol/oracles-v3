@@ -24,7 +24,6 @@
     "forge-install": "forge install --no-commit foundry-rs/forge-std"
   },
   "dependencies": {
-    "@pythnetwork/pyth-sdk-solidity": "^3.1.0",
     "axios": "^1.6.8",
     "redstone-protocol": "^1.0.5"
   },

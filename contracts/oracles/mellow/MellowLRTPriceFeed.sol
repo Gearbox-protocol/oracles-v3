@@ -4,7 +4,6 @@
 pragma solidity ^0.8.23;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IStateSerializer} from "../../interfaces/IStateSerializer.sol";
 import {IMellowVault} from "../../interfaces/mellow/IMellowVault.sol";
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";

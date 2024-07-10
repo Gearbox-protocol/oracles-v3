@@ -55,14 +55,17 @@ contract PricePrinterTest is Test {
             (address token, address priceFeed,) = pfd.priceFeedConfig(i);
             Tokens t = pfd.tokenTestSuite().tokenIndexes(token);
 
+            emit log_string(pfd.tokenTestSuite().symbols(t));
+            emit log_named_string("    Price feed", IPriceFeed(priceFeed).description());
             try IPriceFeed(priceFeed).latestRoundData() returns (uint80, int256 price, uint256, uint256, uint80) {
-                emit log_named_decimal_int(pfd.tokenTestSuite().symbols(t), price, 8);
+                emit log_named_decimal_int("    Price", price, 8);
             } catch {
-                emit log_string(string.concat(pfd.tokenTestSuite().symbols(t), ": REVERT"));
+                emit log_string("    Price: REVERT");
                 mustFail = true;
             }
         }
 
+        emit log_string("");
         emit log_string("RESERVE FEEDS");
         emit log_string("");
 
@@ -73,10 +76,12 @@ contract PricePrinterTest is Test {
             (address token, address priceFeed,) = pfd.priceFeedConfigReserve(i);
             Tokens t = pfd.tokenTestSuite().tokenIndexes(token);
 
+            emit log_string(pfd.tokenTestSuite().symbols(t));
+            emit log_named_string("    Price feed", IPriceFeed(priceFeed).description());
             try IPriceFeed(priceFeed).latestRoundData() returns (uint80, int256 price, uint256, uint256, uint80) {
-                emit log_named_decimal_int(pfd.tokenTestSuite().symbols(t), price, 8);
+                emit log_named_decimal_int("    Price", price, 8);
             } catch {
-                emit log_string(string.concat(pfd.tokenTestSuite().symbols(t), ": REVERT"));
+                emit log_string("    Price: REVERT");
                 mustFail = true;
             }
         }

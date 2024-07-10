@@ -5,7 +5,6 @@ pragma solidity ^0.8.10;
 
 import {
     RedstonePriceFeed,
-    IRedstonePriceFeedExceptions,
     MAX_DATA_TIMESTAMP_DELAY_SECONDS,
     MAX_DATA_TIMESTAMP_AHEAD_SECONDS
 } from "../../../oracles/updatable/RedstonePriceFeed.sol";
@@ -19,7 +18,7 @@ import {TestHelper} from "@gearbox-protocol/core-v3/contracts/test/lib/helper.so
 
 /// @title Redstone price feed unit test
 /// @notice U:[RPF]: Unit tests for Redstone price feed
-contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, RedstoneConstants {
+contract RedstonePriceFeedUnitTest is TestHelper, RedstoneConstants {
     RedstonePriceFeed pf;
     address[10] signers;
     uint256[10] signerKeys;
@@ -29,7 +28,9 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
     function setUp() public {
         _generateSigners(10);
 
-        pf = new RedstonePriceFeed(address(new ERC20Mock("USD Coin", "USDC", 6)), bytes32("USDC"), signers, 10);
+        pf = new RedstonePriceFeed(
+            address(new ERC20Mock("USD Coin", "USDC", 6)), "mock-data-service", "USDC", signers, 10, "USDC / USD"
+        );
     }
 
     function _generateSigners(uint8 _numSigners) internal {
@@ -87,9 +88,11 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
         payload = abi.encodePacked(payload, message, uint24(message.length), REDSTONE_MARKER);
     }
 
-    /// @notice U: [RPF-1]: constructor sets correct values
+    /// @notice U:[RPF-1]: constructor sets correct values
     function test_U_RPF_01_constructor_sets_correct_values() public {
         assertEq(pf.description(), "USDC / USD Redstone price feed", "Incorrect description");
+
+        assertEq(pf.dataServiceId(), "mock-data-service", "Incorrect data service id");
 
         assertEq(pf.dataFeedId(), bytes32("USDC"), "Incorrect data feed id");
 
@@ -116,7 +119,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
         assertEq(pf.getUniqueSignersThreshold(), 10, "Incorrect signers threshold");
     }
 
-    /// @notice U: [RPF-2]: updatePrice works correctly on correct payload
+    /// @notice U:[RPF-2]: updatePrice works correctly on correct payload
     function test_U_RPF_02_updatePrice_successfully_updates_price_with_correct_payload() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
@@ -141,7 +144,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
         assertEq(updatedAt, block.timestamp - 1, "Incorrect updatedAt");
     }
 
-    /// @notice U: [RPF-3]: updatePrice reverts on package timestamp not equal to expected payload timestamp
+    /// @notice U:[RPF-3]: updatePrice reverts on package timestamp not equal to expected payload timestamp
     function test_U_RPF_03_updatePrice_fails_on_at_least_one_package_timestamp_incorrect() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
@@ -150,12 +153,12 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
 
         bytes memory data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(DataPackageTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.DataPackageTimestampIncorrect.selector);
 
         pf.updatePrice(data);
     }
 
-    /// @notice U: [RPF-4]: updatePrice does nothing if updating in a new block with an old payload
+    /// @notice U:[RPF-4]: updatePrice does nothing if updating in a new block with an old payload
     function test_U_RPF_04_updatePrice_skips_execution_if_updating_with_an_old_payload() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
@@ -182,7 +185,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
         assertEq(pf.lastPayloadTimestamp(), block.timestamp - 1);
     }
 
-    /// @notice U: [RPF-5]: updatePrice performs an update for newer payload in the same block
+    /// @notice U:[RPF-5]: updatePrice performs an update for newer payload in the same block
     function test_U_RPF_05_updatePrice_fully_executes_on_new_payload_in_same_block() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
@@ -207,7 +210,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
         assertEq(pf.lastPayloadTimestamp(), block.timestamp + 1, "Incorrect last payload timestamp");
     }
 
-    /// @notice U: [RPF-6]: updatePrice reverts on at least 1 wrong signer
+    /// @notice U:[RPF-6]: updatePrice reverts on at least 1 wrong signer
     function test_U_RPF_06_updatePrice_fails_on_wrong_signer() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
@@ -223,7 +226,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
         pf.updatePrice(data);
     }
 
-    /// @notice U: [RPF-7]: updatePrice reverts on less signatures than required
+    /// @notice U:[RPF-7]: updatePrice reverts on less signatures than required
     function test_U_RPF_07_updatePrice_fails_on_insufficient_signatures() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
@@ -237,7 +240,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
         pf.updatePrice(data);
     }
 
-    /// @notice U: [RPF-8]: updatePrice reverts on zero price
+    /// @notice U:[RPF-8]: updatePrice reverts on zero price
     function test_U_RPF_08_updatePrice_reverts_on_zero_price() public {
         uint256 expectedPayloadTimestamp = block.timestamp - 1;
 
@@ -251,7 +254,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
         pf.updatePrice(data);
     }
 
-    /// @notice U: [RPF-9]: updatePrice reverts if the payload timestamp is too far from block timestamp
+    /// @notice U:[RPF-9]: updatePrice reverts if the payload timestamp is too far from block timestamp
     function test_U_RPF_09_updatePrice_fails_if_payload_timestamp_too_far_from_block() public {
         uint256 expectedPayloadTimestamp = block.timestamp - MAX_DATA_TIMESTAMP_DELAY_SECONDS - 1;
 
@@ -261,7 +264,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
 
         bytes memory data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(RedstonePayloadTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.RedstonePayloadTimestampIncorrect.selector);
 
         pf.updatePrice(data);
 
@@ -273,7 +276,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
 
         data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(RedstonePayloadTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.RedstonePayloadTimestampIncorrect.selector);
 
         pf.updatePrice(data);
     }
