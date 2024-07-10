@@ -38,10 +38,4 @@ contract MellowLRTPriceFeed is SingleAssetLPPriceFeed {
     function getScale() public view override returns (uint256) {
         return _baseTokenUnit; // U:[MEL-1]
     }
-
-    function serialize() external view returns (bytes memory) {
-        return abi.encode(
-            lpToken, lpContract, lowerBound, _calcUpperBound(lowerBound), priceFeed, stalenessPeriod, skipCheck
-        );
-    }
 }

@@ -167,6 +167,12 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         _setLimiter(lowerBound); // U:[BAL-W-1]
     }
 
+    /// @notice Serialized price feed parameters
+    function serialize() public view override returns (bytes memory) {
+        uint256[8] memory weights = [weight0, weight1, weight2, weight3, weight4, weight5, weight6, weight7];
+        return abi.encode(super.serialize(), vault, poolId, weights);
+    }
+
     // ------- //
     // PRICING //
     // ------- //

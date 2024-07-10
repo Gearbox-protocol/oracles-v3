@@ -61,6 +61,12 @@ abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait
         return string.concat(ERC20(lpToken).symbol(), " / USD LP price feed"); // U:[LPPF-2]
     }
 
+    /// @notice Serialized price feed parameters
+    function serialize() public view virtual returns (bytes memory) {
+        uint256 lb = lowerBound;
+        return abi.encode(lpToken, lpContract, lb, _calcUpperBound(lb));
+    }
+
     /// @notice Returns USD price of the LP token with 8 decimals
     function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
         uint256 exchangeRate = getLPExchangeRate();

@@ -54,6 +54,11 @@ contract BoundedPriceFeed is IPriceFeed, SanityCheckTrait, PriceFeedValidationTr
         return string.concat(_descriptionTicker.fromSmallString(), " bounded price feed"); // U:[BPF-2]
     }
 
+    /// @notice Serialized price feed parameters
+    function serialize() external view returns (bytes memory) {
+        return abi.encode(upperBound);
+    }
+
     /// @notice Returns the upper-bounded USD price of the token
     function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
         answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[BPF-3]

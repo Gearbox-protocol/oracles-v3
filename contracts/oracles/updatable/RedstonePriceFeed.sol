@@ -142,6 +142,23 @@ contract RedstonePriceFeed is IUpdatablePriceFeed, RedstoneConsumerNumericBase {
         return string.concat(_descriptionTicker.fromSmallString(), " Redstone price feed"); // U:[RPF-1]
     }
 
+    /// @notice Serialized price feed parameters
+    function serialize() external view returns (bytes memory) {
+        address[10] memory signers = [
+            signerAddress0,
+            signerAddress1,
+            signerAddress2,
+            signerAddress3,
+            signerAddress4,
+            signerAddress5,
+            signerAddress6,
+            signerAddress7,
+            signerAddress8,
+            signerAddress9
+        ];
+        return abi.encode(token, dataFeedId, dataServiceId, signers, _signersThreshold, lastPrice, lastPayloadTimestamp);
+    }
+
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         return (0, int256(uint256(lastPrice)), 0, lastPayloadTimestamp, 0); // U:[RPF-2]

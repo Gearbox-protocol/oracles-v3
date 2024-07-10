@@ -94,6 +94,11 @@ contract PythPriceFeed is IUpdatablePriceFeed {
         return string.concat(_descriptionTicker.fromSmallString(), " Pyth price feed");
     }
 
+    /// @notice Serialized price feed parameters
+    function serialize() external view returns (bytes memory) {
+        return abi.encode(token, priceFeedId, pyth, maxConfToPriceRatio);
+    }
+
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         PythStructs.Price memory priceData = IPyth(pyth).getPriceUnsafe(priceFeedId);
