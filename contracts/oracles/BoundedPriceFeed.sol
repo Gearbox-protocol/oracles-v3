@@ -3,22 +3,14 @@
 // (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
-import {AggregatorV2V3Interface} from "../interfaces/chainlink/AggregatorV2V3Interface.sol";
-
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 
-interface ChainlinkReadableAggregator {
-    function aggregator() external view returns (address);
-    function phaseAggregators(uint16 idx) external view returns (AggregatorV2V3Interface);
-    function phaseId() external view returns (uint16);
-}
-
 /// @title Bounded price feed
 /// @notice Can be used to provide upper-bounded answers for assets that are
 ///         expected to have the price in a certain range, e.g. stablecoins
-contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityCheckTrait, PriceFeedValidationTrait {
+contract BoundedPriceFeed is IPriceFeed, SanityCheckTrait, PriceFeedValidationTrait {
     uint256 public constant override version = 3_10;
     bytes32 public constant override contractType = "PF_BOUNDED_ORACLE";
 
@@ -60,21 +52,5 @@ contract BoundedPriceFeed is IPriceFeed, ChainlinkReadableAggregator, SanityChec
     /// @dev Upper-bounds given value
     function _upperBoundValue(int256 value) internal view returns (int256) {
         return (value > upperBound) ? upperBound : value;
-    }
-
-    // --------- //
-    // ANALYTICS //
-    // --------- //
-
-    function aggregator() external view override returns (address) {
-        return ChainlinkReadableAggregator(priceFeed).aggregator();
-    }
-
-    function phaseAggregators(uint16 idx) external view override returns (AggregatorV2V3Interface) {
-        return ChainlinkReadableAggregator(priceFeed).phaseAggregators(idx);
-    }
-
-    function phaseId() external view override returns (uint16) {
-        return ChainlinkReadableAggregator(priceFeed).phaseId();
     }
 }
