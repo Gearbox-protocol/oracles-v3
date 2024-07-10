@@ -26,13 +26,7 @@ contract MellowLRTPriceFeedUnitTest is PriceFeedUnitTestHelper {
         vault = new MellowVaultMock();
         vault.setStack(1.2e18, 1e18);
         priceFeed = new MellowLRTPriceFeed(
-            address(addressProvider),
-            priceOracle,
-            1.2e18,
-            address(vault),
-            address(underlyingPriceFeed),
-            1 days,
-            address(asset)
+            address(addressProvider), 1.2e18, address(vault), address(underlyingPriceFeed), 1 days, address(asset)
         );
     }
 

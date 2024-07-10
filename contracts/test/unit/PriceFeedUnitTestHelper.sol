@@ -12,25 +12,19 @@ import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 
 contract PriceFeedUnitTestHelper is Test {
-    address priceOracle;
     address configurator;
 
     PriceFeedMock underlyingPriceFeed;
     AddressProviderV3ACLMock addressProvider;
 
     function _setUp() internal {
-        priceOracle = makeAddr("PRICE_ORACLE");
-        vm.mockCall(priceOracle, abi.encodeCall(IVersion.version, ()), abi.encode(uint256(3_00)));
-
         underlyingPriceFeed = new PriceFeedMock(2e8, 8);
         vm.mockCall(
             address(underlyingPriceFeed), abi.encodeCall(PriceFeedMock.description, ()), abi.encode("TEST / USD")
         );
 
         configurator = makeAddr("CONFIGURATOR");
-        vm.startPrank(configurator);
+        vm.prank(configurator);
         addressProvider = new AddressProviderV3ACLMock();
-        addressProvider.setAddress("PRICE_ORACLE", priceOracle, true);
-        vm.stopPrank();
     }
 }

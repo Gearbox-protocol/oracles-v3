@@ -38,17 +38,12 @@ contract CurveStableLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
     function test_U_CRV_S_01_lp_related_functiontionality_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
         new CurveStableLPPriceFeed(
-            address(addressProvider),
-            priceOracle,
-            1.02 ether,
-            address(0),
-            address(curvePool),
-            _getUnderlyingPriceFeeds(4)
+            address(addressProvider), 1.02 ether, address(0), address(curvePool), _getUnderlyingPriceFeeds(4)
         );
 
         vm.expectRevert(ZeroAddressException.selector);
         new CurveStableLPPriceFeed(
-            address(addressProvider), priceOracle, 1.02 ether, lpToken, address(0), _getUnderlyingPriceFeeds(4)
+            address(addressProvider), 1.02 ether, lpToken, address(0), _getUnderlyingPriceFeeds(4)
         );
 
         priceFeed = _newCurvePriceFeed(4, 1.02 ether);
@@ -86,12 +81,7 @@ contract CurveStableLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
     function _newCurvePriceFeed(uint256 numFeeds, uint256 lowerBound) internal returns (CurveStableLPPriceFeed) {
         return new CurveStableLPPriceFeed(
-            address(addressProvider),
-            priceOracle,
-            lowerBound,
-            lpToken,
-            address(curvePool),
-            _getUnderlyingPriceFeeds(numFeeds)
+            address(addressProvider), lowerBound, lpToken, address(curvePool), _getUnderlyingPriceFeeds(numFeeds)
         );
     }
 

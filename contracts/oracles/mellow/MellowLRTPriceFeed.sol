@@ -19,38 +19,30 @@ contract MellowLRTPriceFeed is SingleAssetLPPriceFeed {
 
     constructor(
         address _acl,
-        address _priceOracle,
         uint256 lowerBound,
         address _vault,
         address _priceFeed,
         uint32 _stalenessPeriod,
         address baseToken
-    ) SingleAssetLPPriceFeed(_acl, _priceOracle, _vault, _vault, _priceFeed, _stalenessPeriod) {
+    )
+        SingleAssetLPPriceFeed(_acl, _vault, _vault, _priceFeed, _stalenessPeriod) // U:[MEL-1]
+    {
         _baseTokenUnit = 10 ** ERC20(baseToken).decimals();
-        _setLimiter(lowerBound);
+        _setLimiter(lowerBound); // U:[MEL-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
         IMellowVault.ProcessWithdrawalsStack memory stack = IMellowVault(lpToken).calculateStack();
-        return stack.totalValue * WAD / stack.totalSupply;
+        return stack.totalValue * WAD / stack.totalSupply; // U:[MEL-1]
     }
 
     function getScale() public view override returns (uint256) {
-        return _baseTokenUnit;
+        return _baseTokenUnit; // U:[MEL-1]
     }
 
     function serialize() external view returns (bytes memory) {
         return abi.encode(
-            priceOracle,
-            lpToken,
-            lpContract,
-            lowerBound,
-            _calcUpperBound(lowerBound),
-            updateBoundsAllowed,
-            lastBoundsUpdate,
-            priceFeed,
-            stalenessPeriod,
-            skipCheck
+            lpToken, lpContract, lowerBound, _calcUpperBound(lowerBound), priceFeed, stalenessPeriod, skipCheck
         );
     }
 }

@@ -36,14 +36,8 @@ contract BPTStablePriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod4;
     bool public immutable skipCheck4;
 
-    constructor(
-        address _acl,
-        address _priceOracle,
-        uint256 lowerBound,
-        address _balancerPool,
-        PriceFeedParams[5] memory priceFeeds
-    )
-        LPPriceFeed(_acl, _priceOracle, _balancerPool, _balancerPool) // U:[BAL-S-1]
+    constructor(address _acl, uint256 lowerBound, address _balancerPool, PriceFeedParams[5] memory priceFeeds)
+        LPPriceFeed(_acl, _balancerPool, _balancerPool) // U:[BAL-S-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[BAL-S-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[BAL-S-2]
     {

@@ -32,7 +32,6 @@ import {PriceOracleV3} from "@gearbox-protocol/core-v3/contracts/core/PriceOracl
 import {IACL} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IACL.sol";
 
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
-import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
 
 import {BPTStablePriceFeed} from "../../oracles/balancer/BPTStablePriceFeed.sol";
 import {BPTWeightedPriceFeed} from "../../oracles/balancer/BPTWeightedPriceFeed.sol";
@@ -76,19 +75,13 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     uint256 public immutable chainId;
 
     address acl;
-    address priceOracle;
 
-    constructor(
-        uint256 _chainId,
-        address _acl,
-        address _priceOracle,
-        TokensTestSuite _tokenTestSuite,
-        ISupportedContracts supportedContracts
-    ) PriceFeedDataLive() {
+    constructor(uint256 _chainId, address _acl, TokensTestSuite _tokenTestSuite, ISupportedContracts supportedContracts)
+        PriceFeedDataLive()
+    {
         chainId = _chainId;
         tokenTestSuite = _tokenTestSuite;
         acl = _acl;
-        priceOracle = _priceOracle;
         // CHAINLINK PRICE FEEDS
         ChainlinkPriceFeedData[] memory chainlinkPriceFeeds = chainlinkPriceFeedsByNetwork[chainId];
         uint256 len = chainlinkPriceFeeds.length;
@@ -306,7 +299,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address pf = address(
                         new CurveUSDPriceFeed(
                             acl,
-                            priceOracle,
                             ICurvePool(pool).get_virtual_price() * 99 / 100,
                             token,
                             pool,
@@ -376,7 +368,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         pf = address(
                             new CurveStableLPPriceFeed(
                                 acl,
-                                priceOracle,
                                 ICurvePool(pool).get_virtual_price() * 99 / 100,
                                 tokenTestSuite.addressOf(lpToken),
                                 pool,
@@ -429,7 +420,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     pf = address(
                         new CurveCryptoLPPriceFeed(
                             acl,
-                            priceOracle,
                             ICurvePool(pool).get_virtual_price() * 99 / 100,
                             tokenTestSuite.addressOf(lpToken),
                             pool,
@@ -455,7 +445,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address pf = address(
                         new WstETHPriceFeed(
                             acl,
-                            priceOracle,
                             IwstETH(wsteth).stEthPerToken() * 99 / 100,
                             wsteth,
                             _getDeployedFeed(steth, wstethPriceFeedByNetwork[chainId].reserve),
@@ -497,7 +486,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                         pf = address(
                             new BPTStablePriceFeed(
-                                acl, priceOracle, IBalancerStablePool(lpToken).getRate() * 99 / 100, lpToken, pfParams
+                                acl, IBalancerStablePool(lpToken).getRate() * 99 / 100, lpToken, pfParams
                             )
                         );
 
@@ -538,7 +527,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         pf = address(
                             new BPTWeightedPriceFeed(
                                 acl,
-                                priceOracle,
                                 IBalancerWeightedPool(lpToken).getRate() * 99 / 100,
                                 supportedContracts.addressOf(Contracts.BALANCER_VAULT),
                                 lpToken,
@@ -593,7 +581,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address pf = address(
                     new YearnPriceFeed(
                         acl,
-                        priceOracle,
                         IYVault(yVault).pricePerShare() * 99 / 100,
                         yVault,
                         _getDeployedFeed(underlying, yearnPriceFeeds[i].reserve),
@@ -625,7 +612,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address pf = address(
                     new ERC4626PriceFeed(
                         acl,
-                        priceOracle,
                         ERC4626(token).convertToAssets(10 ** ERC4626(token).decimals()) * 99 / 100,
                         token,
                         _getDeployedFeed(underlying, erc4626PriceFeeds[i].reserve),
@@ -660,7 +646,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address pf = address(
                     new MellowLRTPriceFeed(
                         acl,
-                        priceOracle,
                         lowerBound,
                         token,
                         _getDeployedFeed(underlying, mellowLRTPriceFeeds[i].reserve),
@@ -720,8 +705,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         return priceFeedConfigReserve;
     }
 
-    function addPriceFeeds(address _priceOracle) external {
-        address _acl = PriceOracleV3(_priceOracle).acl();
+    function addPriceFeeds(address priceOracle) external {
+        address _acl = PriceOracleV3(priceOracle).acl();
         address root = Ownable(_acl).owner();
 
         uint256 len = priceFeedConfig.length;
@@ -731,7 +716,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             address token = pfc.token;
 
             vm.prank(root);
-            PriceOracleV3(_priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
+            PriceOracleV3(priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
         }
 
         len = priceFeedConfigReserve.length;
@@ -741,7 +726,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             address token = pfc.token;
 
             vm.prank(root);
-            PriceOracleV3(_priceOracle).setReservePriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
+            PriceOracleV3(priceOracle).setReservePriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
         }
     }
 

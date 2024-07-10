@@ -41,22 +41,12 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
-            address(addressProvider),
-            priceOracle,
-            1.02 ether,
-            address(0),
-            address(balancerPool),
-            _getUnderlyingPriceFeeds(8)
+            address(addressProvider), 1.02 ether, address(0), address(balancerPool), _getUnderlyingPriceFeeds(8)
         );
 
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
-            address(addressProvider),
-            priceOracle,
-            1.02 ether,
-            address(balancerVault),
-            address(0),
-            _getUnderlyingPriceFeeds(8)
+            address(addressProvider), 1.02 ether, address(balancerVault), address(0), _getUnderlyingPriceFeeds(8)
         );
 
         priceFeed = _newBalancerPriceFeed(8, 1.02 ether);
@@ -187,7 +177,6 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
     {
         return new BPTWeightedPriceFeedHarness(
             address(addressProvider),
-            priceOracle,
             lowerBound,
             address(balancerVault),
             address(balancerPool),

@@ -14,15 +14,8 @@ contract YearnPriceFeed is SingleAssetLPPriceFeed {
     /// @dev Scale of yVault's pricePerShare
     uint256 immutable _scale;
 
-    constructor(
-        address _acl,
-        address _priceOracle,
-        uint256 lowerBound,
-        address _yVault,
-        address _priceFeed,
-        uint32 _stalenessPeriod
-    )
-        SingleAssetLPPriceFeed(_acl, _priceOracle, _yVault, _yVault, _priceFeed, _stalenessPeriod) // U:[YFI-1]
+    constructor(address _acl, uint256 lowerBound, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
+        SingleAssetLPPriceFeed(_acl, _yVault, _yVault, _priceFeed, _stalenessPeriod) // U:[YFI-1]
     {
         _scale = 10 ** IYVault(_yVault).decimals();
         _setLimiter(lowerBound); // U:[YFI-1]

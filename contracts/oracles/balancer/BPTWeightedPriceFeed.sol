@@ -96,15 +96,8 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     uint256 immutable scale6;
     uint256 immutable scale7;
 
-    constructor(
-        address _acl,
-        address _priceOracle,
-        uint256 lowerBound,
-        address _vault,
-        address _pool,
-        PriceFeedParams[] memory priceFeeds
-    )
-        LPPriceFeed(_acl, _priceOracle, _pool, _pool) // U:[BAL-W-1]
+    constructor(address _acl, uint256 lowerBound, address _vault, address _pool, PriceFeedParams[] memory priceFeeds)
+        LPPriceFeed(_acl, _pool, _pool) // U:[BAL-W-1]
         nonZeroAddress(_vault) // U:[BAL-W-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[BAL-W-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[BAL-W-2]
