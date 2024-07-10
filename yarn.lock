@@ -1049,11 +1049,6 @@
   resolved "https://registry.npmjs.org/@openzeppelin/contracts/-/contracts-4.3.3.tgz"
   integrity sha512-tDBopO1c98Yk7Cv/PZlHqrvtVjlgK5R4J6jxLwoO7qxK4xqOiZG+zSkIvGFpPZ0ikc3QOED3plgdqjgNTnBc7g==
 
-"@pythnetwork/pyth-sdk-solidity@^3.1.0":
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/@pythnetwork/pyth-sdk-solidity/-/pyth-sdk-solidity-3.1.0.tgz#2de5bc2bbaadd5c5c2702f31116378fb7c9da3ec"
-  integrity sha512-NgtEPUTL9r0qqMpIOEtSdUVjrF08fHK6wa7eM8hdjhjzMOti4o053B9oFqpm4lkzJW6eELXuP4sRJOABGmNTUg==
-
 "@redstone-finance/evm-connector@0.2.5":
   version "0.2.5"
   resolved "https://registry.npmjs.org/@redstone-finance/evm-connector/-/evm-connector-0.2.5.tgz"

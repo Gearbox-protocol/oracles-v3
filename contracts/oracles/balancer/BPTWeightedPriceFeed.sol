@@ -176,7 +176,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
 
         uint256 weightedPrice = FixedPoint.ONE;
         uint256 currentBase = FixedPoint.ONE;
-        for (uint256 i = 0; i < numAssets;) {
+        for (uint256 i = 0; i < numAssets; ++i) {
             (address priceFeed, uint32 stalenessPeriod, bool skipCheck) = _getPriceFeedParams(i);
             answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
             answer = answer * int256(WAD_OVER_USD_FEED_SCALE);
@@ -185,10 +185,6 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
             if (i == numAssets - 1 || weights[i] != weights[i + 1]) {
                 weightedPrice = weightedPrice.mulDown(currentBase.powDown(weights[i]));
                 currentBase = FixedPoint.ONE;
-            }
-
-            unchecked {
-                ++i;
             }
         }
 
@@ -212,15 +208,11 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
 
         k = FixedPoint.ONE;
         uint256 currentBase = FixedPoint.ONE;
-        for (uint256 i = 0; i < len;) {
+        for (uint256 i = 0; i < len; ++i) {
             currentBase = currentBase.mulDown(balances[i]);
             if (i == len - 1 || weights[i] != weights[i + 1]) {
                 k = k.mulDown(currentBase.powDown(weights[i]));
                 currentBase = FixedPoint.ONE;
-            }
-
-            unchecked {
-                ++i;
             }
         }
     }
@@ -295,10 +287,8 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     function _sort(uint256[] memory data) internal pure returns (uint256[] memory indices) {
         uint256 len = data.length;
         indices = new uint256[](len);
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                indices[i] = i;
-            }
+        for (uint256 i; i < len; ++i) {
+            indices[i] = i;
         }
         _quickSort(data, indices, 0, len - 1);
     }

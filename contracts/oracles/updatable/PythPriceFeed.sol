@@ -3,15 +3,13 @@
 // (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-
+import {LibString} from "@solady/utils/LibString.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
-
-import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
-import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
+
+import {IPyth} from "../../interfaces/pyth/IPyth.sol";
+import {PythStructs} from "../../interfaces/pyth/PythStructs.sol";
 
 /// @dev Max period that the payload can be backward in time relative to the block
 uint256 constant MAX_DATA_TIMESTAMP_DELAY_SECONDS = 10 minutes;
@@ -21,28 +19,14 @@ uint256 constant MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 1 minutes;
 
 int256 constant DECIMALS = 10 ** 8;
 
-interface IPythExtended {
-    function latestPriceInfoPublishTime(bytes32 priceFeedId) external view returns (uint64);
-}
-
-interface IPythPriceFeedExceptions {
-    /// @notice Thrown when the timestamp sent with the payload for early stop does not match
-    ///         the payload's internal timestamp
-    error IncorrectExpectedPublishTimestampException();
-
-    /// @notice Thrown when a retrieved price's publish time is too far ahead in the future
-    error PriceTimestampTooFarAheadException();
-
-    /// @notice Thrown when a retrieved price's publish time is too far behind the curent block timestamp
-    error PriceTimestampTooFarBehindException();
-
-    /// @notice Thrown when the the ratio between the confidence interval and price is higher than max allowed
-    error ConfToPriceRatioTooHighException();
-}
-
 /// @title Pyth price feed
-contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
-    using SafeCast for uint256;
+contract PythPriceFeed is IUpdatablePriceFeed {
+    using LibString for string;
+    using LibString for bytes32;
+
+    // --------------- //
+    // STATE VARIABLES //
+    // --------------- //
 
     uint256 public constant override version = 3_10;
     bytes32 public constant contractType = "PF_PYTH_ORACLE";
@@ -60,24 +44,54 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     /// @notice Address of the Pyth main contract instance
     address public immutable pyth;
 
-    /// @dev Price feed description
-    string public description;
-
     /// @notice The max ratio of p.conf to p.price that would trigger the price feed to revert
     uint256 public immutable maxConfToPriceRatio;
+
+    /// @dev Price feed description ticker
+    bytes32 internal _descriptionTicker;
+
+    // ------ //
+    // ERRORS //
+    // ------ //
+
+    /// @notice Thrown when the timestamp sent with the payload for early stop does not match
+    ///         the payload's internal timestamp
+    error IncorrectExpectedPublishTimestampException();
+
+    /// @notice Thrown when a retrieved price's publish time is too far ahead in the future
+    error PriceTimestampTooFarAheadException();
+
+    /// @notice Thrown when a retrieved price's publish time is too far behind the curent block timestamp
+    error PriceTimestampTooFarBehindException();
+
+    /// @notice Thrown when the the ratio between the confidence interval and price is higher than max allowed
+    error ConfToPriceRatioTooHighException();
+
+    // ----------- //
+    // CONSTRUCTOR //
+    // ----------- //
 
     constructor(
         address _token,
         bytes32 _priceFeedId,
         address _pyth,
-        string memory _descriptionTicker,
-        uint256 _maxConfToPriceRatio
+        uint256 _maxConfToPriceRatio,
+        string memory descriptionTicker
     ) {
         token = _token;
         priceFeedId = _priceFeedId;
         pyth = _pyth;
-        description = string.concat(_descriptionTicker, " Pyth price feed");
         maxConfToPriceRatio = _maxConfToPriceRatio;
+        _descriptionTicker = descriptionTicker.toSmallString();
+    }
+
+    // --------- //
+    // FUNCTIONS //
+    // --------- //
+
+    /// @notice Price feed description
+    function description() external view override returns (string memory) {
+        return string.concat(_descriptionTicker.fromSmallString(), " Pyth price feed");
     }
 
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
@@ -102,7 +116,7 @@ contract PythPriceFeed is IUpdatablePriceFeed, IPythPriceFeedExceptions {
     function updatePrice(bytes calldata data) external override {
         (uint256 expectedPublishTimestamp, bytes[] memory updateData) = abi.decode(data, (uint256, bytes[]));
 
-        uint256 lastPublishTimestamp = uint256(IPythExtended(pyth).latestPriceInfoPublishTime(priceFeedId));
+        uint256 lastPublishTimestamp = IPyth(pyth).latestPriceInfoPublishTime(priceFeedId);
 
         // We want to minimize price update execution, in case, e.g., when several users submit
         // the same price update in a short span of time. So only updates with a larger payload timestamp than last recorded

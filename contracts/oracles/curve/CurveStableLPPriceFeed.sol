@@ -13,7 +13,7 @@ import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 /// @dev Older pools may be decoupled from their LP token, so constructor accepts both token and pool
 contract CurveStableLPPriceFeed is LPPriceFeed {
     uint256 public constant override version = 3_10;
-    bytes32 public immutable override contractType;
+    bytes32 public constant override contractType = "PF_CURVE_STABLE_LP_ORACLE";
 
     uint16 public immutable nCoins;
 
@@ -54,10 +54,6 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
         skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
         skipCheck2 = nCoins > 2 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
         skipCheck3 = nCoins > 3 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
-
-        contractType = nCoins == 2
-            ? bytes32("PF_CURVE_2LP_ORACLE")
-            : (nCoins == 3 ? bytes32("PF_CURVE_3LP_ORACLE") : bytes32("PF_CURVE_4LP_ORACLE"));
 
         _setLimiter(lowerBound); // U:[CRV-S-1]
     }

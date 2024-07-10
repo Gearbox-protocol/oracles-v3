@@ -6,6 +6,7 @@ pragma solidity ^0.8.23;
 import {Test} from "forge-std/Test.sol";
 
 import {
+    IncorrectParameterException,
     IncorrectPriceFeedException,
     StalePriceException,
     ZeroAddressException
@@ -24,21 +25,21 @@ contract BoundedPriceFeedUnitTest is Test {
 
     function setUp() public {
         underlyingPriceFeed = new PriceFeedMock(1e8, 8);
-        vm.mockCall(
-            address(underlyingPriceFeed), abi.encodeCall(PriceFeedMock.description, ()), abi.encode("TEST / USD")
-        );
 
-        priceFeed = new BoundedPriceFeed(address(underlyingPriceFeed), 1 days, 1.1e8);
+        priceFeed = new BoundedPriceFeed(address(underlyingPriceFeed), 1 days, 1.1e8, "TEST / USD");
     }
 
     /// @notice U:[BPF-1]: Constructor works as expected
     function test_U_BPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new BoundedPriceFeed(address(0), 1 days, 1.1e8);
+        new BoundedPriceFeed(address(0), 1 days, 1.1e8, "");
+
+        vm.expectRevert(IncorrectParameterException.selector);
+        new BoundedPriceFeed(address(1), 1 days, -1e18, "");
 
         PriceFeedMock invalidPriceFeed = new PriceFeedMock(1 ether, 18);
         vm.expectRevert(IncorrectPriceFeedException.selector);
-        new BoundedPriceFeed(address(invalidPriceFeed), 1 days, 1.1 ether);
+        new BoundedPriceFeed(address(invalidPriceFeed), 1 days, 1.1 ether, "");
 
         assertEq(priceFeed.priceFeed(), address(underlyingPriceFeed), "Incorrect priceFeed");
         assertEq(priceFeed.stalenessPeriod(), 1 days, "Incorrect stalenessPeriod");

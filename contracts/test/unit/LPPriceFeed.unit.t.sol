@@ -58,7 +58,7 @@ contract LPPriceFeedUnitTest is Test {
     /// @notice U:[LPPF-2]: Price feed has correct metadata
     function test_U_LPPF_02_price_feed_has_correct_metadata() public {
         assertEq(priceFeed.decimals(), 8, "Incorrect decimals");
-        assertEq(priceFeed.description(), "TEST / USD price feed", "Incorrect description");
+        assertEq(priceFeed.description(), "TEST / USD LP price feed", "Incorrect description");
         assertTrue(priceFeed.skipPriceCheck(), "Incorrect skipPriceCheck");
     }
 
