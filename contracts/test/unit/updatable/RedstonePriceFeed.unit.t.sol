@@ -5,7 +5,6 @@ pragma solidity ^0.8.10;
 
 import {
     RedstonePriceFeed,
-    IRedstonePriceFeedExceptions,
     MAX_DATA_TIMESTAMP_DELAY_SECONDS,
     MAX_DATA_TIMESTAMP_AHEAD_SECONDS
 } from "../../../oracles/updatable/RedstonePriceFeed.sol";
@@ -19,7 +18,7 @@ import {TestHelper} from "@gearbox-protocol/core-v3/contracts/test/lib/helper.so
 
 /// @title Redstone price feed unit test
 /// @notice U:[RPF]: Unit tests for Redstone price feed
-contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, RedstoneConstants {
+contract RedstonePriceFeedUnitTest is TestHelper, RedstoneConstants {
     RedstonePriceFeed pf;
     address[10] signers;
     uint256[10] signerKeys;
@@ -150,7 +149,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
 
         bytes memory data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(DataPackageTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.DataPackageTimestampIncorrect.selector);
 
         pf.updatePrice(data);
     }
@@ -261,7 +260,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
 
         bytes memory data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(RedstonePayloadTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.RedstonePayloadTimestampIncorrect.selector);
 
         pf.updatePrice(data);
 
@@ -273,7 +272,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, IRedstonePriceFeedExceptions, 
 
         data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(RedstonePayloadTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.RedstonePayloadTimestampIncorrect.selector);
 
         pf.updatePrice(data);
     }
