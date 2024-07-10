@@ -121,7 +121,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         redStonePriceFeedData.signers,
                         redStonePriceFeedData.signersThreshold,
                         // TODO: add ticker for Redstone price feeds in sdk-gov
-                        tokenTestSuite.symbols(t)
+                        string.concat(tokenTestSuite.symbols(t), " / USD")
                     )
                 );
 
