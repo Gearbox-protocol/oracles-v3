@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2024.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {LPPriceFeed} from "./LPPriceFeed.sol";
 import {PriceFeedParams} from "./PriceFeedParams.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @title Single-asset LP price feed
 /// @notice Base contract for LP tokens with one underlying asset

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {PythStructs} from "@pythnetwork/pyth-sdk-solidity/PythStructs.sol";
 
@@ -9,7 +9,7 @@ contract PythMock {
     bool incorrectPublishTime;
     mapping(bytes32 => PythStructs.Price) public priceData;
 
-    function getUpdateFee(bytes[] memory updateData) external view returns (uint256) {
+    function getUpdateFee(bytes[] memory updateData) external pure returns (uint256) {
         return updateData.length;
     }
 

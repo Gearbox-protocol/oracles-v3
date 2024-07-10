@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
+// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.10;
 
 import {
@@ -11,6 +11,7 @@ import {
     IPythExtended
 } from "../../../oracles/updatable/PythPriceFeed.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IPyth} from "@pythnetwork/pyth-sdk-solidity/IPyth.sol";
 
 // TEST
@@ -29,7 +30,7 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
         pyth = new PythMock();
         token = address(new ERC20Mock("USD Coin", "USDC", 6));
 
-        pf = new PythPriceFeed(token, bytes32(uint256(1)), address(pyth), "USDC/USD");
+        pf = new PythPriceFeed(token, bytes32(uint256(1)), address(pyth), "USDC/USD", 5000);
         vm.deal(address(pf), 100000);
     }
 
@@ -69,14 +70,14 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
 
         bytes memory updateData = abi.encode(block.timestamp + 64000, payloads);
 
-        vm.expectRevert(IncorrectExpectedPublishTimestamp.selector);
+        vm.expectRevert(PriceTimestampTooFarAheadException.selector);
         pf.updatePrice(updateData);
 
         pyth.setPriceData(bytes32(uint256(1)), 10 ** 8, 0, -8, block.timestamp - 64001);
 
         updateData = abi.encode(block.timestamp - 64000, payloads);
 
-        vm.expectRevert(IncorrectExpectedPublishTimestamp.selector);
+        vm.expectRevert(PriceTimestampTooFarBehindException.selector);
         pf.updatePrice(updateData);
     }
 
@@ -86,6 +87,10 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
         payloads[0] = abi.encode(int64(10 ** 8), block.timestamp, int32(-8), bytes32(uint256(1)));
 
         bytes memory updateData = abi.encode(block.timestamp, payloads);
+
+        vm.expectEmit(false, false, false, true);
+
+        emit IUpdatablePriceFeed.UpdatePrice(100000000);
 
         vm.expectCall(address(pyth), abi.encodeCall(IPyth.updatePriceFeeds, (payloads)), 1);
         pf.updatePrice(updateData);
@@ -98,7 +103,7 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
 
         bytes memory updateData = abi.encode(block.timestamp, payloads);
 
-        vm.expectRevert(IncorrectExpectedPublishTimestamp.selector);
+        vm.expectRevert(IncorrectExpectedPublishTimestampException.selector);
         pf.updatePrice(updateData);
     }
 
@@ -131,15 +136,12 @@ contract PythPriceFeedUnitTest is TestHelper, IPythPriceFeedExceptions {
         (, price,,,) = pf.latestRoundData();
 
         assertEq(price, 100 * 10 ** 8, "Incorrect price when pyth decimals are 0");
+    }
 
-        pyth.setPriceData(bytes32(uint256(1)), 100, 0, 2, block.timestamp);
+    function test_U_PYPF_08_latestRoundData_reverts_on_too_high_conf_to_price_ratio() public {
+        pyth.setPriceData(bytes32(uint256(1)), 10 ** 8, 10000000000000000000, -8, block.timestamp - 64001);
 
-        vm.expectRevert(IncorrectPriceDecimals.selector);
-        pf.latestRoundData();
-
-        pyth.setPriceData(bytes32(uint256(1)), 100, 0, -257, block.timestamp);
-
-        vm.expectRevert(IncorrectPriceDecimals.selector);
+        vm.expectRevert(ConfToPriceRatioTooHighException.selector);
         pf.latestRoundData();
     }
 }

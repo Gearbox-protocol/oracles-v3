@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
 
@@ -31,32 +31,24 @@ contract CompositePriceFeedUnitTest is Test {
         vm.mockCall(address(targetPriceFeed), abi.encodeCall(PriceFeedMock.description, ()), abi.encode("TEST / ETH"));
         vm.mockCall(address(basePriceFeed), abi.encodeCall(PriceFeedMock.description, ()), abi.encode("ETH / USD"));
 
-        priceFeed = new CompositePriceFeed([
-            PriceFeedParams(address(targetPriceFeed), 1 days),
-            PriceFeedParams(address(basePriceFeed), 1 days)
-        ]);
+        priceFeed = new CompositePriceFeed(
+            [PriceFeedParams(address(targetPriceFeed), 1 days), PriceFeedParams(address(basePriceFeed), 1 days)]
+        );
     }
 
     /// @notice U:[CPF-1]: Constructor works as expected
     function test_U_CPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new CompositePriceFeed([
-            PriceFeedParams(address(0), 1 days),
-            PriceFeedParams(address(basePriceFeed), 1 days)
-        ]);
+        new CompositePriceFeed([PriceFeedParams(address(0), 1 days), PriceFeedParams(address(basePriceFeed), 1 days)]);
 
         vm.expectRevert(ZeroAddressException.selector);
-        new CompositePriceFeed([
-            PriceFeedParams(address(targetPriceFeed), 1 days),
-            PriceFeedParams(address(0), 1 days)
-        ]);
+        new CompositePriceFeed([PriceFeedParams(address(targetPriceFeed), 1 days), PriceFeedParams(address(0), 1 days)]);
 
         PriceFeedMock invalidPriceFeed = new PriceFeedMock(1 ether, 18);
         vm.expectRevert(IncorrectPriceFeedException.selector);
-        new CompositePriceFeed([
-            PriceFeedParams(address(targetPriceFeed), 1 days),
-            PriceFeedParams(address(invalidPriceFeed), 1 days)
-        ]);
+        new CompositePriceFeed(
+            [PriceFeedParams(address(targetPriceFeed), 1 days), PriceFeedParams(address(invalidPriceFeed), 1 days)]
+        );
 
         assertEq(priceFeed.targetFeedScale(), 1e18, "Incorrect targetFeedScale");
 

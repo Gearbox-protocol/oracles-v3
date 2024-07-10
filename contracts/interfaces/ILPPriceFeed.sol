@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: MIT
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2024.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 
-interface ILPPriceFeedEvents {
+/// @title LP price feed interface
+interface ILPPriceFeed is IPriceFeed {
     /// @notice Emitted when new LP token exchange rate bounds are set
     event SetBounds(uint256 lowerBound, uint256 upperBound);
 
     /// @notice Emitted when permissionless bounds update is allowed or forbidden
     event SetUpdateBoundsAllowed(bool allowed);
-}
 
-interface ILPPriceFeedExceptions {
     /// @notice Thrown when trying to set exchange rate lower bound to zero
     error LowerBoundCantBeZeroException();
 
@@ -29,10 +28,7 @@ interface ILPPriceFeedExceptions {
 
     /// @notice Thrown when price oracle's reserve price feed is the LP price feed itself
     error ReserveFeedMustNotBeSelfException();
-}
 
-/// @title LP price feed interface
-interface ILPPriceFeed is IPriceFeed, ILPPriceFeedEvents, ILPPriceFeedExceptions {
     function priceOracle() external view returns (address);
 
     function lpToken() external view returns (address);
