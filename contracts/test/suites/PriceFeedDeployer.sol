@@ -48,6 +48,7 @@ import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 import {PythPriceFeed} from "../../oracles/updatable/PythPriceFeed.sol";
+import {MellowLRTPriceFeed} from "../../oracles/mellow/MellowLRTPriceFeed.sol";
 
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
@@ -55,13 +56,18 @@ import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
 import {IYVault} from "../../interfaces/yearn/IYVault.sol";
+import {IMellowVault} from "../../interfaces/mellow/IMellowVault.sol";
+
+import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
     mapping(address => address) public priceFeeds;
+    mapping(address => address) public reservePriceFeeds;
     PriceFeedConfig[] public priceFeedConfig;
     PriceFeedConfig[] public priceFeedConfigReserve;
     mapping(address => uint32) public stalenessPeriods;
+    mapping(address => uint32) public reserveStalenessPeriods;
 
     address[] public redStoneOracles;
     address[] public pythOracles;
@@ -304,8 +310,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             ICurvePool(pool).get_virtual_price() * 99 / 100,
                             token,
                             pool,
-                            priceFeeds[underlying],
-                            stalenessPeriods[underlying]
+                            _getDeployedFeed(underlying, crvUSDPriceFeeds[i].reserve),
+                            _getDeployedStalenessPeriod(underlying, crvUSDPriceFeeds[i].reserve)
                         )
                     );
 
@@ -331,27 +337,33 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                     address pool = supportedContracts.addressOf(curvePriceFeeds[i].pool);
 
+                    PriceFeedParams[4] memory pfParams;
+
                     address asset0 = tokenTestSuite.addressOf(curvePriceFeeds[i].assets[0]);
+                    pfParams[0] = PriceFeedParams({
+                        priceFeed: _getDeployedFeed(asset0, curvePriceFeeds[i].reserve),
+                        stalenessPeriod: _getDeployedStalenessPeriod(asset0, curvePriceFeeds[i].reserve)
+                    });
+
                     address asset1 = tokenTestSuite.addressOf(curvePriceFeeds[i].assets[1]);
+                    pfParams[1] = PriceFeedParams({
+                        priceFeed: _getDeployedFeed(asset1, curvePriceFeeds[i].reserve),
+                        stalenessPeriod: _getDeployedStalenessPeriod(asset1, curvePriceFeeds[i].reserve)
+                    });
 
                     address asset2 = (nCoins > 2) ? tokenTestSuite.addressOf(curvePriceFeeds[i].assets[2]) : address(0);
                     if (nCoins > 2 && asset2 == address(0)) revert("Asset 2 is not defined");
+                    pfParams[2] = PriceFeedParams({
+                        priceFeed: (nCoins > 2) ? _getDeployedFeed(asset2, curvePriceFeeds[i].reserve) : address(0),
+                        stalenessPeriod: _getDeployedStalenessPeriod(asset2, curvePriceFeeds[i].reserve)
+                    });
 
                     address asset3 = (nCoins > 3) ? tokenTestSuite.addressOf(curvePriceFeeds[i].assets[3]) : address(0);
                     if (nCoins > 3 && asset3 == address(0)) revert("Asset 3 is not defined");
-
-                    PriceFeedParams[4] memory pfParams = [
-                        PriceFeedParams({priceFeed: priceFeeds[asset0], stalenessPeriod: stalenessPeriods[asset0]}),
-                        PriceFeedParams({priceFeed: priceFeeds[asset1], stalenessPeriod: stalenessPeriods[asset1]}),
-                        PriceFeedParams({
-                            priceFeed: (nCoins > 2) ? priceFeeds[asset2] : address(0),
-                            stalenessPeriod: stalenessPeriods[asset2]
-                        }),
-                        PriceFeedParams({
-                            priceFeed: (nCoins > 3) ? priceFeeds[asset3] : address(0),
-                            stalenessPeriod: stalenessPeriods[asset3]
-                        })
-                    ];
+                    pfParams[3] = PriceFeedParams({
+                        priceFeed: (nCoins > 3) ? _getDeployedFeed(asset3, curvePriceFeeds[i].reserve) : address(0),
+                        stalenessPeriod: _getDeployedStalenessPeriod(asset3, curvePriceFeeds[i].reserve)
+                    });
 
                     if (
                         pool != address(0) && tokenTestSuite.addressOf(lpToken) != address(0) && asset0 != address(0)
@@ -391,12 +403,27 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pool = supportedContracts.addressOf(curveCryptoPriceFeeds[i].pool);
 
+                PriceFeedParams[3] memory pfParams;
+
                 address asset0 = tokenTestSuite.addressOf(curveCryptoPriceFeeds[i].assets[0]);
+                pfParams[0] = PriceFeedParams({
+                    priceFeed: _getDeployedFeed(asset0, curveCryptoPriceFeeds[i].reserve),
+                    stalenessPeriod: _getDeployedStalenessPeriod(asset0, curveCryptoPriceFeeds[i].reserve)
+                });
+
                 address asset1 = tokenTestSuite.addressOf(curveCryptoPriceFeeds[i].assets[1]);
+                pfParams[1] = PriceFeedParams({
+                    priceFeed: _getDeployedFeed(asset1, curveCryptoPriceFeeds[i].reserve),
+                    stalenessPeriod: _getDeployedStalenessPeriod(asset1, curveCryptoPriceFeeds[i].reserve)
+                });
 
                 address asset2 =
                     (nCoins > 2) ? tokenTestSuite.addressOf(curveCryptoPriceFeeds[i].assets[2]) : address(0);
                 if (nCoins > 2 && asset2 == address(0)) revert("Asset 2 is not defined");
+                pfParams[2] = PriceFeedParams({
+                    priceFeed: (nCoins > 2) ? _getDeployedFeed(asset2, curveCryptoPriceFeeds[i].reserve) : address(0),
+                    stalenessPeriod: _getDeployedStalenessPeriod(asset2, curveCryptoPriceFeeds[i].reserve)
+                });
 
                 if (pool != address(0) && tokenTestSuite.addressOf(lpToken) != address(0)) {
                     pf = address(
@@ -406,14 +433,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             ICurvePool(pool).get_virtual_price() * 99 / 100,
                             tokenTestSuite.addressOf(lpToken),
                             pool,
-                            [
-                                PriceFeedParams({priceFeed: priceFeeds[asset0], stalenessPeriod: stalenessPeriods[asset0]}),
-                                PriceFeedParams({priceFeed: priceFeeds[asset1], stalenessPeriod: stalenessPeriods[asset1]}),
-                                PriceFeedParams({
-                                    priceFeed: (nCoins > 2) ? priceFeeds[asset2] : address(0),
-                                    stalenessPeriod: stalenessPeriods[asset2]
-                                })
-                            ]
+                            pfParams
                         )
                     );
 
@@ -438,8 +458,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                             priceOracle,
                             IwstETH(wsteth).stEthPerToken() * 99 / 100,
                             wsteth,
-                            priceFeeds[steth],
-                            stalenessPeriods[steth]
+                            _getDeployedFeed(steth, wstethPriceFeedByNetwork[chainId].reserve),
+                            _getDeployedStalenessPeriod(steth, wstethPriceFeedByNetwork[chainId].reserve)
                         )
                     );
 
@@ -470,8 +490,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         for (uint256 j; j < nAssets; ++j) {
                             address asset = tokenTestSuite.addressOf(balancerStableLPPriceFeeds[i].assets[j]);
                             pfParams[j] = PriceFeedParams({
-                                priceFeed: priceFeeds[asset],
-                                stalenessPeriod: stalenessPeriods[asset]
+                                priceFeed: _getDeployedFeed(asset, balancerStableLPPriceFeeds[i].reserve),
+                                stalenessPeriod: _getDeployedStalenessPeriod(asset, balancerStableLPPriceFeeds[i].reserve)
                             });
                         }
 
@@ -508,8 +528,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         for (uint256 j; j < nAssets; ++j) {
                             address asset = tokenTestSuite.addressOf(balancerWeightedLPPriceFeeds[i].assets[j]);
                             pfParams[j] = PriceFeedParams({
-                                priceFeed: priceFeeds[asset],
-                                stalenessPeriod: stalenessPeriods[asset]
+                                priceFeed: _getDeployedFeed(asset, balancerWeightedLPPriceFeeds[i].reserve),
+                                stalenessPeriod: _getDeployedStalenessPeriod(asset, balancerWeightedLPPriceFeeds[i].reserve)
                             });
                         }
 
@@ -542,9 +562,14 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 if (token != address(0)) {
                     address tokenHasSamePriceFeed = tokenTestSuite.addressOf(theSamePriceFeeds[i].tokenHasSamePriceFeed);
-                    address pf = priceFeeds[tokenHasSamePriceFeed];
+                    address pf = _getDeployedFeed(tokenHasSamePriceFeed, theSamePriceFeeds[i].reserve);
                     if (pf != address(0)) {
-                        setPriceFeed(token, pf, stalenessPeriods[tokenHasSamePriceFeed], theSamePriceFeeds[i].reserve);
+                        setPriceFeed(
+                            token,
+                            pf,
+                            _getDeployedStalenessPeriod(tokenHasSamePriceFeed, theSamePriceFeeds[i].reserve),
+                            theSamePriceFeeds[i].reserve
+                        );
                     } else {
                         console.log("WARNING: Price feed for ", ERC20(token).symbol(), " not found");
                     }
@@ -571,8 +596,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         priceOracle,
                         IYVault(yVault).pricePerShare() * 99 / 100,
                         yVault,
-                        priceFeeds[underlying],
-                        stalenessPeriods[underlying]
+                        _getDeployedFeed(underlying, yearnPriceFeeds[i].reserve),
+                        _getDeployedStalenessPeriod(underlying, yearnPriceFeeds[i].reserve)
                     )
                 );
 
@@ -603,12 +628,48 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         priceOracle,
                         ERC4626(token).convertToAssets(10 ** ERC4626(token).decimals()) * 99 / 100,
                         token,
-                        priceFeeds[underlying],
-                        stalenessPeriods[underlying]
+                        _getDeployedFeed(underlying, erc4626PriceFeeds[i].reserve),
+                        _getDeployedStalenessPeriod(underlying, erc4626PriceFeeds[i].reserve)
                     )
                 );
 
                 setPriceFeed(token, pf, erc4626PriceFeeds[i].reserve);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+        }
+
+        // MELLOW LRT PRICE FEEDS
+        GenericLPPriceFeedData[] memory mellowLRTPriceFeeds = mellowLRTPriceFeedsByNetwork[chainId];
+        len = mellowLRTPriceFeeds.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                Tokens t = mellowLRTPriceFeeds[i].lpToken;
+                address token = tokenTestSuite.addressOf(t);
+
+                if (token == address(0)) {
+                    continue;
+                }
+
+                address underlying = tokenTestSuite.addressOf(mellowLRTPriceFeeds[i].underlying);
+
+                IMellowVault.ProcessWithdrawalsStack memory stack = IMellowVault(token).calculateStack();
+                uint256 lowerBound = stack.totalValue * WAD * 99 / (stack.totalSupply * 100);
+
+                address pf = address(
+                    new MellowLRTPriceFeed(
+                        acl,
+                        priceOracle,
+                        lowerBound,
+                        token,
+                        _getDeployedFeed(underlying, mellowLRTPriceFeeds[i].reserve),
+                        _getDeployedStalenessPeriod(underlying, mellowLRTPriceFeeds[i].reserve),
+                        underlying
+                    )
+                );
+
+                setPriceFeed(token, pf, mellowLRTPriceFeeds[i].reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
@@ -624,8 +685,14 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     }
 
     function setPriceFeed(address token, address priceFeed, uint32 stalenessPeriod, bool reserve) internal {
-        priceFeeds[token] = priceFeed;
-        stalenessPeriods[token] = stalenessPeriod;
+        if (reserve) {
+            reservePriceFeeds[token] = priceFeed;
+            reserveStalenessPeriods[token] = stalenessPeriod;
+        } else {
+            priceFeeds[token] = priceFeed;
+            stalenessPeriods[token] = stalenessPeriod;
+        }
+
         if (reserve) {
             priceFeedConfigReserve.push(
                 PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod})
@@ -635,6 +702,14 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod})
             );
         }
+    }
+
+    function _getDeployedFeed(address token, bool reserve) internal view returns (address) {
+        return reserve ? reservePriceFeeds[token] : priceFeeds[token];
+    }
+
+    function _getDeployedStalenessPeriod(address token, bool reserve) internal view returns (uint32) {
+        return reserve ? reserveStalenessPeriods[token] : stalenessPeriods[token];
     }
 
     function getPriceFeeds() external view returns (PriceFeedConfig[] memory) {
