@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IStateSerializer} from "../../interfaces/IStateSerializer.sol";
 import {IMellowVault} from "../../interfaces/mellow/IMellowVault.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 /// @title Mellow LRT price feed
 contract MellowLRTPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
-    PriceFeedType public constant override priceFeedType = PriceFeedType.MELLOW_LRT_ORACLE;
+    bytes32 public constant override contractType = "PF_MELLOW_LRT_ORACLE";
 
     /// @dev Amount of base token comprising a single unit (accounting for decimals)
     uint256 immutable _baseTokenUnit;
@@ -40,7 +39,7 @@ contract MellowLRTPriceFeed is SingleAssetLPPriceFeed {
         return _baseTokenUnit;
     }
 
-    function serialize() public view returns (bytes memory serializedData) {
+    function serialize() external view returns (bytes memory) {
         return abi.encode(
             priceOracle,
             lpToken,
