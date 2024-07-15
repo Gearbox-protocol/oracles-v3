@@ -1,6 +1,3 @@
-[submodule "lib/forge-std"]
-	path = lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
 [submodule "lib/@gearbox-protocol/core-v3"]
 	path = lib/@gearbox-protocol/core-v3
 	url = https://github.com/Gearbox-protocol/core-v3
@@ -17,3 +14,6 @@
 [submodule "lib/@solady"]
 	path = lib/@solady
 	url = https://github.com/Vectorized/solady
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
