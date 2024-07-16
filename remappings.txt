@@ -1,6 +1,5 @@
 ds-test/=lib/forge-std/lib/ds-test/src/
 forge-std/=lib/forge-std/src/
-@1inch/=lib/@1inch/
 @solady=lib/@solady/src/
 @openzeppelin/=lib/@openzeppelin/
 @gearbox-protocol/=lib/@gearbox-protocol/
