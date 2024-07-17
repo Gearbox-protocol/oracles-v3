@@ -65,7 +65,7 @@ contract CompositePriceFeedUnitTest is Test {
     }
 
     /// @notice U:[CPF-2]: Price feed has correct metadata
-    function test_U_CPF_02_price_feed_has_correct_metadata() public {
+    function test_U_CPF_02_price_feed_has_correct_metadata() public view {
         assertEq(priceFeed.decimals(), 8, "Incorrect decimals");
         assertEq(priceFeed.description(), "(TEST / ETH) * (ETH / USD) composite price feed", "Incorrect description");
         assertTrue(priceFeed.skipPriceCheck(), "Incorrect skipPriceCheck");

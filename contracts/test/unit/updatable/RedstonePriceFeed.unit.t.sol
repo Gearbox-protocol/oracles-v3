@@ -89,7 +89,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, RedstoneConstants {
     }
 
     /// @notice U:[RPF-1]: constructor sets correct values
-    function test_U_RPF_01_constructor_sets_correct_values() public {
+    function test_U_RPF_01_constructor_sets_correct_values() public view {
         assertEq(pf.description(), "USDC / USD Redstone price feed", "Incorrect description");
 
         assertEq(pf.dataServiceId(), "mock-data-service", "Incorrect data service id");

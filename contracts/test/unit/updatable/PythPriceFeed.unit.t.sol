@@ -33,7 +33,7 @@ contract PythPriceFeedUnitTest is TestHelper {
     }
 
     /// @notice U:[PYPF-1]: constructor sets correct values
-    function test_U_PYPF_01_constructor_sets_correct_values() public {
+    function test_U_PYPF_01_constructor_sets_correct_values() public view {
         assertEq(pf.description(), "USDC / USD Pyth price feed", "Price feed description incorrect");
 
         assertEq(pf.token(), token, "Price feed token incorrect");

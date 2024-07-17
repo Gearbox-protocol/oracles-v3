@@ -48,7 +48,7 @@ contract BoundedPriceFeedUnitTest is Test {
     }
 
     /// @notice U:[BPF-2]: Price feed has correct metadata
-    function test_U_BPF_02_price_feed_has_correct_metadata() public {
+    function test_U_BPF_02_price_feed_has_correct_metadata() public view {
         assertEq(priceFeed.decimals(), 8, "Incorrect decimals");
         assertEq(priceFeed.description(), "TEST / USD bounded price feed", "Incorrect description");
         assertTrue(priceFeed.skipPriceCheck(), "Incorrect skipPriceCheck");
