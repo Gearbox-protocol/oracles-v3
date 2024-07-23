@@ -12,7 +12,7 @@ import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool
 /// @dev Similarly to Curve stableswap, aggregate function is minimum of underlying tokens prices
 contract BPTStablePriceFeed is LPPriceFeed {
     uint256 public constant override version = 3_10;
-    bytes32 public constant contractType = "PF_BALANCER_STABLE_LP_ORACLE";
+    bytes32 public constant override contractType = "PF_BALANCER_STABLE_LP_ORACLE";
 
     uint8 public immutable numAssets;
 

@@ -32,7 +32,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
     uint256 public constant override version = 3_10;
-    bytes32 public constant contractType = "PF_BALANCER_WEIGHTED_LP_ORACLE";
+    bytes32 public constant override contractType = "PF_BALANCER_WEIGHTED_LP_ORACLE";
 
     /// @notice Balancer vault address
     address public immutable vault;
