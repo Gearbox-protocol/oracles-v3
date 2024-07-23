@@ -7,7 +7,9 @@ import {IMellowVault} from "../../../interfaces/mellow/IMellowVault.sol";
 
 import {PriceFeedUnitTestHelper} from "../PriceFeedUnitTestHelper.sol";
 
+import {MellowChainlinkOracleMock} from "../../mocks/mellow/MellowChainlinkOracleMock.sol";
 import {MellowVaultMock} from "../../mocks/mellow/MellowVaultMock.sol";
+import {MellowVaultConfiguratorMock} from "../../mocks/mellow/MellowVaultConfiguratorMock.sol";
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
 
 import {MellowLRTPriceFeed} from "../../../oracles/mellow/MellowLRTPriceFeed.sol";
@@ -23,10 +25,15 @@ contract MellowLRTPriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
 
         asset = new ERC20Mock("Test Token", "TEST", 18);
-        vault = new MellowVaultMock();
+
+        MellowChainlinkOracleMock chainlinkOracle = new MellowChainlinkOracleMock();
+        MellowVaultConfiguratorMock vaultConfigurator = new MellowVaultConfiguratorMock(chainlinkOracle);
+        vault = new MellowVaultMock(vaultConfigurator);
         vault.setStack(1.2e18, 1e18);
+        chainlinkOracle.setBaseToken(address(vault), address(asset));
+
         priceFeed = new MellowLRTPriceFeed(
-            address(addressProvider), 1.2e18, address(vault), address(underlyingPriceFeed), 1 days, address(asset)
+            address(addressProvider), 1.2e18, address(vault), address(underlyingPriceFeed), 1 days
         );
     }
 

@@ -664,8 +664,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         lowerBound,
                         token,
                         _getDeployedFeed(underlying, mellowLRTPriceFeeds[i].reserve),
-                        _getDeployedStalenessPeriod(underlying, mellowLRTPriceFeeds[i].reserve),
-                        underlying
+                        _getDeployedStalenessPeriod(underlying, mellowLRTPriceFeeds[i].reserve)
                     )
                 );
 

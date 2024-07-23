@@ -16,16 +16,10 @@ contract MellowLRTPriceFeed is SingleAssetLPPriceFeed {
     /// @dev Amount of base token comprising a single unit (accounting for decimals)
     uint256 immutable _baseTokenUnit;
 
-    constructor(
-        address _acl,
-        uint256 lowerBound,
-        address _vault,
-        address _priceFeed,
-        uint32 _stalenessPeriod,
-        address baseToken
-    )
+    constructor(address _acl, uint256 lowerBound, address _vault, address _priceFeed, uint32 _stalenessPeriod)
         SingleAssetLPPriceFeed(_acl, _vault, _vault, _priceFeed, _stalenessPeriod) // U:[MEL-1]
     {
+        address baseToken = IMellowVault(_vault).configurator().priceOracle().baseTokens(_vault);
         _baseTokenUnit = 10 ** ERC20(baseToken).decimals();
         _setLimiter(lowerBound); // U:[MEL-1]
     }
