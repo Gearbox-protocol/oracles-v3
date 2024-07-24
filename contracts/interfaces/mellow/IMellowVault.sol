@@ -3,6 +3,8 @@
 // (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
+import {IMellowVaultConfigurator} from "./IMellowVaultConfigurator.sol";
+
 interface IMellowVault {
     struct ProcessWithdrawalsStack {
         address[] tokens;
@@ -17,4 +19,6 @@ interface IMellowVault {
     }
 
     function calculateStack() external view returns (ProcessWithdrawalsStack memory s);
+
+    function configurator() external view returns (IMellowVaultConfigurator);
 }

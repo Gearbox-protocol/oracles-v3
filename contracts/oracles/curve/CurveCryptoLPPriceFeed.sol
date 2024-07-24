@@ -18,7 +18,7 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
     uint256 public constant override version = 3_10;
-    bytes32 public constant contractType = "PF_CURVE_CRYPTO_LP_ORACLE";
+    bytes32 public constant override contractType = "PF_CURVE_CRYPTO_LP_ORACLE";
 
     uint16 public immutable nCoins;
 

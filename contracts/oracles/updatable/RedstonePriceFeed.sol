@@ -82,12 +82,14 @@ contract RedstonePriceFeed is IUpdatablePriceFeed, RedstoneConsumerNumericBase {
     /// @notice Thrown when the provided set of signers contains duplicates
     error DuplicateSignersException();
 
-    /// @notice Thrown when attempting to push an update with the payload that is older than the last
-    ///         update payload, or too far from the current block timestamp
-    error RedstonePayloadTimestampIncorrect();
+    /// @notice Thrown when expected payload timestamp is too far ahead in the future
+    error PayloadTimestampTooFarAheadException();
+
+    /// @notice Thrown when expected payload timestamp is too far behind in the past
+    error PayloadTimestampTooFarBehindException();
 
     /// @notice Thrown when data package timestamp is not equal to expected payload timestamp
-    error DataPackageTimestampIncorrect();
+    error IncorrectDataPackageTimestampException();
 
     // ----------- //
     // CONSTRUCTOR //
@@ -223,20 +225,19 @@ contract RedstonePriceFeed is IUpdatablePriceFeed, RedstoneConsumerNumericBase {
         uint256 receivedTimestampSeconds = receivedTimestampMilliseconds / 1000;
 
         if (receivedTimestampSeconds != lastPayloadTimestamp) {
-            revert DataPackageTimestampIncorrect(); // U:[RPF-3]
+            revert IncorrectDataPackageTimestampException(); // U:[RPF-3]
         }
     }
 
-    /// @dev Validates that the expected payload timestamp is not older than the last payload's,
-    ///      and not too far from the current block's
+    /// @dev Validates that the expected payload timestamp is not too far ahead or behind of the current block timestamp
     /// @param expectedPayloadTimestamp Timestamp expected to be in all of the incoming payload's packages
     function _validateExpectedPayloadTimestamp(uint256 expectedPayloadTimestamp) internal view {
         if ((block.timestamp < expectedPayloadTimestamp)) {
             if ((expectedPayloadTimestamp - block.timestamp) > MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
-                revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
+                revert PayloadTimestampTooFarAheadException(); // U:[RPF-9]
             }
         } else if ((block.timestamp - expectedPayloadTimestamp) > MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
-            revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
+            revert PayloadTimestampTooFarBehindException(); // U:[RPF-9]
         }
     }
 }

@@ -153,7 +153,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, RedstoneConstants {
 
         bytes memory data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(RedstonePriceFeed.DataPackageTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.IncorrectDataPackageTimestampException.selector);
 
         pf.updatePrice(data);
     }
@@ -264,7 +264,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, RedstoneConstants {
 
         bytes memory data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(RedstonePriceFeed.RedstonePayloadTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.PayloadTimestampTooFarBehindException.selector);
 
         pf.updatePrice(data);
 
@@ -276,7 +276,7 @@ contract RedstonePriceFeedUnitTest is TestHelper, RedstoneConstants {
 
         data = abi.encode(expectedPayloadTimestamp, payload);
 
-        vm.expectRevert(RedstonePriceFeed.RedstonePayloadTimestampIncorrect.selector);
+        vm.expectRevert(RedstonePriceFeed.PayloadTimestampTooFarAheadException.selector);
 
         pf.updatePrice(data);
     }
