@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
-import {ACLNonReentrantTrait} from "@gearbox-protocol/core-v3/contracts/traits/ACLNonReentrantTrait.sol";
+import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
+import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
+import {ControlledTrait} from "@gearbox-protocol/core-v3/contracts/traits/ControlledTrait.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
-import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
-import {
-    IAddressProviderV3, AP_PRICE_ORACLE
-} from "@gearbox-protocol/core-v3/contracts/interfaces/IAddressProviderV3.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 
 /// @dev Window size in bps, used to compute upper bound given lower bound
 uint256 constant WINDOW_SIZE = 200;
@@ -28,15 +25,12 @@ uint256 constant UPDATE_BOUNDS_COOLDOWN = 1 days;
 ///         It is assumed that the price of an LP token is the product of its exchange rate and some aggregate function
 ///         of underlying tokens prices. This contract simplifies creation of such price feeds and provides standard
 ///         validation of the LP token exchange rate that protects against price manipulation.
-abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedValidationTrait {
+abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait, PriceFeedValidationTrait {
     /// @notice Answer precision (always 8 decimals for USD price feeds)
     uint8 public constant override decimals = 8; // U:[LPPF-2]
 
     /// @notice Indicates that price oracle can skip checks for this price feed's answers
     bool public constant override skipPriceCheck = true; // U:[LPPF-2]
-
-    /// @notice Price oracle contract
-    address public immutable override priceOracle;
 
     /// @notice LP token for which the prices are computed
     address public immutable override lpToken;
@@ -47,31 +41,30 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     /// @notice Lower bound for the LP token exchange rate
     uint256 public override lowerBound;
 
-    /// @notice Whether permissionless bounds update is allowed
-    bool public override updateBoundsAllowed;
-
-    /// @notice Timestamp of the last bounds update
-    uint40 public override lastBoundsUpdate;
-
     /// @notice Constructor
-    /// @param _addressProvider Address provider contract address
+    /// @param _acl Address of the ACL contract
     /// @param _lpToken  LP token for which the prices are computed
     /// @param _lpContract LP contract (can be different from LP token)
     /// @dev Derived price feeds must call `_setLimiter` in their constructor after
     ///      initializing all state variables needed for exchange rate calculation
-    constructor(address _addressProvider, address _lpToken, address _lpContract)
-        ACLNonReentrantTrait(_addressProvider) // U:[LPPF-1]
+    constructor(address _acl, address _lpToken, address _lpContract)
+        ControlledTrait(_acl) // U:[LPPF-1]
         nonZeroAddress(_lpToken) // U:[LPPF-1]
         nonZeroAddress(_lpContract) // U:[LPPF-1]
     {
-        priceOracle = IAddressProviderV3(_addressProvider).getAddressOrRevert(AP_PRICE_ORACLE, 3_00); // U:[LPPF-1]
         lpToken = _lpToken; // U:[LPPF-1]
         lpContract = _lpContract; // U:[LPPF-1]
     }
 
     /// @notice Price feed description
     function description() external view override returns (string memory) {
-        return string(abi.encodePacked(ERC20(lpToken).symbol(), " / USD price feed")); // U:[LPPF-2]
+        return string.concat(ERC20(lpToken).symbol(), " / USD LP price feed"); // U:[LPPF-2]
+    }
+
+    /// @notice Serialized price feed parameters
+    function serialize() public view virtual returns (bytes memory) {
+        uint256 lb = lowerBound;
+        return abi.encode(lpToken, lpContract, lb, _calcUpperBound(lb));
     }
 
     /// @notice Returns USD price of the LP token with 8 decimals
@@ -108,59 +101,19 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLNonReentrantTrait, PriceFeedVa
     // CONFIGURATION //
     // ------------- //
 
-    /// @notice Allows permissionless bounds update
-    function allowBoundsUpdate()
-        external
-        override
-        configuratorOnly // U:[LPPF-5]
-    {
-        if (updateBoundsAllowed) return;
-        updateBoundsAllowed = true; // U:[LPPF-5]
-        emit SetUpdateBoundsAllowed(true); // U:[LPPF-5]
-    }
-
-    /// @notice Forbids permissionless bounds update
-    function forbidBoundsUpdate()
-        external
-        override
-        controllerOnly // U:[LPPF-5]
-    {
-        if (!updateBoundsAllowed) return;
-        updateBoundsAllowed = false; // U:[LPPF-5]
-        emit SetUpdateBoundsAllowed(false); // U:[LPPF-5]
-    }
-
     /// @notice Sets new lower and upper bounds for the LP token exchange rate
     /// @param newLowerBound New lower bound value
     function setLimiter(uint256 newLowerBound)
         external
         override
-        controllerOnly // U:[LPPF-6]
+        controllerOrConfiguratorOnly // U:[LPPF-6]
     {
         _setLimiter(newLowerBound); // U:[LPPF-6]
     }
 
-    /// @notice Permissionlessly updates LP token's exchange rate bounds using answer from the reserve price feed.
-    ///         Lower bound is set to the induced reserve exchange rate (with small buffer for downside movement).
-    /// @param updateData Data to update the reserve price feed with before querying its answer if it is updatable
-    function updateBounds(bytes calldata updateData) external override {
-        if (!updateBoundsAllowed) revert UpdateBoundsNotAllowedException(); // U:[LPPF-7]
-
-        if (block.timestamp < lastBoundsUpdate + UPDATE_BOUNDS_COOLDOWN) revert UpdateBoundsBeforeCooldownException(); // U:[LPPF-7]
-        lastBoundsUpdate = uint40(block.timestamp); // U:[LPPF-7]
-
-        address reserveFeed = IPriceOracleV3(priceOracle).priceFeedsRaw({token: lpToken, reserve: true}); // U:[LPPF-7]
-        if (reserveFeed == address(this)) revert ReserveFeedMustNotBeSelfException(); // U:[LPPF-7]
-        try IUpdatablePriceFeed(reserveFeed).updatable() returns (bool updatable) {
-            if (updatable) IUpdatablePriceFeed(reserveFeed).updatePrice(updateData); // U:[LPPF-7]
-        } catch {}
-
-        uint256 reserveAnswer = IPriceOracleV3(priceOracle).getPriceRaw({token: lpToken, reserve: true}); // U:[LPPF-7]
-        uint256 reserveExchangeRate = uint256(reserveAnswer * getScale() / uint256(getAggregatePrice())); // U:[LPPF-7]
-
-        _ensureValueInBounds(reserveExchangeRate, lowerBound); // U:[LPPF-7]
-        _setLimiter(_calcLowerBound(reserveExchangeRate)); // U:[LPPF-7]
-    }
+    // --------- //
+    // INTERNALS //
+    // --------- //
 
     /// @dev `setLimiter` implementation: sets new bounds, ensures that current value is within them, emits event
     function _setLimiter(uint256 lower) internal {

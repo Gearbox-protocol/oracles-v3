@@ -11,7 +11,8 @@
     "url": "https://github.com/Gearbox-protocol/oracles-v3"
   },
   "files": [
-    "contracts"
+    "contracts",
+    "scripts"
   ],
   "license": "BUSL-1.1",
   "scripts": {
@@ -20,24 +21,18 @@
     "prettier:ci": "forge fmt",
     "lint": "eslint \"**/*.ts\" --fix",
     "lint:ci": "eslint \"**/*.ts\"",
-    "typecheck:ci": "tsc --noEmit",
-    "forge-install": "forge install --no-commit foundry-rs/forge-std"
+    "typecheck:ci": "tsc --noEmit"
   },
   "dependencies": {
+    "axios": "^1.6.8",
     "redstone-protocol": "^1.0.5"
   },
   "devDependencies": {
-    "@chainlink/contracts": "^0.4.0",
     "@commitlint/cli": "^17.1.2",
     "@commitlint/config-conventional": "^17.1.0",
-    "@gearbox-protocol/core-v2": "1.19.0-base.14",
-    "@gearbox-protocol/core-v3": "^1.47.1",
     "@gearbox-protocol/eslint-config": "^1.6.1",
     "@gearbox-protocol/prettier-config": "^1.5.0",
-    "@gearbox-protocol/sdk-gov": "^2.13.5",
-    "@openzeppelin/contracts": "4.9.3",
     "@redstone-finance/evm-connector": "0.2.5",
-    "@typechain/ethers-v5": "^10.1.0",
     "dotenv": "^16.0.3",
     "eslint": "^8.25.0",
     "ethers": "5.4.4",

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {LPPriceFeed} from "./LPPriceFeed.sol";
 import {PriceFeedParams} from "./PriceFeedParams.sol";
@@ -14,14 +14,8 @@ abstract contract SingleAssetLPPriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod;
     bool public immutable skipCheck;
 
-    constructor(
-        address addressProvider,
-        address _lpToken,
-        address _lpContract,
-        address _priceFeed,
-        uint32 _stalenessPeriod
-    )
-        LPPriceFeed(addressProvider, _lpToken, _lpContract) // U:[SAPF-1]
+    constructor(address _acl, address _lpToken, address _lpContract, address _priceFeed, uint32 _stalenessPeriod)
+        LPPriceFeed(_acl, _lpToken, _lpContract) // U:[SAPF-1]
         nonZeroAddress(_priceFeed) // U:[SAPF-1]
     {
         priceFeed = _priceFeed; // U:[SAPF-1]

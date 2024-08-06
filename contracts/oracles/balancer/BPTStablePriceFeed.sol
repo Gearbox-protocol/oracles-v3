@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedParams} from "../PriceFeedParams.sol";
-import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
+import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
 
 /// @title Balancer stable pool token price feed
 /// @dev Similarly to Curve stableswap, aggregate function is minimum of underlying tokens prices
 contract BPTStablePriceFeed is LPPriceFeed {
-    uint256 public constant override version = 3_00;
-    PriceFeedType public constant override priceFeedType = PriceFeedType.BALANCER_STABLE_LP_ORACLE;
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PF_BALANCER_STABLE_LP_ORACLE";
 
     uint8 public immutable numAssets;
 
@@ -37,13 +36,8 @@ contract BPTStablePriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod4;
     bool public immutable skipCheck4;
 
-    constructor(
-        address addressProvider,
-        uint256 lowerBound,
-        address _balancerPool,
-        PriceFeedParams[5] memory priceFeeds
-    )
-        LPPriceFeed(addressProvider, _balancerPool, _balancerPool) // U:[BAL-S-1]
+    constructor(address _acl, uint256 lowerBound, address _balancerPool, PriceFeedParams[5] memory priceFeeds)
+        LPPriceFeed(_acl, _balancerPool, _balancerPool) // U:[BAL-S-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[BAL-S-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[BAL-S-2]
     {

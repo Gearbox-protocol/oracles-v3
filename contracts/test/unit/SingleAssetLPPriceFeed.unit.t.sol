@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
 
-import {IVersion} from "@gearbox-protocol/core-v2/contracts/interfaces/IVersion.sol";
+import {IVersion} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IVersion.sol";
 
 import {
     IncorrectPriceFeedException,
@@ -26,27 +26,19 @@ contract SingleAssetLPPriceFeedUnitTest is Test {
 
     address lpToken;
     address lpContract;
-    address priceOracle;
     PriceFeedMock underlyingPriceFeed;
     AddressProviderV3ACLMock addressProvider;
 
     function setUp() public {
         lpToken = makeAddr("LP_TOKEN");
         lpContract = makeAddr("LP_CONTRACT");
-        priceOracle = makeAddr("PRICE_ORACLE");
-        vm.mockCall(priceOracle, abi.encodeCall(IVersion.version, ()), abi.encode(uint256(3_00)));
 
         addressProvider = new AddressProviderV3ACLMock();
-        addressProvider.setAddress("PRICE_ORACLE", priceOracle, true);
 
         underlyingPriceFeed = new PriceFeedMock(1e8, 8);
 
         priceFeed = new SingleAssetLPPriceFeedHarness(
-            address(addressProvider),
-            address(lpToken),
-            address(lpContract),
-            address(underlyingPriceFeed),
-            1 days
+            address(addressProvider), address(lpToken), address(lpContract), address(underlyingPriceFeed), 1 days
         );
     }
 
@@ -54,21 +46,13 @@ contract SingleAssetLPPriceFeedUnitTest is Test {
     function test_U_SAPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
         new SingleAssetLPPriceFeedHarness(
-            address(addressProvider),
-            address(lpToken),
-            address(lpContract),
-            address(0),
-            1 days
+            address(addressProvider), address(lpToken), address(lpContract), address(0), 1 days
         );
 
         PriceFeedMock invalidPriceFeed = new PriceFeedMock(1 ether, 18);
         vm.expectRevert(IncorrectPriceFeedException.selector);
         new SingleAssetLPPriceFeedHarness(
-            address(addressProvider),
-            address(lpToken),
-            address(lpContract),
-            address(invalidPriceFeed),
-            1 days
+            address(addressProvider), address(lpToken), address(lpContract), address(invalidPriceFeed), 1 days
         );
 
         assertEq(priceFeed.lpToken(), lpToken, "Incorrect lpToken");

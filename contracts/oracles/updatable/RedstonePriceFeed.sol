@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {LibString} from "@solady/utils/LibString.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {RedstoneConsumerNumericBase} from
     "@redstone-finance/evm-connector/contracts/core/RedstoneConsumerNumericBase.sol";
 
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 /// @dev Max period that the payload can be backward in time relative to the block
@@ -21,41 +20,19 @@ uint256 constant MAX_DATA_TIMESTAMP_AHEAD_SECONDS = 1 minutes;
 /// @dev Max number of authorized signers
 uint256 constant MAX_SIGNERS = 10;
 
-interface IRedstonePriceFeedExceptions {
-    /// @notice Thrown when trying to construct a price feed with incorrect signers threshold
-    error IncorrectSignersThresholdException();
-
-    /// @notice Thrown when the provided set of signers is smaller than the threshold
-    error NotEnoughSignersException();
-
-    /// @notice Thrown when the provided set of signers contains duplicates
-    error DuplicateSignersException();
-
-    /// @notice Thrown when attempting to push an update with the payload that is older than the last
-    ///         update payload, or too far from the current block timestamp
-    error RedstonePayloadTimestampIncorrect();
-
-    /// @notice Thrown when data package timestamp is not equal to expected payload timestamp
-    error DataPackageTimestampIncorrect();
-}
-
-interface IRedstonePriceFeedEvents {
-    /// @notice Emitted when a successful price update is pushed
-    /// @param price New USD price of the token with 8 decimals
-    event UpdatePrice(uint256 price);
-}
-
 /// @title Redstone price feed
-contract RedstonePriceFeed is
-    IUpdatablePriceFeed,
-    IRedstonePriceFeedExceptions,
-    IRedstonePriceFeedEvents,
-    RedstoneConsumerNumericBase
-{
+contract RedstonePriceFeed is IUpdatablePriceFeed, RedstoneConsumerNumericBase {
     using SafeCast for uint256;
+    using LibString for string;
+    using LibString for bytes32;
 
-    PriceFeedType public constant override priceFeedType = PriceFeedType.REDSTONE_ORACLE;
-    uint256 public constant override version = 3_00;
+    // --------------- //
+    // STATE VARIABLES //
+    // --------------- //
+
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PF_REDSTONE_ORACLE";
+
     uint8 public constant override decimals = 8;
     bool public constant override skipPriceCheck = false;
     bool public constant override updatable = true;
@@ -65,6 +42,9 @@ contract RedstonePriceFeed is
 
     /// @notice ID of the asset in Redstone's payload
     bytes32 public immutable dataFeedId;
+
+    /// @notice ID of the data service consumed by the price feed
+    string public dataServiceId;
 
     address public immutable signerAddress0;
     address public immutable signerAddress1;
@@ -86,7 +66,43 @@ contract RedstonePriceFeed is
     /// @notice The timestamp of the last update's payload
     uint40 public lastPayloadTimestamp;
 
-    constructor(address _token, bytes32 _dataFeedId, address[MAX_SIGNERS] memory _signers, uint8 signersThreshold) {
+    /// @dev Price feed description ticker
+    bytes32 internal _descriptionTicker;
+
+    // ------ //
+    // ERRORS //
+    // ------ //
+
+    /// @notice Thrown when trying to construct a price feed with incorrect signers threshold
+    error IncorrectSignersThresholdException();
+
+    /// @notice Thrown when the provided set of signers is smaller than the threshold
+    error NotEnoughSignersException();
+
+    /// @notice Thrown when the provided set of signers contains duplicates
+    error DuplicateSignersException();
+
+    /// @notice Thrown when expected payload timestamp is too far ahead in the future
+    error PayloadTimestampTooFarAheadException();
+
+    /// @notice Thrown when expected payload timestamp is too far behind in the past
+    error PayloadTimestampTooFarBehindException();
+
+    /// @notice Thrown when data package timestamp is not equal to expected payload timestamp
+    error IncorrectDataPackageTimestampException();
+
+    // ----------- //
+    // CONSTRUCTOR //
+    // ----------- //
+
+    constructor(
+        address _token,
+        string memory _dataServiceId,
+        bytes32 _dataFeedId,
+        address[MAX_SIGNERS] memory _signers,
+        uint8 signersThreshold,
+        string memory descriptionTicker
+    ) {
         if (signersThreshold == 0 || signersThreshold > MAX_SIGNERS) revert IncorrectSignersThresholdException();
         unchecked {
             uint256 numSigners;
@@ -101,6 +117,7 @@ contract RedstonePriceFeed is
         }
 
         token = _token;
+        dataServiceId = _dataServiceId; // U:[RPF-1]
         dataFeedId = _dataFeedId; // U:[RPF-1]
 
         signerAddress0 = _signers[0];
@@ -115,11 +132,33 @@ contract RedstonePriceFeed is
         signerAddress9 = _signers[9];
 
         _signersThreshold = signersThreshold; // U:[RPF-1]
+        _descriptionTicker = descriptionTicker.toSmallString();
     }
+
+    // --------- //
+    // FUNCTIONS //
+    // --------- //
 
     /// @notice Price feed description
     function description() external view override returns (string memory) {
-        return string(abi.encodePacked(ERC20(token).symbol(), " / USD Redstone price feed")); // U:[RPF-1]
+        return string.concat(_descriptionTicker.fromSmallString(), " Redstone price feed"); // U:[RPF-1]
+    }
+
+    /// @notice Serialized price feed parameters
+    function serialize() external view returns (bytes memory) {
+        address[10] memory signers = [
+            signerAddress0,
+            signerAddress1,
+            signerAddress2,
+            signerAddress3,
+            signerAddress4,
+            signerAddress5,
+            signerAddress6,
+            signerAddress7,
+            signerAddress8,
+            signerAddress9
+        ];
+        return abi.encode(token, dataFeedId, dataServiceId, signers, _signersThreshold, lastPrice, lastPayloadTimestamp);
     }
 
     /// @notice Returns the USD price of the token with 8 decimals and the last update timestamp
@@ -186,20 +225,19 @@ contract RedstonePriceFeed is
         uint256 receivedTimestampSeconds = receivedTimestampMilliseconds / 1000;
 
         if (receivedTimestampSeconds != lastPayloadTimestamp) {
-            revert DataPackageTimestampIncorrect(); // U:[RPF-3]
+            revert IncorrectDataPackageTimestampException(); // U:[RPF-3]
         }
     }
 
-    /// @dev Validates that the expected payload timestamp is not older than the last payload's,
-    ///      and not too far from the current block's
+    /// @dev Validates that the expected payload timestamp is not too far ahead or behind of the current block timestamp
     /// @param expectedPayloadTimestamp Timestamp expected to be in all of the incoming payload's packages
     function _validateExpectedPayloadTimestamp(uint256 expectedPayloadTimestamp) internal view {
         if ((block.timestamp < expectedPayloadTimestamp)) {
             if ((expectedPayloadTimestamp - block.timestamp) > MAX_DATA_TIMESTAMP_AHEAD_SECONDS) {
-                revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
+                revert PayloadTimestampTooFarAheadException(); // U:[RPF-9]
             }
         } else if ((block.timestamp - expectedPayloadTimestamp) > MAX_DATA_TIMESTAMP_DELAY_SECONDS) {
-            revert RedstonePayloadTimestampIncorrect(); // U:[RPF-9]
+            revert PayloadTimestampTooFarBehindException(); // U:[RPF-9]
         }
     }
 }

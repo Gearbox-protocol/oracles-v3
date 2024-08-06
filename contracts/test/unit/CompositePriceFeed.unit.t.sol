@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
 
@@ -28,35 +28,29 @@ contract CompositePriceFeedUnitTest is Test {
         targetPriceFeed = new PriceFeedMock(2 ether, 18);
         basePriceFeed = new PriceFeedMock(0.5e8, 8);
 
-        vm.mockCall(address(targetPriceFeed), abi.encodeCall(PriceFeedMock.description, ()), abi.encode("TEST / ETH"));
-        vm.mockCall(address(basePriceFeed), abi.encodeCall(PriceFeedMock.description, ()), abi.encode("ETH / USD"));
-
-        priceFeed = new CompositePriceFeed([
-            PriceFeedParams(address(targetPriceFeed), 1 days),
-            PriceFeedParams(address(basePriceFeed), 1 days)
-        ]);
+        priceFeed = new CompositePriceFeed(
+            [PriceFeedParams(address(targetPriceFeed), 1 days), PriceFeedParams(address(basePriceFeed), 1 days)],
+            "(TEST / ETH) * (ETH / USD)"
+        );
     }
 
     /// @notice U:[CPF-1]: Constructor works as expected
     function test_U_CPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new CompositePriceFeed([
-            PriceFeedParams(address(0), 1 days),
-            PriceFeedParams(address(basePriceFeed), 1 days)
-        ]);
+        new CompositePriceFeed(
+            [PriceFeedParams(address(0), 1 days), PriceFeedParams(address(basePriceFeed), 1 days)], ""
+        );
 
         vm.expectRevert(ZeroAddressException.selector);
-        new CompositePriceFeed([
-            PriceFeedParams(address(targetPriceFeed), 1 days),
-            PriceFeedParams(address(0), 1 days)
-        ]);
+        new CompositePriceFeed(
+            [PriceFeedParams(address(targetPriceFeed), 1 days), PriceFeedParams(address(0), 1 days)], ""
+        );
 
         PriceFeedMock invalidPriceFeed = new PriceFeedMock(1 ether, 18);
         vm.expectRevert(IncorrectPriceFeedException.selector);
-        new CompositePriceFeed([
-            PriceFeedParams(address(targetPriceFeed), 1 days),
-            PriceFeedParams(address(invalidPriceFeed), 1 days)
-        ]);
+        new CompositePriceFeed(
+            [PriceFeedParams(address(targetPriceFeed), 1 days), PriceFeedParams(address(invalidPriceFeed), 1 days)], ""
+        );
 
         assertEq(priceFeed.targetFeedScale(), 1e18, "Incorrect targetFeedScale");
 
@@ -66,13 +60,14 @@ contract CompositePriceFeedUnitTest is Test {
         assertEq(priceFeed.stalenessPeriod0(), 1 days, "Incorrect stalenessPeriod0");
         assertEq(priceFeed.stalenessPeriod1(), 1 days, "Incorrect stalenessPeriod1");
 
+        assertFalse(priceFeed.skipCheck0(), "Incorrect skipCheck0");
         assertFalse(priceFeed.skipCheck1(), "Incorrect skipCheck1");
     }
 
     /// @notice U:[CPF-2]: Price feed has correct metadata
-    function test_U_CPF_02_price_feed_has_correct_metadata() public {
+    function test_U_CPF_02_price_feed_has_correct_metadata() public view {
         assertEq(priceFeed.decimals(), 8, "Incorrect decimals");
-        assertEq(priceFeed.description(), "TEST / ETH * ETH / USD composite price feed", "Incorrect description");
+        assertEq(priceFeed.description(), "(TEST / ETH) * (ETH / USD) composite price feed", "Incorrect description");
         assertTrue(priceFeed.skipPriceCheck(), "Incorrect skipPriceCheck");
     }
 
