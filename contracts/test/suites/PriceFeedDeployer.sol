@@ -48,6 +48,7 @@ import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
 import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
+import {MellowLRTPriceFeed} from "../../oracles/mellow/MellowLRTPriceFeed.sol";
 
 import {IWAToken} from "../../interfaces/aave/IWAToken.sol";
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
@@ -57,6 +58,9 @@ import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
 import {IYVault} from "../../interfaces/yearn/IYVault.sol";
+import {IMellowVault} from "../../interfaces/mellow/IMellowVault.sol";
+
+import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
 
 contract PriceFeedDeployer is Test, PriceFeedDataLive {
     TokensTestSuite public tokenTestSuite;
@@ -666,6 +670,38 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 );
 
                 setPriceFeed(token, pf, erc4626PriceFeeds[i].trusted, erc4626PriceFeeds[i].reserve);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+        }
+
+        address addressProvider_ = addressProvider;
+
+        // MELLOW LRT PRICE FEEDS
+        GenericLPPriceFeedData[] memory mellowLRTPriceFeeds = mellowLRTPriceFeedsByNetwork[chainId];
+        len = mellowLRTPriceFeeds.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                Tokens t = mellowLRTPriceFeeds[i].lpToken;
+                address token = tokenTestSuite.addressOf(t);
+
+                if (token == address(0)) {
+                    continue;
+                }
+
+                address underlying = tokenTestSuite.addressOf(mellowLRTPriceFeeds[i].underlying);
+
+                IMellowVault.ProcessWithdrawalsStack memory stack = IMellowVault(token).calculateStack();
+                uint256 lowerBound = stack.totalValue * WAD * 99 / (stack.totalSupply * 100);
+
+                address pf = address(
+                    new MellowLRTPriceFeed(
+                        addressProvider_, lowerBound, token, priceFeeds[underlying], stalenessPeriods[underlying]
+                    )
+                );
+
+                setPriceFeed(token, pf, mellowLRTPriceFeeds[i].trusted, mellowLRTPriceFeeds[i].reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
