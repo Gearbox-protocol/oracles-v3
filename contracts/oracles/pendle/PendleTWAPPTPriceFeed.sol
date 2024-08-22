@@ -78,7 +78,7 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
         return FixedPoint.divDown(WAD, assetToPTRate);
     }
 
-    /// @notice Returns the USD price of the PT token with 8 decimals and the last update timestamp
+    /// @notice Returns the USD price of the PT token with 8 decimals
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         int256 answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
 
