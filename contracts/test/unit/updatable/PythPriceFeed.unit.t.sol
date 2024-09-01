@@ -8,7 +8,10 @@ import {
     MAX_DATA_TIMESTAMP_DELAY_SECONDS,
     MAX_DATA_TIMESTAMP_AHEAD_SECONDS
 } from "../../../oracles/updatable/PythPriceFeed.sol";
-import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
+import {
+    IncorrectParameterException,
+    IncorrectPriceException
+} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IPyth} from "../../../interfaces/pyth/IPyth.sol";
 
@@ -33,7 +36,7 @@ contract PythPriceFeedUnitTest is TestHelper {
     }
 
     /// @notice U:[PYPF-1]: constructor sets correct values
-    function test_U_PYPF_01_constructor_sets_correct_values() public view {
+    function test_U_PYPF_01_constructor_sets_correct_values() public {
         assertEq(pf.description(), "USDC / USD Pyth price feed", "Price feed description incorrect");
 
         assertEq(pf.token(), token, "Price feed token incorrect");
@@ -41,6 +44,9 @@ contract PythPriceFeedUnitTest is TestHelper {
         assertEq(pf.priceFeedId(), bytes32(uint256(1)), "Price feed ID incorrect");
 
         assertEq(pf.pyth(), address(pyth), "Pyth address incorrect");
+
+        vm.expectRevert(IncorrectParameterException.selector);
+        new PythPriceFeed(token, bytes32(uint256(1)), address(pyth), 0, "USDC / USD");
     }
 
     /// @notice U:[PYPF-2]: updatePrice stops early when expected timestamp is older than the last recorded

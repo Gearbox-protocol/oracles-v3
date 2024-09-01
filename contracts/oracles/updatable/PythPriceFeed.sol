@@ -5,7 +5,10 @@ pragma solidity ^0.8.23;
 
 import {LibString} from "@solady/utils/LibString.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
-import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
+import {
+    IncorrectParameterException,
+    IncorrectPriceException
+} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 import {IPyth} from "../../interfaces/pyth/IPyth.sol";
@@ -78,6 +81,7 @@ contract PythPriceFeed is IUpdatablePriceFeed {
         uint256 _maxConfToPriceRatio,
         string memory descriptionTicker
     ) {
+        if (_maxConfToPriceRatio == 0) revert IncorrectParameterException();
         token = _token;
         priceFeedId = _priceFeedId;
         pyth = _pyth;
