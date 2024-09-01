@@ -107,15 +107,20 @@ contract PythPriceFeedUnitTest is TestHelper {
         pf.updatePrice(updateData);
     }
 
-    /// @notice U:[PYPF-6]: updatePrice reverts on price equal to 0
-    function test_U_PYPF_06_updatePrice_reverts_on_price_0() public {
+    /// @notice U:[PYPF-6]: updatePrice reverts on price equal to 0 or wrong expo
+    function test_U_PYPF_06_updatePrice_reverts_on_price_0_or_wrong_expo() public {
         bytes[] memory payloads = new bytes[](1);
         payloads[0] = abi.encode(0, block.timestamp, int32(-8), bytes32(uint256(1)));
-
-        bytes memory updateData = abi.encode(block.timestamp, payloads);
-
         vm.expectRevert(IncorrectPriceException.selector);
-        pf.updatePrice(updateData);
+        pf.updatePrice(abi.encode(block.timestamp, payloads));
+
+        payloads[0] = abi.encode(1, block.timestamp, int32(2), bytes32(uint256(1)));
+        vm.expectRevert(PythPriceFeed.IncorrectPriceDecimalsException.selector);
+        pf.updatePrice(abi.encode(block.timestamp, payloads));
+
+        payloads[0] = abi.encode(1, block.timestamp, int32(-20), bytes32(uint256(1)));
+        vm.expectRevert(PythPriceFeed.IncorrectPriceDecimalsException.selector);
+        pf.updatePrice(abi.encode(block.timestamp, payloads));
     }
 
     function test_U_PYPF_07_latestRoundData_correctly_handles_non_standard_expo() public {
