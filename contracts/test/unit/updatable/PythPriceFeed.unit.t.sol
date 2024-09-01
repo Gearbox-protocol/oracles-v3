@@ -136,6 +136,16 @@ contract PythPriceFeedUnitTest is TestHelper {
         (, price,,,) = pf.latestRoundData();
 
         assertEq(price, 100 * 10 ** 8, "Incorrect price when pyth decimals are 0");
+
+        pyth.setPriceData(bytes32(uint256(1)), 100, 0, 2, block.timestamp);
+
+        vm.expectRevert(PythPriceFeed.IncorrectPriceDecimalsException.selector);
+        pf.latestRoundData();
+
+        pyth.setPriceData(bytes32(uint256(1)), 100, 0, -20, block.timestamp);
+
+        vm.expectRevert(PythPriceFeed.IncorrectPriceDecimalsException.selector);
+        pf.latestRoundData();
     }
 
     function test_U_PYPF_08_latestRoundData_reverts_on_too_high_conf_to_price_ratio() public {

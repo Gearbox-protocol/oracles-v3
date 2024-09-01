@@ -61,6 +61,9 @@ contract PythPriceFeed is IUpdatablePriceFeed {
     ///         the payload's internal timestamp
     error IncorrectExpectedPublishTimestampException();
 
+    /// @notice Thrown when the decimals returned by Pyth are outside sane boundaries
+    error IncorrectPriceDecimalsException();
+
     /// @notice Thrown when a retrieved price's publish time is too far ahead in the future
     error PriceTimestampTooFarAheadException();
 
@@ -152,6 +155,7 @@ contract PythPriceFeed is IUpdatablePriceFeed {
         if (price == 0) revert IncorrectPriceException();
 
         if (priceData.expo != -8) {
+            if (priceData.expo > 0 || priceData.expo < -18) revert IncorrectPriceDecimalsException();
             int256 pythDecimals = int256(uint256(10) ** uint32(-priceData.expo));
             price = price * DECIMALS / pythDecimals;
         }
