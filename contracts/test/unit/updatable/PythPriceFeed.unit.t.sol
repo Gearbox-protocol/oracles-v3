@@ -8,7 +8,10 @@ import {
     MAX_DATA_TIMESTAMP_DELAY_SECONDS,
     MAX_DATA_TIMESTAMP_AHEAD_SECONDS
 } from "../../../oracles/updatable/PythPriceFeed.sol";
-import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
+import {
+    IncorrectParameterException,
+    IncorrectPriceException
+} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IPyth} from "../../../interfaces/pyth/IPyth.sol";
 
@@ -33,7 +36,7 @@ contract PythPriceFeedUnitTest is TestHelper {
     }
 
     /// @notice U:[PYPF-1]: constructor sets correct values
-    function test_U_PYPF_01_constructor_sets_correct_values() public view {
+    function test_U_PYPF_01_constructor_sets_correct_values() public {
         assertEq(pf.description(), "USDC / USD Pyth price feed", "Price feed description incorrect");
 
         assertEq(pf.token(), token, "Price feed token incorrect");
@@ -41,6 +44,9 @@ contract PythPriceFeedUnitTest is TestHelper {
         assertEq(pf.priceFeedId(), bytes32(uint256(1)), "Price feed ID incorrect");
 
         assertEq(pf.pyth(), address(pyth), "Pyth address incorrect");
+
+        vm.expectRevert(IncorrectParameterException.selector);
+        new PythPriceFeed(token, bytes32(uint256(1)), address(pyth), 0, "USDC / USD");
     }
 
     /// @notice U:[PYPF-2]: updatePrice stops early when expected timestamp is older than the last recorded
@@ -101,15 +107,20 @@ contract PythPriceFeedUnitTest is TestHelper {
         pf.updatePrice(updateData);
     }
 
-    /// @notice U:[PYPF-6]: updatePrice reverts on price equal to 0
-    function test_U_PYPF_06_updatePrice_reverts_on_price_0() public {
+    /// @notice U:[PYPF-6]: updatePrice reverts on price equal to 0 or wrong expo
+    function test_U_PYPF_06_updatePrice_reverts_on_price_0_or_wrong_expo() public {
         bytes[] memory payloads = new bytes[](1);
         payloads[0] = abi.encode(0, block.timestamp, int32(-8), bytes32(uint256(1)));
-
-        bytes memory updateData = abi.encode(block.timestamp, payloads);
-
         vm.expectRevert(IncorrectPriceException.selector);
-        pf.updatePrice(updateData);
+        pf.updatePrice(abi.encode(block.timestamp, payloads));
+
+        payloads[0] = abi.encode(1, block.timestamp, int32(2), bytes32(uint256(1)));
+        vm.expectRevert(PythPriceFeed.IncorrectPriceDecimalsException.selector);
+        pf.updatePrice(abi.encode(block.timestamp, payloads));
+
+        payloads[0] = abi.encode(1, block.timestamp, int32(-20), bytes32(uint256(1)));
+        vm.expectRevert(PythPriceFeed.IncorrectPriceDecimalsException.selector);
+        pf.updatePrice(abi.encode(block.timestamp, payloads));
     }
 
     function test_U_PYPF_07_latestRoundData_correctly_handles_non_standard_expo() public {
@@ -130,6 +141,16 @@ contract PythPriceFeedUnitTest is TestHelper {
         (, price,,,) = pf.latestRoundData();
 
         assertEq(price, 100 * 10 ** 8, "Incorrect price when pyth decimals are 0");
+
+        pyth.setPriceData(bytes32(uint256(1)), 100, 0, 2, block.timestamp);
+
+        vm.expectRevert(PythPriceFeed.IncorrectPriceDecimalsException.selector);
+        pf.latestRoundData();
+
+        pyth.setPriceData(bytes32(uint256(1)), 100, 0, -20, block.timestamp);
+
+        vm.expectRevert(PythPriceFeed.IncorrectPriceDecimalsException.selector);
+        pf.latestRoundData();
     }
 
     function test_U_PYPF_08_latestRoundData_reverts_on_too_high_conf_to_price_ratio() public {

@@ -5,7 +5,10 @@ pragma solidity ^0.8.23;
 
 import {LibString} from "@solady/utils/LibString.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
-import {IncorrectPriceException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
+import {
+    IncorrectParameterException,
+    IncorrectPriceException
+} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 import {IPyth} from "../../interfaces/pyth/IPyth.sol";
@@ -58,6 +61,9 @@ contract PythPriceFeed is IUpdatablePriceFeed {
     ///         the payload's internal timestamp
     error IncorrectExpectedPublishTimestampException();
 
+    /// @notice Thrown when the decimals returned by Pyth are outside sane boundaries
+    error IncorrectPriceDecimalsException();
+
     /// @notice Thrown when a retrieved price's publish time is too far ahead in the future
     error PriceTimestampTooFarAheadException();
 
@@ -78,6 +84,7 @@ contract PythPriceFeed is IUpdatablePriceFeed {
         uint256 _maxConfToPriceRatio,
         string memory descriptionTicker
     ) {
+        if (_maxConfToPriceRatio == 0) revert IncorrectParameterException();
         token = _token;
         priceFeedId = _priceFeedId;
         pyth = _pyth;
@@ -137,6 +144,7 @@ contract PythPriceFeed is IUpdatablePriceFeed {
 
         if (priceData.publishTime != expectedPublishTimestamp) revert IncorrectExpectedPublishTimestampException();
         if (priceData.price == 0) revert IncorrectPriceException();
+        if (priceData.expo > 0 || priceData.expo < -18) revert IncorrectPriceDecimalsException();
 
         emit UpdatePrice(uint64(priceData.price));
     }
@@ -148,6 +156,7 @@ contract PythPriceFeed is IUpdatablePriceFeed {
         if (price == 0) revert IncorrectPriceException();
 
         if (priceData.expo != -8) {
+            if (priceData.expo > 0 || priceData.expo < -18) revert IncorrectPriceDecimalsException();
             int256 pythDecimals = int256(uint256(10) ** uint32(-priceData.expo));
             price = price * DECIMALS / pythDecimals;
         }
