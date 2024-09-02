@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
+// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -56,7 +56,7 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
 
         string memory ptName = IERC20Metadata(pt).name();
 
-        description = string(abi.encodePacked(ptName, " Pendle Market TWAP * ", IPriceFeed(priceFeed).description()));
+        description = string.concat(ptName, " Pendle Market TWAP * ", IPriceFeed(priceFeed).description());
     }
 
     /// @dev Gets the ln(impliedRate) from the market TWAP
