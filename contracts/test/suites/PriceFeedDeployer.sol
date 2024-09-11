@@ -25,7 +25,8 @@ import {
     TheSamePriceFeedData,
     BalancerLPPriceFeedData,
     RedStonePriceFeedData,
-    PythPriceFeedData
+    PythPriceFeedData,
+    PendlePriceFeedData
 } from "@gearbox-protocol/sdk-gov/contracts/PriceFeedDataLive.sol";
 import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
 import {PriceOracleV3} from "@gearbox-protocol/core-v3/contracts/core/PriceOracleV3.sol";
@@ -48,6 +49,7 @@ import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 import {PythPriceFeed} from "../../oracles/updatable/PythPriceFeed.sol";
 import {MellowLRTPriceFeed} from "../../oracles/mellow/MellowLRTPriceFeed.sol";
+import {PendleTWAPPTPriceFeed} from "../../oracles/pendle/PendleTWAPPTPriceFeed.sol";
 
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
@@ -645,6 +647,36 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 );
 
                 setPriceFeed(token, pf, mellowLRTPriceFeeds[i].reserve);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+        }
+
+        // PENDLE PT PRICE FEEDS
+        PendlePriceFeedData[] memory pendlePTPriceFeeds = pendlePriceFeedsByNetwork[chainId];
+        len = pendlePTPriceFeeds.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                Tokens t = pendlePTPriceFeeds[i].token;
+                address token = tokenTestSuite.addressOf(t);
+
+                if (token == address(0)) {
+                    continue;
+                }
+
+                address underlying = tokenTestSuite.addressOf(pendlePTPriceFeeds[i].underlying);
+
+                address pf = address(
+                    new PendleTWAPPTPriceFeed(
+                        pendlePTPriceFeeds[i].market,
+                        priceFeeds[underlying],
+                        stalenessPeriods[underlying],
+                        pendlePTPriceFeeds[i].twapWindow
+                    )
+                );
+
+                setPriceFeed(token, pf, pendlePTPriceFeeds[i].reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
