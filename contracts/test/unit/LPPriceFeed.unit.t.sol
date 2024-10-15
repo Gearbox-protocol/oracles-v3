@@ -1,23 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
 
-import {IVersion} from "@gearbox-protocol/core-v2/contracts/interfaces/IVersion.sol";
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
-import {IPriceOracleV3} from "@gearbox-protocol/core-v3/contracts/interfaces/IPriceOracleV3.sol";
-import {ILPPriceFeedEvents, ILPPriceFeedExceptions} from "../../interfaces/ILPPriceFeed.sol";
-
+import {IVersion} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IVersion.sol";
+import {ILPPriceFeed} from "../../interfaces/ILPPriceFeed.sol";
 import {
     CallerNotConfiguratorException,
-    CallerNotControllerException,
+    CallerNotControllerOrConfiguratorException,
     ZeroAddressException
 } from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
-import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 
@@ -25,15 +21,13 @@ import {LPPriceFeedHarness} from "./LPPriceFeed.harness.sol";
 
 /// @title LP price feed unit test
 /// @notice U:[LPPF]: Unit tests for LP price feed
-contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions {
+contract LPPriceFeedUnitTest is Test {
     LPPriceFeedHarness priceFeed;
 
     address configurator;
 
     ERC20Mock lpToken;
     address lpContract;
-    address priceOracle;
-    PriceFeedMock reserveFeed;
     AddressProviderV3ACLMock addressProvider;
 
     function setUp() public {
@@ -43,15 +37,8 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         lpContract = makeAddr("LP_CONTRACT");
 
-        priceOracle = makeAddr("PRICE_ORACLE");
-        vm.mockCall(priceOracle, abi.encodeCall(IVersion.version, ()), abi.encode(uint256(3_00)));
-
-        reserveFeed = new PriceFeedMock(2.02e8, 8);
-
-        vm.startPrank(configurator);
+        vm.prank(configurator);
         addressProvider = new AddressProviderV3ACLMock();
-        addressProvider.setAddress("PRICE_ORACLE", priceOracle, true);
-        vm.stopPrank();
 
         priceFeed = new LPPriceFeedHarness(address(addressProvider), address(lpToken), lpContract);
     }
@@ -59,23 +46,19 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
     /// @notice U:[LPPF-1]: Constructor works as expected
     function test_U_LPPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new LPPriceFeedHarness(address(0), address(lpToken), lpContract);
-
-        vm.expectRevert(ZeroAddressException.selector);
         new LPPriceFeedHarness(address(addressProvider), address(0), lpContract);
 
         vm.expectRevert(ZeroAddressException.selector);
         new LPPriceFeedHarness(address(addressProvider), address(lpToken), address(0));
 
-        assertEq(priceFeed.priceOracle(), priceOracle, "Incorrect priceOracle");
         assertEq(priceFeed.lpToken(), address(lpToken), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(lpContract), "Incorrect lpContract");
     }
 
     /// @notice U:[LPPF-2]: Price feed has correct metadata
-    function test_U_LPPF_02_price_feed_has_correct_metadata() public {
+    function test_U_LPPF_02_price_feed_has_correct_metadata() public view {
         assertEq(priceFeed.decimals(), 8, "Incorrect decimals");
-        assertEq(priceFeed.description(), "TEST / USD price feed", "Incorrect description");
+        assertEq(priceFeed.description(), "TEST / USD LP price feed", "Incorrect description");
         assertTrue(priceFeed.skipPriceCheck(), "Incorrect skipPriceCheck");
     }
 
@@ -87,7 +70,7 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
 
         // reverts if exchange rate below lower bound
         priceFeed.hackLPExchangeRate(1 ether - 1);
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        vm.expectRevert(ILPPriceFeed.ExchangeRateOutOfBoundsException.selector);
         priceFeed.latestRoundData();
 
         // computes normally if exchange rate within bounds
@@ -111,139 +94,31 @@ contract LPPriceFeedUnitTest is Test, ILPPriceFeedEvents, ILPPriceFeedExceptions
         }
     }
 
-    /// @notice U:[LPPF-5]: `allowBoundsUpdate` and `forbidBoundsUpdate` work as expected
-    function test_U_LPPF_05_allowBoundsUpdate_and_forbidBoundsUpdate_work_as_expected() public {
-        // reverts if caller is not configurator
-        vm.expectRevert(CallerNotConfiguratorException.selector);
-        priceFeed.allowBoundsUpdate();
-
-        // works as expected otherwise
-        vm.expectEmit(false, false, false, true);
-        emit SetUpdateBoundsAllowed(true);
-
-        vm.prank(configurator);
-        priceFeed.allowBoundsUpdate();
-
-        assertTrue(priceFeed.updateBoundsAllowed(), "Incorrect updateBoundsAllowed");
-
-        // reverts if caller is not controller
-        vm.expectRevert(CallerNotControllerException.selector);
-        priceFeed.forbidBoundsUpdate();
-
-        // works as expected otherwise
-        vm.expectEmit(false, false, false, true);
-        emit SetUpdateBoundsAllowed(false);
-
-        vm.prank(configurator);
-        priceFeed.forbidBoundsUpdate();
-
-        assertFalse(priceFeed.updateBoundsAllowed(), "Incorrect updateBoundsAllowed");
-    }
-
     /// @notice U:[LPPF-6]: `setLimiter` works as expected
     function test_U_LPPF_06_setLimiter_works_as_expected() public {
         priceFeed.hackLPExchangeRate(1 ether);
 
         // reverts if caller is not controller
-        vm.expectRevert(CallerNotControllerException.selector);
+        vm.expectRevert(CallerNotControllerOrConfiguratorException.selector);
         priceFeed.setLimiter(0);
 
         vm.startPrank(configurator);
 
         // reverts if lower bound is zero
-        vm.expectRevert(LowerBoundCantBeZeroException.selector);
+        vm.expectRevert(ILPPriceFeed.LowerBoundCantBeZeroException.selector);
         priceFeed.setLimiter(0);
 
         // reverts if new bounds don't contain current exchange rate
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        vm.expectRevert(ILPPriceFeed.ExchangeRateOutOfBoundsException.selector);
         priceFeed.setLimiter(0.5 ether);
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
+        vm.expectRevert(ILPPriceFeed.ExchangeRateOutOfBoundsException.selector);
         priceFeed.setLimiter(2 ether);
 
         // works as expected otherwise
         vm.expectEmit(false, false, false, true);
-        emit SetBounds(0.99 ether, 1.0098 ether);
+        emit ILPPriceFeed.SetBounds(0.99 ether, 1.0098 ether);
         priceFeed.setLimiter(0.99 ether);
 
         vm.stopPrank();
-    }
-
-    /// @notice U:[LPPF-7]: `updateBounds` works as expected
-    function test_U_LPPF_07_updateBoudns_works_as_expected() public {
-        priceFeed.hackAggregatePrice(2e8);
-        priceFeed.hackLowerBound(1 ether);
-        priceFeed.hackScale(1 ether);
-
-        // permissionless bounds update is forbidden (oh the irony)
-        vm.expectRevert(UpdateBoundsNotAllowedException.selector);
-        priceFeed.updateBounds("some data");
-
-        priceFeed.hackUpdateBoundsAllowed(true);
-
-        // cooldown hasn't passed
-        priceFeed.hackLastBoundsUpdate(block.timestamp);
-        vm.expectRevert(UpdateBoundsBeforeCooldownException.selector);
-        priceFeed.updateBounds("some data");
-
-        priceFeed.hackLastBoundsUpdate(block.timestamp - 1 days);
-
-        // reserve feed is self
-        vm.mockCall(
-            priceOracle,
-            abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)),
-            abi.encode(address(priceFeed))
-        );
-        vm.expectRevert(ReserveFeedMustNotBeSelfException.selector);
-        priceFeed.updateBounds("some data");
-
-        vm.mockCall(
-            priceOracle, abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)), abi.encode(reserveFeed)
-        );
-
-        // reserve exchange rate is out of bounds
-        vm.mockCall(
-            priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.05e8)
-        );
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
-        priceFeed.updateBounds("some data");
-
-        vm.mockCall(
-            priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)), abi.encode(2.02e8)
-        );
-
-        // exchange rate is out of new bounds
-        priceFeed.hackLPExchangeRate(0.99 ether);
-        vm.expectRevert(ExchangeRateOutOfBoundsException.selector);
-        priceFeed.updateBounds("some data");
-
-        priceFeed.hackLPExchangeRate(1.01 ether);
-
-        for (uint256 i; i < 2; ++i) {
-            bool isUpdatable = i == 1;
-            if (isUpdatable) {
-                vm.mockCall(address(reserveFeed), abi.encodeCall(IUpdatablePriceFeed.updatable, ()), abi.encode(true));
-                vm.mockCall(address(reserveFeed), abi.encodeCall(IUpdatablePriceFeed.updatePrice, ("some data")), "");
-
-                vm.expectCall(address(reserveFeed), abi.encodeCall(IUpdatablePriceFeed.updatePrice, ("some data")));
-            } else {
-                vm.mockCallRevert(
-                    address(reserveFeed),
-                    abi.encode(IUpdatablePriceFeed.updatePrice.selector),
-                    "updatePrice should not be called"
-                );
-            }
-
-            vm.expectCall(priceOracle, abi.encodeCall(IPriceOracleV3.priceFeedsRaw, (address(lpToken), true)));
-            vm.expectCall(priceOracle, abi.encodeCall(IPriceOracleV3.getPriceRaw, (address(lpToken), true)));
-
-            vm.expectEmit(false, false, false, true);
-            // lower bound 0.9999 = 2.02 / 2 * 0.99; upper bound 1.019898 = 0.9999 * 1.02
-            emit SetBounds(0.9999 ether, 1.019898 ether);
-
-            priceFeed.updateBounds("some data");
-            assertEq(priceFeed.lowerBound(), 0.9999 ether, "Incorrect lowerBound");
-
-            priceFeed.hackLastBoundsUpdate(block.timestamp - 1 days);
-        }
     }
 }

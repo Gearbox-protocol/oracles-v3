@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2024.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {IMellowVault} from "../../../interfaces/mellow/IMellowVault.sol";
 import {IMellowVaultConfigurator} from "../../../interfaces/mellow/IMellowVaultConfigurator.sol";

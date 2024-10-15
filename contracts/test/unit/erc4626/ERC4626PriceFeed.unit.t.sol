@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 
@@ -25,13 +25,8 @@ contract ERC4626PriceFeedUnitTest is PriceFeedUnitTestHelper {
         vault = new ERC4626Mock(address(asset), "Test Token Vault", "vTEST");
         vault.hackPricePerShare(1.03e6);
 
-        priceFeed = new ERC4626PriceFeed(
-            address(addressProvider),
-            1.02e6,
-            address(vault),
-            address(underlyingPriceFeed),
-            1 days
-        );
+        priceFeed =
+            new ERC4626PriceFeed(address(addressProvider), 1.02e6, address(vault), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[TV-1]: Price feed works as expected

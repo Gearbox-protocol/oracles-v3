@@ -3,6 +3,11 @@
 // (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
-interface IstETHPoolGateway {
-    function pool() external view returns (address);
+contract PythStructs {
+    struct Price {
+        int64 price;
+        uint64 conf;
+        int32 expo;
+        uint256 publishTime;
+    }
 }

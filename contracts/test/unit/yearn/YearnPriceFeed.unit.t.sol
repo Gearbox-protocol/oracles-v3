@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {PriceFeedUnitTestHelper} from "../PriceFeedUnitTestHelper.sol";
 
@@ -20,13 +20,8 @@ contract YearnPriceFeedUnitTest is PriceFeedUnitTestHelper {
         yVault = new YVaultMock(makeAddr("TOKEN"), 6);
         yVault.hackPricePerShare(1.03e6);
 
-        priceFeed = new YearnPriceFeed(
-            address(addressProvider),
-            1.02e6,
-            address(yVault),
-            address(underlyingPriceFeed),
-            1 days
-        );
+        priceFeed =
+            new YearnPriceFeed(address(addressProvider), 1.02e6, address(yVault), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[YFI-1]: Price feed works as expected

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {PriceFeedUnitTestHelper} from "../PriceFeedUnitTestHelper.sol";
 
@@ -29,9 +29,7 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
         _setUp();
         for (uint256 i; i < 8; ++i) {
             underlyings[i] = new ERC20Mock(
-                string.concat("Test Token ", vm.toString(i)),
-                string.concat("TEST", vm.toString(i)),
-                uint8(18 - i)
+                string.concat("Test Token ", vm.toString(i)), string.concat("TEST", vm.toString(i)), uint8(18 - i)
             );
             underlyingPriceFeeds[i] = new PriceFeedMock(int256(1e8 * 4 ** i), 8);
         }
@@ -43,20 +41,12 @@ contract BPTWeightedPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
-            address(addressProvider),
-            1.02 ether,
-            address(0),
-            address(balancerPool),
-            _getUnderlyingPriceFeeds(8)
+            address(addressProvider), 1.02 ether, address(0), address(balancerPool), _getUnderlyingPriceFeeds(8)
         );
 
         vm.expectRevert(ZeroAddressException.selector);
         new BPTWeightedPriceFeedHarness(
-            address(addressProvider),
-            1.02 ether,
-            address(balancerVault),
-            address(0),
-            _getUnderlyingPriceFeeds(8)
+            address(addressProvider), 1.02 ether, address(balancerVault), address(0), _getUnderlyingPriceFeeds(8)
         );
 
         priceFeed = _newBalancerPriceFeed(8, 1.02 ether);

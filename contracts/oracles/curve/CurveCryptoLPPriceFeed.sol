@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
 import {PriceFeedParams} from "../PriceFeedParams.sol";
 import {FixedPoint} from "../../libraries/FixedPoint.sol";
 import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
-import {WAD} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
+import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 
@@ -18,8 +17,8 @@ uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 contract CurveCryptoLPPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
-    uint256 public constant override version = 3_00;
-    PriceFeedType public constant override priceFeedType = PriceFeedType.CURVE_CRYPTO_ORACLE;
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PF_CURVE_CRYPTO_LP_ORACLE";
 
     uint16 public immutable nCoins;
 
@@ -35,14 +34,8 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod2;
     bool public immutable skipCheck2;
 
-    constructor(
-        address addressProvider,
-        uint256 lowerBound,
-        address _token,
-        address _pool,
-        PriceFeedParams[3] memory priceFeeds
-    )
-        LPPriceFeed(addressProvider, _token, _pool) // U:[CRV-C-1]
+    constructor(address _acl, uint256 lowerBound, address _token, address _pool, PriceFeedParams[3] memory priceFeeds)
+        LPPriceFeed(_acl, _token, _pool) // U:[CRV-C-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-C-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-C-2]
     {

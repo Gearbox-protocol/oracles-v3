@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {PriceFeedUnitTestHelper} from "../PriceFeedUnitTestHelper.sol";
 
@@ -34,12 +34,7 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
     /// @notice U:[BAL-S-1]: LP-related functionality works as expected
     function test_U_BAL_S_01_lp_related_functiontionality_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new BPTStablePriceFeed(
-            address(addressProvider),
-            1.02 ether,
-            address(0),
-            _getUnderlyingPriceFeeds(5)
-        );
+        new BPTStablePriceFeed(address(addressProvider), 1.02 ether, address(0), _getUnderlyingPriceFeeds(5));
 
         priceFeed = _newBalancerPriceFeed(5, 1.02 ether);
 
@@ -75,10 +70,7 @@ contract BPTStablePriceFeedUnitTest is PriceFeedUnitTestHelper {
 
     function _newBalancerPriceFeed(uint256 numFeeds, uint256 lowerBound) internal returns (BPTStablePriceFeed) {
         return new BPTStablePriceFeed(
-            address(addressProvider),
-            lowerBound,
-            address(balancerPool),
-            _getUnderlyingPriceFeeds(numFeeds)
+            address(addressProvider), lowerBound, address(balancerPool), _getUnderlyingPriceFeeds(numFeeds)
         );
     }
 
