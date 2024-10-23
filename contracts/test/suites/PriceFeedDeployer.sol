@@ -25,7 +25,8 @@ import {
     TheSamePriceFeedData,
     BalancerLPPriceFeedData,
     RedStonePriceFeedData,
-    PythPriceFeedData
+    PythPriceFeedData,
+    PendlePriceFeedData
 } from "@gearbox-protocol/sdk-gov/contracts/PriceFeedDataLive.sol";
 import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
 import {PriceOracleV3} from "@gearbox-protocol/core-v3/contracts/core/PriceOracleV3.sol";
@@ -48,6 +49,7 @@ import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 import {PythPriceFeed} from "../../oracles/updatable/PythPriceFeed.sol";
 import {MellowLRTPriceFeed} from "../../oracles/mellow/MellowLRTPriceFeed.sol";
+import {PendleTWAPPTPriceFeed} from "../../oracles/pendle/PendleTWAPPTPriceFeed.sol";
 
 import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
 import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
@@ -556,30 +558,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
-        // THE SAME PRICEFEEDS
-        TheSamePriceFeedData[] memory theSamePriceFeeds = theSamePriceFeedsByNetwork[chainId];
-        len = theSamePriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                address token = tokenTestSuite.addressOf(theSamePriceFeeds[i].token);
-
-                if (token != address(0)) {
-                    address tokenHasSamePriceFeed = tokenTestSuite.addressOf(theSamePriceFeeds[i].tokenHasSamePriceFeed);
-                    address pf = _getDeployedFeed(tokenHasSamePriceFeed, theSamePriceFeeds[i].reserve);
-                    if (pf != address(0)) {
-                        setPriceFeed(
-                            token,
-                            pf,
-                            _getDeployedStalenessPeriod(tokenHasSamePriceFeed, theSamePriceFeeds[i].reserve),
-                            theSamePriceFeeds[i].reserve
-                        );
-                    } else {
-                        console.log("WARNING: Price feed for ", ERC20(token).symbol(), " not found");
-                    }
-                }
-            }
-        }
-
         // YEARN PRICE FEEDS
         SingeTokenPriceFeedData[] memory yearnPriceFeeds = yearnPriceFeedsByNetwork[chainId];
         len = yearnPriceFeeds.length;
@@ -675,6 +653,36 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
+        // PENDLE PT PRICE FEEDS
+        PendlePriceFeedData[] memory pendlePTPriceFeeds = pendlePriceFeedsByNetwork[chainId];
+        len = pendlePTPriceFeeds.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                Tokens t = pendlePTPriceFeeds[i].token;
+                address token = tokenTestSuite.addressOf(t);
+
+                if (token == address(0)) {
+                    continue;
+                }
+
+                address underlying = tokenTestSuite.addressOf(pendlePTPriceFeeds[i].underlying);
+
+                address pf = address(
+                    new PendleTWAPPTPriceFeed(
+                        pendlePTPriceFeeds[i].market,
+                        priceFeeds[underlying],
+                        stalenessPeriods[underlying],
+                        pendlePTPriceFeeds[i].twapWindow
+                    )
+                );
+
+                setPriceFeed(token, pf, pendlePTPriceFeeds[i].reserve);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+        }
+
         priceFeedConfigLength = priceFeedConfig.length;
         priceFeedConfigReserveLength = priceFeedConfigReserve.length;
     }
@@ -700,6 +708,24 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             priceFeedConfig.push(
                 PriceFeedConfig({token: token, priceFeed: priceFeed, stalenessPeriod: stalenessPeriod})
             );
+        }
+
+        _setTheSameAsPFs(token, priceFeed, stalenessPeriod, reserve);
+    }
+
+    function _setTheSameAsPFs(address refToken, address priceFeed, uint32 stalenessPeriod, bool reserve) internal {
+        TheSamePriceFeedData[] memory theSamePriceFeeds = theSamePriceFeedsByNetwork[chainId];
+        uint256 len = theSamePriceFeeds.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                address token = tokenTestSuite.addressOf(theSamePriceFeeds[i].token);
+                address tokenHasSamePriceFeed = tokenTestSuite.addressOf(theSamePriceFeeds[i].tokenHasSamePriceFeed);
+
+                if (refToken == tokenHasSamePriceFeed && reserve == theSamePriceFeeds[i].reserve && token != address(0))
+                {
+                    setPriceFeed(token, priceFeed, stalenessPeriod, theSamePriceFeeds[i].reserve);
+                }
+            }
         }
     }
 
