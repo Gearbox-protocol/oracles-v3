@@ -87,6 +87,7 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
         return FixedPoint.divDown(WAD, assetToPTRate);
     }
 
+    /// @dev Retrieves the current SY and YT indices
     function _getSYandPYIndex() internal view returns (uint256 syIndex, uint256 pyIndex) {
         syIndex = IPendleSY(sy).exchangeRate();
         uint256 pyIndexStored = IPendleYT(yt).pyIndexStored();
