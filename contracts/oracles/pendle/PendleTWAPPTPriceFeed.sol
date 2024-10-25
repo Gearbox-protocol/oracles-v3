@@ -10,6 +10,7 @@ import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.s
 
 import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
 import {IPendleMarket} from "../../interfaces/pendle/IPendleMarket.sol";
+import {IPendleYT, IPendleSY} from "../../interfaces/pendle/IPendleTokens.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 import {PriceFeedParams} from "../PriceFeedParams.sol";
@@ -34,6 +35,12 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
     /// @notice Address of the pendle market where the PT is traded
     address public immutable market;
 
+    /// @notice Address of the Pendle SY connected to the PT
+    address public immutable sy;
+
+    /// @notice Address of the Pendle YT connected to the YT
+    address public immutable yt;
+
     /// @notice Timestamp of the market (and PT) expiry
     uint256 public immutable expiry;
 
@@ -53,7 +60,9 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
         skipCheck = _validatePriceFeed(priceFeed, stalenessPeriod);
         twapWindow = _twapWindow;
 
-        (, address pt,) = IPendleMarket(_market).readTokens();
+        address pt;
+
+        (sy, pt, yt) = IPendleMarket(_market).readTokens();
 
         string memory ptName = IERC20Metadata(pt).name();
 
@@ -78,12 +87,29 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
         return FixedPoint.divDown(WAD, assetToPTRate);
     }
 
+    function _getSYandPYIndex() internal view returns (uint256 syIndex, uint256 pyIndex) {
+        syIndex = IPendleSY(sy).exchangeRate();
+        uint256 pyIndexStored = IPendleYT(yt).pyIndexStored();
+
+        if (IPendleYT(yt).doCacheIndexSameBlock() && IPendleYT(yt).pyIndexLastUpdatedBlock() == block.number) {
+            pyIndex = pyIndexStored;
+        } else {
+            pyIndex = syIndex >= pyIndexStored ? syIndex : pyIndexStored;
+        }
+    }
+
     /// @notice Returns the USD price of the PT token with 8 decimals
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         int256 answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
 
         if (expiry > block.timestamp) {
             answer = int256(FixedPoint.mulDown(uint256(answer), _getPTToAssetRate()));
+        }
+
+        (uint256 syIndex, uint256 pyIndex) = _getSYandPYIndex();
+
+        if (syIndex < pyIndex) {
+            answer = int256(uint256(answer) * syIndex / pyIndex);
         }
 
         return (0, answer, 0, 0, 0);
