@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "main"
+      - "pendle-pt-price-feed"
 
 env:
   HUSKY: 0
