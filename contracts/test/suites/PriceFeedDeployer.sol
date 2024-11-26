@@ -704,7 +704,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                         pendlePTPriceFeeds[i].market,
                         priceFeeds[underlying],
                         stalenessPeriods[underlying],
-                        pendlePTPriceFeeds[i].twapWindow
+                        pendlePTPriceFeeds[i].twapWindow,
+                        false
                     )
                 );
 
