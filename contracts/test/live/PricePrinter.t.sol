@@ -10,7 +10,8 @@ import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceF
 import {AddressProviderV3ACLMock} from
     "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 import {SupportedContracts} from "@gearbox-protocol/sdk-gov/contracts/SupportedContracts.sol";
-import {Tokens, TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
+import "@gearbox-protocol/sdk-gov/contracts/Tokens.sol";
+import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 import {NetworkDetector} from "@gearbox-protocol/sdk-gov/contracts/NetworkDetector.sol";
 import {PriceFeedConfig} from "@gearbox-protocol/core-v3/contracts/test/interfaces/ICreditConfig.sol";
 import {PriceFeedDeployer} from "../suites/PriceFeedDeployer.sol";
@@ -50,7 +51,7 @@ contract PricePrinterTest is Test {
         emit log_string(string.concat("Found ", vm.toString(len), " tokens"));
         for (uint256 i; i < len; ++i) {
             (address token, address priceFeed,,) = pfd.priceFeedConfig(i);
-            Tokens t = pfd.tokenTestSuite().tokenIndexes(token);
+            uint256 t = pfd.tokenTestSuite().tokenIndexes(token);
 
             try IPriceFeed(priceFeed).latestRoundData() returns (uint80, int256 price, uint256, uint256, uint80) {
                 emit log_named_decimal_int(pfd.tokenTestSuite().symbols(t), price, 8);
