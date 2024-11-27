@@ -51,13 +51,17 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
     /// @notice The size of the TWAP observation window
     uint32 public immutable twapWindow;
 
-    constructor(address _market, address _priceFeed, uint32 _stalenessPeriod, uint32 _twapWindow) {
+    /// @notice Whether this price feed prices to SY
+    bool public immutable priceToSy;
+
+    constructor(address _market, address _priceFeed, uint32 _stalenessPeriod, uint32 _twapWindow, bool _priceToSY) {
         market = _market;
         expiry = IPendleMarket(_market).expiry();
         priceFeed = _priceFeed;
         stalenessPeriod = _stalenessPeriod;
         skipCheck = _validatePriceFeed(priceFeed, stalenessPeriod);
         twapWindow = _twapWindow;
+        priceToSy = _priceToSY;
 
         address pt;
 
@@ -65,7 +69,15 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
 
         string memory ptName = IERC20Metadata(pt).name();
 
-        description = string.concat(ptName, " Pendle Market TWAP * ", IPriceFeed(priceFeed).description());
+        description = string(
+            abi.encodePacked(
+                ptName,
+                " Pendle Market TWAP ",
+                priceToSy ? "to SY" : "to asset",
+                " * ",
+                IPriceFeed(priceFeed).description()
+            )
+        );
     }
 
     /// @dev Gets the ln(impliedRate) from the market TWAP
@@ -110,6 +122,10 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
 
         if (syIndex < pyIndex) {
             answer = int256(uint256(answer) * syIndex / pyIndex);
+        }
+
+        if (priceToSy) {
+            answer = int256(FixedPoint.divDown(uint256(answer), syIndex));
         }
 
         return (0, answer, 0, 0, 0);

@@ -670,9 +670,10 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 address pf = address(
                     new PendleTWAPPTPriceFeed(
                         pendlePTPriceFeeds[i].market,
-                        priceFeeds[underlying],
-                        stalenessPeriods[underlying],
-                        pendlePTPriceFeeds[i].twapWindow
+                        _getDeployedFeed(underlying, pendlePTPriceFeeds[i].reserve),
+                        _getDeployedStalenessPeriod(underlying, pendlePTPriceFeeds[i].reserve),
+                        pendlePTPriceFeeds[i].twapWindow,
+                        pendlePTPriceFeeds[i].priceToSy
                     )
                 );
 
