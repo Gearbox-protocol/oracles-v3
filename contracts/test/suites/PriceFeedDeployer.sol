@@ -11,7 +11,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC4626} from "@openzeppelin/contracts/token/ERC20/extensions/ERC4626.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import {Tokens} from "@gearbox-protocol/sdk-gov/contracts/Tokens.sol";
+import "@gearbox-protocol/sdk-gov/contracts/Tokens.sol";
 import {ISupportedContracts, Contracts} from "@gearbox-protocol/sdk-gov/contracts/SupportedContracts.sol";
 import {
     PriceFeedDataLive,
@@ -93,7 +93,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         unchecked {
             for (uint256 i; i < len; ++i) {
                 address pf = chainlinkPriceFeeds[i].priceFeed;
-                Tokens t = chainlinkPriceFeeds[i].token;
+                uint256 t = chainlinkPriceFeeds[i].token;
 
                 address token = tokenTestSuite.addressOf(t);
 
@@ -112,7 +112,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             len = redStonePriceFeeds.length;
             for (uint256 i; i < len; ++i) {
                 RedStonePriceFeedData memory redStonePriceFeedData = redStonePriceFeeds[i];
-                Tokens t = redStonePriceFeedData.token;
+                uint256 t = redStonePriceFeedData.token;
                 address token = tokenTestSuite.addressOf(t);
 
                 address pf = address(
@@ -144,7 +144,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             len = pythPriceFeeds.length;
             for (uint256 i; i < len; ++i) {
                 PythPriceFeedData memory pythPriceFeedData = pythPriceFeeds[i];
-                Tokens t = pythPriceFeedData.token;
+                uint256 t = pythPriceFeedData.token;
                 address token = tokenTestSuite.addressOf(t);
 
                 address pf = address(
@@ -170,7 +170,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             len = boundedPriceFeeds.length;
             unchecked {
                 for (uint256 i = 0; i < len; ++i) {
-                    Tokens t = boundedPriceFeeds[i].token;
+                    uint256 t = boundedPriceFeeds[i].token;
 
                     address token = tokenTestSuite.addressOf(t);
 
@@ -200,7 +200,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             len = compositePriceFeeds.length;
             unchecked {
                 for (uint256 i = 0; i < len; ++i) {
-                    Tokens t = compositePriceFeeds[i].token;
+                    uint256 t = compositePriceFeeds[i].token;
 
                     address token = tokenTestSuite.addressOf(t);
 
@@ -307,7 +307,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             len = crvUSDPriceFeeds.length;
             unchecked {
                 for (uint256 i; i < len; ++i) {
-                    Tokens t = crvUSDPriceFeeds[i].token;
+                    uint256 t = crvUSDPriceFeeds[i].token;
                     address token = tokenTestSuite.addressOf(t);
                     if (token == address(0)) continue;
 
@@ -339,7 +339,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
             unchecked {
                 for (uint256 i; i < len; ++i) {
-                    Tokens lpToken = curvePriceFeeds[i].lpToken;
+                    uint256 lpToken = curvePriceFeeds[i].lpToken;
 
                     uint256 nCoins = curvePriceFeeds[i].assets.length;
                     address pf;
@@ -405,7 +405,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
         unchecked {
             for (uint256 i; i < len; ++i) {
-                Tokens lpToken = curveCryptoPriceFeeds[i].lpToken;
+                uint256 lpToken = curveCryptoPriceFeeds[i].lpToken;
                 uint256 nCoins = curveCryptoPriceFeeds[i].assets.length;
                 address pf;
 
@@ -452,8 +452,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
         // wstETH PRICE FEED
         unchecked {
-            Tokens t = wstethPriceFeedByNetwork[chainId].token;
-            if (t != Tokens.NO_TOKEN) {
+            uint256 t = wstethPriceFeedByNetwork[chainId].token;
+            if (t != TOKEN_NO_TOKEN) {
                 address wsteth = tokenTestSuite.addressOf(t);
 
                 if (wsteth != address(0)) {
@@ -484,7 +484,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
             unchecked {
                 for (uint256 i; i < len; ++i) {
-                    Tokens t = balancerStableLPPriceFeeds[i].lpToken;
+                    uint256 t = balancerStableLPPriceFeeds[i].lpToken;
 
                     address pf;
                     address lpToken = tokenTestSuite.addressOf(t);
@@ -522,7 +522,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
             unchecked {
                 for (uint256 i; i < len; ++i) {
-                    Tokens t = balancerWeightedLPPriceFeeds[i].lpToken;
+                    uint256 t = balancerWeightedLPPriceFeeds[i].lpToken;
 
                     address pf;
                     address lpToken = tokenTestSuite.addressOf(t);
@@ -563,7 +563,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         len = yearnPriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
-                Tokens t = yearnPriceFeeds[i].token;
+                uint256 t = yearnPriceFeeds[i].token;
                 address yVault = tokenTestSuite.addressOf(t);
 
                 if (yVault == address(0)) {
@@ -593,7 +593,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         len = erc4626PriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
-                Tokens t = erc4626PriceFeeds[i].lpToken;
+                uint256 t = erc4626PriceFeeds[i].lpToken;
                 address token = tokenTestSuite.addressOf(t);
 
                 if (token == address(0)) {
@@ -624,7 +624,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         len = mellowLRTPriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
-                Tokens t = mellowLRTPriceFeeds[i].lpToken;
+                uint256 t = mellowLRTPriceFeeds[i].lpToken;
                 address token = tokenTestSuite.addressOf(t);
 
                 if (token == address(0)) {
@@ -658,7 +658,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         len = pendlePTPriceFeeds.length;
         unchecked {
             for (uint256 i; i < len; ++i) {
-                Tokens t = pendlePTPriceFeeds[i].token;
+                uint256 t = pendlePTPriceFeeds[i].token;
                 address token = tokenTestSuite.addressOf(t);
 
                 if (token == address(0)) {
