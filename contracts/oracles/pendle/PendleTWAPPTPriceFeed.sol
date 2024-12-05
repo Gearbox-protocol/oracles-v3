@@ -80,6 +80,11 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
         );
     }
 
+    /// @notice Serialized price feed parameters
+    function serialize() external view returns (bytes memory) {
+        return abi.encode(market, sy, yt, expiry, twapWindow, priceToSy);
+    }
+
     /// @dev Gets the ln(impliedRate) from the market TWAP
     function _getMarketLnImpliedRate() internal view returns (uint256) {
         uint32[] memory secondAgos = new uint32[](2);
