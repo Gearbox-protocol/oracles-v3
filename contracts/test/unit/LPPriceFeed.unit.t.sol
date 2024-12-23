@@ -9,7 +9,6 @@ import {IVersion} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IVer
 import {ILPPriceFeed} from "../../interfaces/ILPPriceFeed.sol";
 import {
     CallerNotConfiguratorException,
-    CallerNotControllerOrConfiguratorException,
     ZeroAddressException
 } from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
@@ -98,8 +97,8 @@ contract LPPriceFeedUnitTest is Test {
     function test_U_LPPF_06_setLimiter_works_as_expected() public {
         priceFeed.hackLPExchangeRate(1 ether);
 
-        // reverts if caller is not controller
-        vm.expectRevert(CallerNotControllerOrConfiguratorException.selector);
+        // reverts if caller is not configurator
+        vm.expectRevert(CallerNotConfiguratorException.selector);
         priceFeed.setLimiter(0);
 
         vm.startPrank(configurator);

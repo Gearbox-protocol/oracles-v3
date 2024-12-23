@@ -7,7 +7,7 @@ import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
-import {ControlledTrait} from "@gearbox-protocol/core-v3/contracts/traits/ControlledTrait.sol";
+import {ACLTrait} from "@gearbox-protocol/core-v3/contracts/traits/ACLTrait.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 
@@ -25,7 +25,7 @@ uint256 constant UPDATE_BOUNDS_COOLDOWN = 1 days;
 ///         It is assumed that the price of an LP token is the product of its exchange rate and some aggregate function
 ///         of underlying tokens prices. This contract simplifies creation of such price feeds and provides standard
 ///         validation of the LP token exchange rate that protects against price manipulation.
-abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait, PriceFeedValidationTrait {
+abstract contract LPPriceFeed is ILPPriceFeed, ACLTrait, SanityCheckTrait, PriceFeedValidationTrait {
     /// @notice Answer precision (always 8 decimals for USD price feeds)
     uint8 public constant override decimals = 8; // U:[LPPF-2]
 
@@ -48,7 +48,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait
     /// @dev Derived price feeds must call `_setLimiter` in their constructor after
     ///      initializing all state variables needed for exchange rate calculation
     constructor(address _acl, address _lpToken, address _lpContract)
-        ControlledTrait(_acl) // U:[LPPF-1]
+        ACLTrait(_acl) // U:[LPPF-1]
         nonZeroAddress(_lpToken) // U:[LPPF-1]
         nonZeroAddress(_lpContract) // U:[LPPF-1]
     {
@@ -106,7 +106,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ControlledTrait, SanityCheckTrait
     function setLimiter(uint256 newLowerBound)
         external
         override
-        controllerOrConfiguratorOnly // U:[LPPF-6]
+        configuratorOnly // U:[LPPF-6]
     {
         _setLimiter(newLowerBound); // U:[LPPF-6]
     }
