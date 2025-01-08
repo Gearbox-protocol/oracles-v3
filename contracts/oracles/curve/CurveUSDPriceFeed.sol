@@ -13,17 +13,17 @@ import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 ///         is reused. Particularly, the same bounding mechanism is applied to the pool exchange rate.
 contract CurveUSDPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_CURVE_USD_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::CURVE_USD";
 
     constructor(
-        address _acl,
+        address _owner,
         uint256 lowerBound,
         address _crvUSD,
         address _pool,
         address _priceFeed,
         uint32 _stalenessPeriod
     )
-        SingleAssetLPPriceFeed(_acl, _crvUSD, _pool, _priceFeed, _stalenessPeriod) // U:[CRV-D-1]
+        SingleAssetLPPriceFeed(_owner, _crvUSD, _pool, _priceFeed, _stalenessPeriod) // U:[CRV-D-1]
     {
         _setLimiter(lowerBound); // U:[CRV-D-1]
     }

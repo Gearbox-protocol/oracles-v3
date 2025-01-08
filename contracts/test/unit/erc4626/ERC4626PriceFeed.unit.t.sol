@@ -25,8 +25,7 @@ contract ERC4626PriceFeedUnitTest is PriceFeedUnitTestHelper {
         vault = new ERC4626Mock(address(asset), "Test Token Vault", "vTEST");
         vault.hackPricePerShare(1.03e6);
 
-        priceFeed =
-            new ERC4626PriceFeed(address(addressProvider), 1.02e6, address(vault), address(underlyingPriceFeed), 1 days);
+        priceFeed = new ERC4626PriceFeed(owner, 1.02e6, address(vault), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[TV-1]: Price feed works as expected

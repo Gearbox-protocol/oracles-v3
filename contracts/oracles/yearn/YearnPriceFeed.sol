@@ -9,13 +9,13 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 /// @title Yearn price feed
 contract YearnPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_YEARN_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::YEARN";
 
     /// @dev Scale of yVault's pricePerShare
     uint256 immutable _scale;
 
-    constructor(address _acl, uint256 lowerBound, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(_acl, _yVault, _yVault, _priceFeed, _stalenessPeriod) // U:[YFI-1]
+    constructor(address _owner, uint256 lowerBound, address _yVault, address _priceFeed, uint32 _stalenessPeriod)
+        SingleAssetLPPriceFeed(_owner, _yVault, _yVault, _priceFeed, _stalenessPeriod) // U:[YFI-1]
     {
         _scale = 10 ** IYVault(_yVault).decimals();
         _setLimiter(lowerBound); // U:[YFI-1]

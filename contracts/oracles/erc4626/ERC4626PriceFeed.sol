@@ -10,7 +10,7 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 /// @title ERC4626 vault shares price feed
 contract ERC4626PriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_ERC4626_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::ERC4626";
 
     /// @dev Amount of shares comprising a single unit (accounting for decimals)
     uint256 immutable _shareUnit;
@@ -18,8 +18,8 @@ contract ERC4626PriceFeed is SingleAssetLPPriceFeed {
     /// @dev Amount of underlying asset comprising a single unit (accounting for decimals)
     uint256 immutable _assetUnit;
 
-    constructor(address _acl, uint256 lowerBound, address _vault, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(_acl, _vault, _vault, _priceFeed, _stalenessPeriod) // U:[TV-1]
+    constructor(address _owner, uint256 lowerBound, address _vault, address _priceFeed, uint32 _stalenessPeriod)
+        SingleAssetLPPriceFeed(_owner, _vault, _vault, _priceFeed, _stalenessPeriod) // U:[TV-1]
     {
         _shareUnit = 10 ** IERC4626(_vault).decimals();
         _assetUnit = 10 ** ERC20(IERC4626(_vault).asset()).decimals();

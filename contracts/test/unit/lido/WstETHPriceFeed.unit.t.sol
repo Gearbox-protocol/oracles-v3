@@ -20,9 +20,7 @@ contract WstETHPriceFeedUnitTest is PriceFeedUnitTestHelper {
         wstETH = new WstETHMock(makeAddr("stETH"));
         wstETH.hackStEthPerToken(1.03 ether);
 
-        priceFeed = new WstETHPriceFeed(
-            address(addressProvider), 1.02 ether, address(wstETH), address(underlyingPriceFeed), 1 days
-        );
+        priceFeed = new WstETHPriceFeed(owner, 1.02 ether, address(wstETH), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[LDO-1]: Price feed works as expected

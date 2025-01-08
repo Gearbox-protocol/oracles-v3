@@ -3,13 +3,15 @@
 // (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
-import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
-import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
-import {ACLTrait} from "@gearbox-protocol/core-v3/contracts/traits/ACLTrait.sol";
-import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+
 import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
+import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
+import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
+
+import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
 
 /// @dev Window size in bps, used to compute upper bound given lower bound
 uint256 constant WINDOW_SIZE = 200;
@@ -25,7 +27,7 @@ uint256 constant UPDATE_BOUNDS_COOLDOWN = 1 days;
 ///         It is assumed that the price of an LP token is the product of its exchange rate and some aggregate function
 ///         of underlying tokens prices. This contract simplifies creation of such price feeds and provides standard
 ///         validation of the LP token exchange rate that protects against price manipulation.
-abstract contract LPPriceFeed is ILPPriceFeed, ACLTrait, SanityCheckTrait, PriceFeedValidationTrait {
+abstract contract LPPriceFeed is ILPPriceFeed, Ownable, SanityCheckTrait, PriceFeedValidationTrait {
     /// @notice Answer precision (always 8 decimals for USD price feeds)
     uint8 public constant override decimals = 8; // U:[LPPF-2]
 
@@ -42,16 +44,16 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLTrait, SanityCheckTrait, Price
     uint256 public override lowerBound;
 
     /// @notice Constructor
-    /// @param _acl Address of the ACL contract
+    /// @param _owner Owner of the price feed that can update exchange rate bounds
     /// @param _lpToken  LP token for which the prices are computed
     /// @param _lpContract LP contract (can be different from LP token)
     /// @dev Derived price feeds must call `_setLimiter` in their constructor after
     ///      initializing all state variables needed for exchange rate calculation
-    constructor(address _acl, address _lpToken, address _lpContract)
-        ACLTrait(_acl) // U:[LPPF-1]
+    constructor(address _owner, address _lpToken, address _lpContract)
         nonZeroAddress(_lpToken) // U:[LPPF-1]
         nonZeroAddress(_lpContract) // U:[LPPF-1]
     {
+        transferOwnership(_owner); // U:[LPPF-1]
         lpToken = _lpToken; // U:[LPPF-1]
         lpContract = _lpContract; // U:[LPPF-1]
     }
@@ -106,7 +108,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, ACLTrait, SanityCheckTrait, Price
     function setLimiter(uint256 newLowerBound)
         external
         override
-        configuratorOnly // U:[LPPF-6]
+        onlyOwner // U:[LPPF-6]
     {
         _setLimiter(newLowerBound); // U:[LPPF-6]
     }

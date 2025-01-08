@@ -7,14 +7,9 @@ import {Test} from "forge-std/Test.sol";
 
 import {IVersion} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IVersion.sol";
 import {ILPPriceFeed} from "../../interfaces/ILPPriceFeed.sol";
-import {
-    CallerNotConfiguratorException,
-    ZeroAddressException
-} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
+import {ZeroAddressException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
-import {AddressProviderV3ACLMock} from
-    "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 
 import {LPPriceFeedHarness} from "./LPPriceFeed.harness.sol";
 
@@ -23,32 +18,28 @@ import {LPPriceFeedHarness} from "./LPPriceFeed.harness.sol";
 contract LPPriceFeedUnitTest is Test {
     LPPriceFeedHarness priceFeed;
 
-    address configurator;
+    address owner;
 
     ERC20Mock lpToken;
     address lpContract;
-    AddressProviderV3ACLMock addressProvider;
 
     function setUp() public {
-        configurator = makeAddr("CONFIGURATOR");
+        owner = makeAddr("OWNER");
 
         lpToken = new ERC20Mock("Test Token", "TEST", 18);
 
         lpContract = makeAddr("LP_CONTRACT");
 
-        vm.prank(configurator);
-        addressProvider = new AddressProviderV3ACLMock();
-
-        priceFeed = new LPPriceFeedHarness(address(addressProvider), address(lpToken), lpContract);
+        priceFeed = new LPPriceFeedHarness(owner, address(lpToken), lpContract);
     }
 
     /// @notice U:[LPPF-1]: Constructor works as expected
     function test_U_LPPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new LPPriceFeedHarness(address(addressProvider), address(0), lpContract);
+        new LPPriceFeedHarness(owner, address(0), lpContract);
 
         vm.expectRevert(ZeroAddressException.selector);
-        new LPPriceFeedHarness(address(addressProvider), address(lpToken), address(0));
+        new LPPriceFeedHarness(owner, address(lpToken), address(0));
 
         assertEq(priceFeed.lpToken(), address(lpToken), "Incorrect lpToken");
         assertEq(priceFeed.lpContract(), address(lpContract), "Incorrect lpContract");
@@ -97,11 +88,11 @@ contract LPPriceFeedUnitTest is Test {
     function test_U_LPPF_06_setLimiter_works_as_expected() public {
         priceFeed.hackLPExchangeRate(1 ether);
 
-        // reverts if caller is not configurator
-        vm.expectRevert(CallerNotConfiguratorException.selector);
+        // reverts if caller is not owner
+        vm.expectRevert("Ownable: caller is not the owner");
         priceFeed.setLimiter(0);
 
-        vm.startPrank(configurator);
+        vm.startPrank(owner);
 
         // reverts if lower bound is zero
         vm.expectRevert(ILPPriceFeed.LowerBoundCantBeZeroException.selector);

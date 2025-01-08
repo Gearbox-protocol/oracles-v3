@@ -80,6 +80,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
     uint256 public immutable chainId;
 
     address acl;
+    address owner;
 
     constructor(uint256 _chainId, address _acl, TokensTestSuite _tokenTestSuite, ISupportedContracts supportedContracts)
         PriceFeedDataLive()
@@ -87,6 +88,8 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
         chainId = _chainId;
         tokenTestSuite = _tokenTestSuite;
         acl = _acl;
+        owner = Ownable(_acl).owner();
+
         // CHAINLINK PRICE FEEDS
         ChainlinkPriceFeedData[] memory chainlinkPriceFeeds = chainlinkPriceFeedsByNetwork[chainId];
         uint256 len = chainlinkPriceFeeds.length;
@@ -315,7 +318,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     address underlying = tokenTestSuite.addressOf(crvUSDPriceFeeds[i].underlying);
                     address pf = address(
                         new CurveUSDPriceFeed(
-                            acl,
+                            owner,
                             ICurvePool(pool).get_virtual_price() * 99 / 100,
                             token,
                             pool,
@@ -384,7 +387,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                         pf = address(
                             new CurveStableLPPriceFeed(
-                                acl,
+                                owner,
                                 ICurvePool(pool).get_virtual_price() * 99 / 100,
                                 tokenTestSuite.addressOf(lpToken),
                                 pool,
@@ -436,7 +439,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 if (pool != address(0) && tokenTestSuite.addressOf(lpToken) != address(0)) {
                     pf = address(
                         new CurveCryptoLPPriceFeed(
-                            acl,
+                            owner,
                             ICurvePool(pool).get_virtual_price() * 99 / 100,
                             tokenTestSuite.addressOf(lpToken),
                             pool,
@@ -461,7 +464,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                     address pf = address(
                         new WstETHPriceFeed(
-                            acl,
+                            owner,
                             IwstETH(wsteth).stEthPerToken() * 99 / 100,
                             wsteth,
                             _getDeployedFeed(steth, wstethPriceFeedByNetwork[chainId].reserve),
@@ -503,7 +506,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                         pf = address(
                             new BPTStablePriceFeed(
-                                acl, IBalancerStablePool(lpToken).getRate() * 99 / 100, lpToken, pfParams
+                                owner, IBalancerStablePool(lpToken).getRate() * 99 / 100, lpToken, pfParams
                             )
                         );
 
@@ -543,7 +546,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                         pf = address(
                             new BPTWeightedPriceFeed(
-                                acl,
+                                owner,
                                 IBalancerWeightedPool(lpToken).getRate() * 99 / 100,
                                 supportedContracts.addressOf(Contracts.BALANCER_VAULT),
                                 lpToken,
@@ -573,7 +576,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pf = address(
                     new YearnPriceFeed(
-                        acl,
+                        owner,
                         IYVault(yVault).pricePerShare() * 99 / 100,
                         yVault,
                         _getDeployedFeed(underlying, yearnPriceFeeds[i].reserve),
@@ -604,7 +607,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pf = address(
                     new ERC4626PriceFeed(
-                        acl,
+                        owner,
                         ERC4626(token).convertToAssets(10 ** ERC4626(token).decimals()) * 99 / 100,
                         token,
                         _getDeployedFeed(underlying, erc4626PriceFeeds[i].reserve),
@@ -638,7 +641,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                 address pf = address(
                     new MellowLRTPriceFeed(
-                        acl,
+                        owner,
                         lowerBound,
                         token,
                         _getDeployedFeed(underlying, mellowLRTPriceFeeds[i].reserve),
@@ -756,7 +759,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             PriceFeedConfig memory pfc = priceFeedConfig[i];
             address token = pfc.token;
 
-            vm.prank(root);
+            vm.prank(owner);
             PriceOracleV3(priceOracle).setPriceFeed(token, pfc.priceFeed, pfc.stalenessPeriod);
         }
 

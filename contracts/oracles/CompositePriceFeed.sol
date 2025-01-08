@@ -16,7 +16,7 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     using LibString for bytes32;
 
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_COMPOSITE_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::COMPOSITE";
 
     uint8 public constant override decimals = 8; // U:[CPF-2]
     bool public constant override skipPriceCheck = true; // U:[CPF-2]

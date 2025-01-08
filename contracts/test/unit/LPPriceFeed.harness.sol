@@ -6,14 +6,14 @@ pragma solidity ^0.8.23;
 import {LPPriceFeed} from "../../oracles/LPPriceFeed.sol";
 
 contract LPPriceFeedHarness is LPPriceFeed {
-    bytes32 public constant override contractType = "PF_ZERO_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::LP";
     uint256 public constant override version = 0;
 
     int256 _answer;
     uint256 _exchangeRate;
     uint256 _scale;
 
-    constructor(address _acl, address _lpToken, address _lpContract) LPPriceFeed(_acl, _lpToken, _lpContract) {}
+    constructor(address _owner, address _lpToken, address _lpContract) LPPriceFeed(_owner, _lpToken, _lpContract) {}
 
     function hackAggregatePrice(int256 answer) external {
         _answer = answer;

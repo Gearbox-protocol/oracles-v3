@@ -37,14 +37,10 @@ contract CurveCryptoLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
     /// @notice U:[CRV-C-1]: LP-related functionality works as expected
     function test_U_CRV_C_01_lp_related_functiontionality_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new CurveCryptoLPPriceFeed(
-            address(addressProvider), 1.02 ether, address(0), address(curvePool), _getUnderlyingPriceFeeds(3)
-        );
+        new CurveCryptoLPPriceFeed(owner, 1.02 ether, address(0), address(curvePool), _getUnderlyingPriceFeeds(3));
 
         vm.expectRevert(ZeroAddressException.selector);
-        new CurveCryptoLPPriceFeed(
-            address(addressProvider), 1.02 ether, lpToken, address(0), _getUnderlyingPriceFeeds(3)
-        );
+        new CurveCryptoLPPriceFeed(owner, 1.02 ether, lpToken, address(0), _getUnderlyingPriceFeeds(3));
 
         priceFeed = _newCurvePriceFeed(3, 1.02 ether);
 
@@ -81,7 +77,7 @@ contract CurveCryptoLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
     function _newCurvePriceFeed(uint256 numFeeds, uint256 lowerBound) internal returns (CurveCryptoLPPriceFeed) {
         return new CurveCryptoLPPriceFeed(
-            address(addressProvider), lowerBound, lpToken, address(curvePool), _getUnderlyingPriceFeeds(numFeeds)
+            owner, lowerBound, lpToken, address(curvePool), _getUnderlyingPriceFeeds(numFeeds)
         );
     }
 

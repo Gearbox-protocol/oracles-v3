@@ -22,9 +22,8 @@ contract CurveUSDPriceFeedUnitTest is PriceFeedUnitTestHelper {
         curvePool = new CurvePoolMock();
         curvePool.hack_price_oracle(1.03 ether);
 
-        priceFeed = new CurveUSDPriceFeed(
-            address(addressProvider), 1.02 ether, crvUSD, address(curvePool), address(underlyingPriceFeed), 1 days
-        );
+        priceFeed =
+            new CurveUSDPriceFeed(owner, 1.02 ether, crvUSD, address(curvePool), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[CRV-D-1]: Price feed works as expected

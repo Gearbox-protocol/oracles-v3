@@ -9,7 +9,7 @@ import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IP
 /// @notice Always returns zero price as answer
 contract ZeroPriceFeed is IPriceFeed {
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_ZERO_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::ZERO";
 
     uint8 public constant override decimals = 8; // U:[ZPF-1]
     string public constant override description = "Zero price feed"; // U:[ZPF-1]

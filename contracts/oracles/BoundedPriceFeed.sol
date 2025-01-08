@@ -17,7 +17,7 @@ contract BoundedPriceFeed is IPriceFeed, SanityCheckTrait, PriceFeedValidationTr
     using LibString for bytes32;
 
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_BOUNDED_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::BOUNDED";
 
     uint8 public constant override decimals = 8; // U:[BPF-2]
     bool public constant override skipPriceCheck = true; // U:[BPF-2]

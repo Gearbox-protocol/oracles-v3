@@ -14,8 +14,8 @@ abstract contract SingleAssetLPPriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod;
     bool public immutable skipCheck;
 
-    constructor(address _acl, address _lpToken, address _lpContract, address _priceFeed, uint32 _stalenessPeriod)
-        LPPriceFeed(_acl, _lpToken, _lpContract) // U:[SAPF-1]
+    constructor(address _owner, address _lpToken, address _lpContract, address _priceFeed, uint32 _stalenessPeriod)
+        LPPriceFeed(_owner, _lpToken, _lpContract) // U:[SAPF-1]
         nonZeroAddress(_priceFeed) // U:[SAPF-1]
     {
         priceFeed = _priceFeed; // U:[SAPF-1]

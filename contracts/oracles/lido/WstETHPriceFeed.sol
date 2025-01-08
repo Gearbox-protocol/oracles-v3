@@ -10,10 +10,10 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 /// @title wstETH price feed
 contract WstETHPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_WSTETH_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::WSTETH";
 
-    constructor(address _acl, uint256 lowerBound, address _wstETH, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(_acl, _wstETH, _wstETH, _priceFeed, _stalenessPeriod) // U:[LDO-1]
+    constructor(address _owner, uint256 lowerBound, address _wstETH, address _priceFeed, uint32 _stalenessPeriod)
+        SingleAssetLPPriceFeed(_owner, _wstETH, _wstETH, _priceFeed, _stalenessPeriod) // U:[LDO-1]
     {
         _setLimiter(lowerBound); // U:[LDO-1]
     }

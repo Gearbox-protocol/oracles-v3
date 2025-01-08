@@ -18,7 +18,7 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_CURVE_CRYPTO_LP_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::CURVE_CRYPTO";
 
     uint16 public immutable nCoins;
 
@@ -34,8 +34,8 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod2;
     bool public immutable skipCheck2;
 
-    constructor(address _acl, uint256 lowerBound, address _token, address _pool, PriceFeedParams[3] memory priceFeeds)
-        LPPriceFeed(_acl, _token, _pool) // U:[CRV-C-1]
+    constructor(address _owner, uint256 lowerBound, address _token, address _pool, PriceFeedParams[3] memory priceFeeds)
+        LPPriceFeed(_owner, _token, _pool) // U:[CRV-C-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-C-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-C-2]
     {

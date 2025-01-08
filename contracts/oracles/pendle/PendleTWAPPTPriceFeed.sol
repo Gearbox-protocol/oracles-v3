@@ -23,7 +23,7 @@ import {LogExpMath} from "../../libraries/LogExpMath.sol";
 ///         3) The PT price is ptToAssetRate * assetPrice;
 contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheckTrait {
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_PENDLE_PT_TWAP_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::PENDLE_PT_TWAP";
     uint8 public constant override decimals = 8;
     string public description;
 
@@ -69,14 +69,8 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
 
         string memory ptName = IERC20Metadata(pt).name();
 
-        description = string(
-            abi.encodePacked(
-                ptName,
-                " Pendle Market TWAP ",
-                priceToSy ? "to SY" : "to asset",
-                " * ",
-                IPriceFeed(priceFeed).description()
-            )
+        description = string.concat(
+            ptName, " Pendle Market TWAP ", priceToSy ? "to SY" : "to asset", " * ", IPriceFeed(priceFeed).description()
         );
     }
 

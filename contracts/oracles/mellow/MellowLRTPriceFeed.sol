@@ -11,13 +11,13 @@ import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 /// @title Mellow LRT price feed
 contract MellowLRTPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_MELLOW_LRT_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::MELLOW_LRT";
 
     /// @dev Amount of base token comprising a single unit (accounting for decimals)
     uint256 immutable _baseTokenUnit;
 
-    constructor(address _acl, uint256 lowerBound, address _vault, address _priceFeed, uint32 _stalenessPeriod)
-        SingleAssetLPPriceFeed(_acl, _vault, _vault, _priceFeed, _stalenessPeriod) // U:[MEL-1]
+    constructor(address _owner, uint256 lowerBound, address _vault, address _priceFeed, uint32 _stalenessPeriod)
+        SingleAssetLPPriceFeed(_owner, _vault, _vault, _priceFeed, _stalenessPeriod) // U:[MEL-1]
     {
         address baseToken = IMellowVault(_vault).configurator().priceOracle().baseTokens(_vault);
         _baseTokenUnit = 10 ** ERC20(baseToken).decimals();

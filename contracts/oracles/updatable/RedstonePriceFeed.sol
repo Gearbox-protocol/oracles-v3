@@ -31,7 +31,7 @@ contract RedstonePriceFeed is IUpdatablePriceFeed, RedstoneConsumerNumericBase {
     // --------------- //
 
     uint256 public constant override version = 3_10;
-    bytes32 public constant override contractType = "PF_REDSTONE_ORACLE";
+    bytes32 public constant override contractType = "PRICE_FEED::REDSTONE";
 
     uint8 public constant override decimals = 8;
     bool public constant override skipPriceCheck = false;

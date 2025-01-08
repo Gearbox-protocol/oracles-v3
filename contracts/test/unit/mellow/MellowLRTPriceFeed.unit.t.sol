@@ -32,9 +32,7 @@ contract MellowLRTPriceFeedUnitTest is PriceFeedUnitTestHelper {
         vault.setStack(1.2e18, 1e18);
         chainlinkOracle.setBaseToken(address(vault), address(asset));
 
-        priceFeed = new MellowLRTPriceFeed(
-            address(addressProvider), 1.2e18, address(vault), address(underlyingPriceFeed), 1 days
-        );
+        priceFeed = new MellowLRTPriceFeed(owner, 1.2e18, address(vault), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[MEL-1]: Price feed works as expected

@@ -14,8 +14,6 @@ import {
 } from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 
 import {PriceFeedMock} from "@gearbox-protocol/core-v3/contracts/test/mocks/oracles/PriceFeedMock.sol";
-import {AddressProviderV3ACLMock} from
-    "@gearbox-protocol/core-v3/contracts/test/mocks/core/AddressProviderV3ACLMock.sol";
 
 import {SingleAssetLPPriceFeedHarness} from "./SingleAssetLPPriceFeed.harness.sol";
 
@@ -24,35 +22,34 @@ import {SingleAssetLPPriceFeedHarness} from "./SingleAssetLPPriceFeed.harness.so
 contract SingleAssetLPPriceFeedUnitTest is Test {
     SingleAssetLPPriceFeedHarness priceFeed;
 
+    address owner;
+
     address lpToken;
     address lpContract;
     PriceFeedMock underlyingPriceFeed;
-    AddressProviderV3ACLMock addressProvider;
 
     function setUp() public {
+        owner = makeAddr("OWNER");
+
         lpToken = makeAddr("LP_TOKEN");
         lpContract = makeAddr("LP_CONTRACT");
-
-        addressProvider = new AddressProviderV3ACLMock();
 
         underlyingPriceFeed = new PriceFeedMock(1e8, 8);
 
         priceFeed = new SingleAssetLPPriceFeedHarness(
-            address(addressProvider), address(lpToken), address(lpContract), address(underlyingPriceFeed), 1 days
+            owner, address(lpToken), address(lpContract), address(underlyingPriceFeed), 1 days
         );
     }
 
     /// @notice U:[SAPF-1]: Constructor works as expected
     function test_U_SAPF_01_constructor_works_as_expected() public {
         vm.expectRevert(ZeroAddressException.selector);
-        new SingleAssetLPPriceFeedHarness(
-            address(addressProvider), address(lpToken), address(lpContract), address(0), 1 days
-        );
+        new SingleAssetLPPriceFeedHarness(owner, address(lpToken), address(lpContract), address(0), 1 days);
 
         PriceFeedMock invalidPriceFeed = new PriceFeedMock(1 ether, 18);
         vm.expectRevert(IncorrectPriceFeedException.selector);
         new SingleAssetLPPriceFeedHarness(
-            address(addressProvider), address(lpToken), address(lpContract), address(invalidPriceFeed), 1 days
+            owner, address(lpToken), address(lpContract), address(invalidPriceFeed), 1 days
         );
 
         assertEq(priceFeed.lpToken(), lpToken, "Incorrect lpToken");
