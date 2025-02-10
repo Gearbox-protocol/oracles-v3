@@ -17,7 +17,7 @@ contract CurveUSDPriceFeed is SingleAssetLPPriceFeed {
 
     constructor(
         address _owner,
-        uint256 lowerBound,
+        uint256 _lowerBound,
         address _crvUSD,
         address _pool,
         address _priceFeed,
@@ -25,7 +25,7 @@ contract CurveUSDPriceFeed is SingleAssetLPPriceFeed {
     )
         SingleAssetLPPriceFeed(_owner, _crvUSD, _pool, _priceFeed, _stalenessPeriod) // U:[CRV-D-1]
     {
-        _setLimiter(lowerBound); // U:[CRV-D-1]
+        _setLimiter(_lowerBound); // U:[CRV-D-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {

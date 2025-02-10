@@ -64,6 +64,9 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
         return string.concat(_descriptionTicker.fromSmallString(), " composite price feed"); // U:[CPF-2]
     }
 
+    /// @notice Empty state serialization
+    function serialize() external pure override returns (bytes memory) {}
+
     /// @notice Returns the USD price of the target asset, computed as target/base price times base/USD price
     function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
         answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[CPF-3]

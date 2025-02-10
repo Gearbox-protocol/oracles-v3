@@ -15,6 +15,9 @@ contract ZeroPriceFeed is IPriceFeed {
     string public constant override description = "Zero price feed"; // U:[ZPF-1]
     bool public constant override skipPriceCheck = true; // U:[ZPF-1]
 
+    /// @notice Empty state serialization
+    function serialize() external pure override returns (bytes memory) {}
+
     /// @notice Returns zero price
     function latestRoundData() external pure override returns (uint80, int256, uint256, uint256, uint80) {
         return (0, 0, 0, 0, 0); // U:[ZPF-2]

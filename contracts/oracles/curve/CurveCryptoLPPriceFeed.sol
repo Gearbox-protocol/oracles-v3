@@ -34,7 +34,13 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
     uint32 public immutable stalenessPeriod2;
     bool public immutable skipCheck2;
 
-    constructor(address _owner, uint256 lowerBound, address _token, address _pool, PriceFeedParams[3] memory priceFeeds)
+    constructor(
+        address _owner,
+        uint256 _lowerBound,
+        address _token,
+        address _pool,
+        PriceFeedParams[3] memory priceFeeds
+    )
         LPPriceFeed(_owner, _token, _pool) // U:[CRV-C-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-C-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-C-2]
@@ -53,7 +59,7 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
         skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
         skipCheck2 = nCoins == 3 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
 
-        _setLimiter(lowerBound); // U:[CRV-C-1]
+        _setLimiter(_lowerBound); // U:[CRV-C-1]
     }
 
     function getAggregatePrice() public view override returns (int256 answer) {

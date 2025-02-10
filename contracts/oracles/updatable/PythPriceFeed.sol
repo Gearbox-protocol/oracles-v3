@@ -102,7 +102,7 @@ contract PythPriceFeed is IUpdatablePriceFeed {
     }
 
     /// @notice Serialized price feed parameters
-    function serialize() external view returns (bytes memory) {
+    function serialize() external view override returns (bytes memory) {
         return abi.encode(token, priceFeedId, pyth, maxConfToPriceRatio);
     }
 

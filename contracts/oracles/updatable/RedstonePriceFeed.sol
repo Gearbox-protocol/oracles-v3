@@ -145,7 +145,7 @@ contract RedstonePriceFeed is IUpdatablePriceFeed, RedstoneConsumerNumericBase {
     }
 
     /// @notice Serialized price feed parameters
-    function serialize() external view returns (bytes memory) {
+    function serialize() external view override returns (bytes memory) {
         address[10] memory signers = [
             signerAddress0,
             signerAddress1,

@@ -64,7 +64,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, Ownable, SanityCheckTrait, PriceF
     }
 
     /// @notice Serialized price feed parameters
-    function serialize() public view virtual returns (bytes memory) {
+    function serialize() public view virtual override returns (bytes memory) {
         uint256 lb = lowerBound;
         return abi.encode(lpToken, lpContract, lb, _calcUpperBound(lb));
     }

@@ -75,7 +75,7 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
     }
 
     /// @notice Serialized price feed parameters
-    function serialize() external view returns (bytes memory) {
+    function serialize() external view override returns (bytes memory) {
         return abi.encode(market, sy, yt, expiry, twapWindow, priceToSy);
     }
 

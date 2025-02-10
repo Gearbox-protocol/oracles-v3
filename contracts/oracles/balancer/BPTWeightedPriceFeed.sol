@@ -96,7 +96,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     uint256 immutable scale6;
     uint256 immutable scale7;
 
-    constructor(address _owner, uint256 lowerBound, address _vault, address _pool, PriceFeedParams[] memory priceFeeds)
+    constructor(address _owner, uint256 _lowerBound, address _vault, address _pool, PriceFeedParams[] memory priceFeeds)
         LPPriceFeed(_owner, _pool, _pool) // U:[BAL-W-1]
         nonZeroAddress(_vault) // U:[BAL-W-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[BAL-W-2]
@@ -164,7 +164,7 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         skipCheck6 = numAssets >= 7 ? _validatePriceFeed(priceFeed6, stalenessPeriod6) : false;
         skipCheck7 = numAssets >= 8 ? _validatePriceFeed(priceFeed7, stalenessPeriod7) : false;
 
-        _setLimiter(lowerBound); // U:[BAL-W-1]
+        _setLimiter(_lowerBound); // U:[BAL-W-1]
     }
 
     /// @notice Serialized price feed parameters

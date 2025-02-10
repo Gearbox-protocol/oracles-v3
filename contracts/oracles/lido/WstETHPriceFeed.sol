@@ -12,10 +12,10 @@ contract WstETHPriceFeed is SingleAssetLPPriceFeed {
     uint256 public constant override version = 3_10;
     bytes32 public constant override contractType = "PRICE_FEED::WSTETH";
 
-    constructor(address _owner, uint256 lowerBound, address _wstETH, address _priceFeed, uint32 _stalenessPeriod)
+    constructor(address _owner, uint256 _lowerBound, address _wstETH, address _priceFeed, uint32 _stalenessPeriod)
         SingleAssetLPPriceFeed(_owner, _wstETH, _wstETH, _priceFeed, _stalenessPeriod) // U:[LDO-1]
     {
-        _setLimiter(lowerBound); // U:[LDO-1]
+        _setLimiter(_lowerBound); // U:[LDO-1]
     }
 
     function getLPExchangeRate() public view override returns (uint256) {
