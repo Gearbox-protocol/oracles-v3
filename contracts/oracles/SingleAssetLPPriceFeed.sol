@@ -20,7 +20,7 @@ abstract contract SingleAssetLPPriceFeed is LPPriceFeed {
     {
         priceFeed = _priceFeed; // U:[SAPF-1]
         stalenessPeriod = _stalenessPeriod; // U:[SAPF-1]
-        skipCheck = _validatePriceFeed(_priceFeed, _stalenessPeriod); // U:[SAPF-1]
+        skipCheck = _validatePriceFeedMetadata(_priceFeed, _stalenessPeriod); // U:[SAPF-1]
     }
 
     function getAggregatePrice() public view override returns (int256 answer) {

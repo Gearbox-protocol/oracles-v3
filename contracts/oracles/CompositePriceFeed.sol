@@ -54,7 +54,7 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
         targetFeedScale = int256(10 ** IPriceFeed(priceFeed0).decimals()); // U:[CPF-1]
         // target/base price feed validation is omitted because it will fail if feed has other than 8 decimals
         skipCheck0 = false; // U:[CPF-1]
-        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1); // U:[CPF-1]
+        skipCheck1 = _validatePriceFeedMetadata(priceFeed1, stalenessPeriod1); // U:[CPF-1]
 
         _descriptionTicker = descriptionTicker.toSmallString();
     }

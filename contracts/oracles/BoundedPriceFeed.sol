@@ -44,7 +44,7 @@ contract BoundedPriceFeed is IPriceFeed, SanityCheckTrait, PriceFeedValidationTr
         if (_upperBound <= 0) revert IncorrectParameterException(); // U:[BPF-1]
         priceFeed = _priceFeed; // U:[BPF-1]
         stalenessPeriod = _stalenessPeriod; // U:[BPF-1]
-        skipCheck = _validatePriceFeed(priceFeed, stalenessPeriod); // U:[BPF-1]
+        skipCheck = _validatePriceFeedMetadata(priceFeed, stalenessPeriod); // U:[BPF-1]
         upperBound = _upperBound; // U:[BPF-1]
         _descriptionTicker = descriptionTicker.toSmallString();
     }

@@ -55,11 +55,11 @@ contract BPTStablePriceFeed is LPPriceFeed {
 
         numAssets = priceFeed2 == address(0) ? 2 : (priceFeed3 == address(0) ? 3 : (priceFeed4 == address(0) ? 4 : 5)); // U:[BAL-S-2]
 
-        skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
-        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
-        skipCheck2 = numAssets > 2 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
-        skipCheck3 = numAssets > 3 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
-        skipCheck4 = numAssets > 4 ? _validatePriceFeed(priceFeed4, stalenessPeriod4) : false;
+        skipCheck0 = _validatePriceFeedMetadata(priceFeed0, stalenessPeriod0);
+        skipCheck1 = _validatePriceFeedMetadata(priceFeed1, stalenessPeriod1);
+        skipCheck2 = numAssets > 2 ? _validatePriceFeedMetadata(priceFeed2, stalenessPeriod2) : false;
+        skipCheck3 = numAssets > 3 ? _validatePriceFeedMetadata(priceFeed3, stalenessPeriod3) : false;
+        skipCheck4 = numAssets > 4 ? _validatePriceFeedMetadata(priceFeed4, stalenessPeriod4) : false;
 
         _setLimiter(_lowerBound); // U:[BAL-S-1]
     }

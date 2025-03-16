@@ -155,14 +155,14 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
         stalenessPeriod6 = numAssets >= 7 ? priceFeeds[index6].stalenessPeriod : 0;
         stalenessPeriod7 = numAssets >= 8 ? priceFeeds[index7].stalenessPeriod : 0;
 
-        skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
-        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
-        skipCheck2 = numAssets >= 3 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
-        skipCheck3 = numAssets >= 4 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
-        skipCheck4 = numAssets >= 5 ? _validatePriceFeed(priceFeed4, stalenessPeriod4) : false;
-        skipCheck5 = numAssets >= 6 ? _validatePriceFeed(priceFeed5, stalenessPeriod5) : false;
-        skipCheck6 = numAssets >= 7 ? _validatePriceFeed(priceFeed6, stalenessPeriod6) : false;
-        skipCheck7 = numAssets >= 8 ? _validatePriceFeed(priceFeed7, stalenessPeriod7) : false;
+        skipCheck0 = _validatePriceFeedMetadata(priceFeed0, stalenessPeriod0);
+        skipCheck1 = _validatePriceFeedMetadata(priceFeed1, stalenessPeriod1);
+        skipCheck2 = numAssets >= 3 ? _validatePriceFeedMetadata(priceFeed2, stalenessPeriod2) : false;
+        skipCheck3 = numAssets >= 4 ? _validatePriceFeedMetadata(priceFeed3, stalenessPeriod3) : false;
+        skipCheck4 = numAssets >= 5 ? _validatePriceFeedMetadata(priceFeed4, stalenessPeriod4) : false;
+        skipCheck5 = numAssets >= 6 ? _validatePriceFeedMetadata(priceFeed5, stalenessPeriod5) : false;
+        skipCheck6 = numAssets >= 7 ? _validatePriceFeedMetadata(priceFeed6, stalenessPeriod6) : false;
+        skipCheck7 = numAssets >= 8 ? _validatePriceFeedMetadata(priceFeed7, stalenessPeriod7) : false;
 
         _setLimiter(_lowerBound); // U:[BAL-W-1]
     }

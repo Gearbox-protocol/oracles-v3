@@ -59,7 +59,7 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
         expiry = IPendleMarket(_market).expiry();
         priceFeed = _priceFeed;
         stalenessPeriod = _stalenessPeriod;
-        skipCheck = _validatePriceFeed(priceFeed, stalenessPeriod);
+        skipCheck = _validatePriceFeedMetadata(priceFeed, stalenessPeriod);
         twapWindow = _twapWindow;
         priceToSy = _priceToSY;
 

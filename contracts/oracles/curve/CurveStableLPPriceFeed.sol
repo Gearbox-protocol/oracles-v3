@@ -56,10 +56,10 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
 
         nCoins = priceFeed2 == address(0) ? 2 : (priceFeed3 == address(0) ? 3 : 4); // U:[CRV-S-2]
 
-        skipCheck0 = _validatePriceFeed(priceFeed0, stalenessPeriod0);
-        skipCheck1 = _validatePriceFeed(priceFeed1, stalenessPeriod1);
-        skipCheck2 = nCoins > 2 ? _validatePriceFeed(priceFeed2, stalenessPeriod2) : false;
-        skipCheck3 = nCoins > 3 ? _validatePriceFeed(priceFeed3, stalenessPeriod3) : false;
+        skipCheck0 = _validatePriceFeedMetadata(priceFeed0, stalenessPeriod0);
+        skipCheck1 = _validatePriceFeedMetadata(priceFeed1, stalenessPeriod1);
+        skipCheck2 = nCoins > 2 ? _validatePriceFeedMetadata(priceFeed2, stalenessPeriod2) : false;
+        skipCheck3 = nCoins > 3 ? _validatePriceFeedMetadata(priceFeed3, stalenessPeriod3) : false;
 
         _setLimiter(_lowerBound); // U:[CRV-S-1]
     }
