@@ -38,7 +38,7 @@ import {BPTStablePriceFeed} from "../../oracles/balancer/BPTStablePriceFeed.sol"
 import {BPTWeightedPriceFeed} from "../../oracles/balancer/BPTWeightedPriceFeed.sol";
 import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
 import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
-import {CurveUSDPriceFeed} from "../../oracles/curve/CurveUSDPriceFeed.sol";
+import {CurveTWAPPriceFeed} from "../../oracles/curve/CurveTWAPPriceFeed.sol";
 import {ERC4626PriceFeed} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
 import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
 import {RedstonePriceFeed} from "../../oracles/updatable/RedstonePriceFeed.sol";
@@ -316,10 +316,11 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                     address pool = supportedContracts.addressOf(crvUSDPriceFeeds[i].pool);
                     address underlying = tokenTestSuite.addressOf(crvUSDPriceFeeds[i].underlying);
+
                     address pf = address(
-                        new CurveUSDPriceFeed(
-                            owner,
-                            ICurvePool(pool).get_virtual_price() * 99 / 100,
+                        new CurveTWAPPriceFeed(
+                            0,
+                            1e18,
                             token,
                             pool,
                             _getDeployedFeed(underlying, crvUSDPriceFeeds[i].reserve),
