@@ -6,26 +6,26 @@ pragma solidity ^0.8.23;
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 
 /// @title LP price feed interface
-interface IFixedRatePriceFeed is IPriceFeed {
+interface IFixedMultiplierPriceFeed is IPriceFeed {
     // ------ //
     // EVENTS //
     // ------ //
 
-    /// @notice Emitted when new LP token rate is set
-    event SetRate(uint256 rate);
+    /// @notice Emitted when new LP token multiplier is set
+    event SetMultiplier(uint256 multiplier);
 
     // ------ //
     // ERRORS //
     // ------ //
 
-    /// @notice Thrown when trying to set exchange rate to zero
-    error RateCantBeZeroException();
+    /// @notice Thrown when trying to set multiplier to zero
+    error MultiplierCantBeZeroException();
 
     // ------- //
     // GETTERS //
     // ------- //
 
-    function rate() external view returns (uint256);
+    function multiplier() external view returns (uint256);
     function scale() external view returns (uint256);
     function lpToken() external view returns (address);
 
@@ -33,5 +33,5 @@ interface IFixedRatePriceFeed is IPriceFeed {
     // CONFIGURATION //
     // ------------- //
 
-    function setRate(uint256 newRate) external;
+    function setMultiplier(uint256 newMultiplier) external;
 }

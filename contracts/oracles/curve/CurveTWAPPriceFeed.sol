@@ -27,7 +27,7 @@ contract CurveTWAPPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     uint256 public constant override version = 3_10;
 
     /// @notice Contract type
-    bytes32 public constant override contractType = "PRICE_FEED::CURVE_USD";
+    bytes32 public constant override contractType = "PRICE_FEED::CURVE_TWAP";
 
     /// @notice Answer precision (always 8 decimals for USD price feeds)
     uint8 public constant override decimals = 8;
