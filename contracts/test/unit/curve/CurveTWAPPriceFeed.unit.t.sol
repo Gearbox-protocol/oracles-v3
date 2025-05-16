@@ -32,7 +32,14 @@ contract CurveTWAPPriceFeedUnitTest is PriceFeedUnitTestHelper {
         upperBound = 1.05 ether;
 
         priceFeed = new CurveTWAPPriceFeed(
-            lowerBound, upperBound, token, address(curvePool), address(underlyingPriceFeed), 1 days
+            lowerBound,
+            upperBound,
+            false,
+            token,
+            address(curvePool),
+            address(underlyingPriceFeed),
+            1 days,
+            "TOKEN / USDC"
         );
     }
 
@@ -44,12 +51,17 @@ contract CurveTWAPPriceFeedUnitTest is PriceFeedUnitTestHelper {
         assertEq(priceFeed.priceFeed(), address(underlyingPriceFeed), "Incorrect price feed");
         assertEq(priceFeed.lowerBound(), lowerBound, "Incorrect lower bound");
         assertEq(priceFeed.upperBound(), upperBound, "Incorrect upper bound");
-        assertEq(priceFeed.description(), "TOKEN / USD Curve TWAP price feed", "Incorrect description");
+        assertEq(priceFeed.description(), "TOKEN / USDC Curve TWAP price feed", "Incorrect description");
 
         // latestRoundData
-        vm.expectCall(address(curvePool), abi.encodeCall(ICurvePool.price_oracle, ()));
+        vm.expectCall(address(curvePool), abi.encodeWithSignature("price_oracle()"));
         (, int256 price,,,) = priceFeed.latestRoundData();
         assertEq(price, int256((1.03 ether * 2e8) / WAD), "Incorrect price");
+
+        curvePool.hack_withIndex(true);
+        vm.expectCall(address(curvePool), abi.encodeWithSignature("price_oracle(uint256)", 0));
+        (, int256 price2,,,) = priceFeed.latestRoundData();
+        assertEq(price2, int256((1.03 ether * 2e8) / WAD), "Incorrect price");
     }
 
     /// @notice U:[CTWAP-2]: Price feed handles exchange rate bounds properly
@@ -82,10 +94,12 @@ contract CurveTWAPPriceFeedUnitTest is PriceFeedUnitTestHelper {
         new CurveTWAPPriceFeed(
             lowerBound,
             lowerBound - 1, // Upper less than lower
+            false,
             token,
             address(curvePool),
             address(underlyingPriceFeed),
-            1 days
+            1 days,
+            "TOKEN / USDC"
         );
     }
 }

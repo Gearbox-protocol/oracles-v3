@@ -20,7 +20,7 @@ contract ConstantPriceFeedUnitTest is Test {
         // Mock token symbol call
         vm.mockCall(token, abi.encodeCall(IERC20Metadata.symbol, ()), abi.encode("TKN"));
 
-        priceFeed = new ConstantPriceFeed(token, constantPrice);
+        priceFeed = new ConstantPriceFeed(token, constantPrice, "TKN / USD");
     }
 
     /// @notice U:[CPF-1]: Price feed initialization works as expected
@@ -58,14 +58,14 @@ contract ConstantPriceFeedUnitTest is Test {
     function test_U_CPF_4_constructor_validation() public {
         // Test with zero address token
         vm.expectRevert();
-        new ConstantPriceFeed(address(0), constantPrice);
+        new ConstantPriceFeed(address(0), constantPrice, "TKN / USD");
 
         // Test with zero price
         vm.expectRevert(IncorrectPriceException.selector);
-        new ConstantPriceFeed(token, 0);
+        new ConstantPriceFeed(token, 0, "TKN / USD");
 
         // Test with negative price
         vm.expectRevert(IncorrectPriceException.selector);
-        new ConstantPriceFeed(token, -1);
+        new ConstantPriceFeed(token, -1, "TKN / USD");
     }
 }
