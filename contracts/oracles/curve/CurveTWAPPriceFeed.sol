@@ -9,7 +9,6 @@ import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IP
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 /// @title Curve TWAP price feed
 /// @notice Computes price of coin 1 in a Curve pool in terms of units of coin 0, based on the pool's TWAP, which is then
@@ -39,7 +38,7 @@ contract CurveTWAPPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     /// @notice Indicates that price oracle can skip checks for this price feed's answers
     bool public constant override skipPriceCheck = true;
 
-    /// @notice token token address
+    /// @notice Token address
     address public immutable token;
 
     /// @notice Curve pool address
@@ -85,7 +84,7 @@ contract CurveTWAPPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
         uint32 _stalenessPeriod,
         string memory _descriptionTicker
     ) nonZeroAddress(_token) nonZeroAddress(_pool) nonZeroAddress(_priceFeed) {
-        if (_upperBound < _lowerBound) revert UpperBoundTooLowException();
+        if (_upperBound <= _lowerBound) revert UpperBoundTooLowException();
 
         token = _token;
         pool = _pool;
