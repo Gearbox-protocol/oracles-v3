@@ -24,7 +24,7 @@ contract ConstantPriceFeedUnitTest is Test {
     }
 
     /// @notice U:[CPF-1]: Price feed initialization works as expected
-    function test_U_CPF_1_initialization() public {
+    function test_U_CPF_1_initialization() public view {
         assertEq(priceFeed.price(), constantPrice, "Incorrect constant price");
         assertEq(priceFeed.description(), "TKN / USD constant price feed", "Incorrect description");
         assertEq(priceFeed.decimals(), 8, "Incorrect decimals");
@@ -33,7 +33,7 @@ contract ConstantPriceFeedUnitTest is Test {
     }
 
     /// @notice U:[CPF-2]: Price feed returns constant price as expected
-    function test_U_CPF_2_latestRoundData() public {
+    function test_U_CPF_2_latestRoundData() public view {
         (uint80 roundId, int256 answer, uint256 startedAt, uint256 updatedAt, uint80 answeredInRound) =
             priceFeed.latestRoundData();
 
@@ -45,7 +45,7 @@ contract ConstantPriceFeedUnitTest is Test {
     }
 
     /// @notice U:[CPF-3]: Price feed serialization works as expected
-    function test_U_CPF_3_serialize() public {
+    function test_U_CPF_3_serialize() public view {
         bytes memory serialized = priceFeed.serialize();
         (int256 serializedPrice) = abi.decode(serialized, (int256));
 
