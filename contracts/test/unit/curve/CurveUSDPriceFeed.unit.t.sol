@@ -34,7 +34,7 @@ contract CurveUSDPriceFeedUnitTest is PriceFeedUnitTestHelper {
         assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
         // overriden functions
-        vm.expectCall(address(curvePool), abi.encodeCall(ICurvePool.price_oracle, ()));
+        vm.expectCall(address(curvePool), abi.encodeWithSignature("price_oracle()"));
         assertEq(priceFeed.getLPExchangeRate(), 1.03 ether, "Incorrect getLPExchangeRate");
         assertEq(priceFeed.getScale(), 1 ether, "Incorrect getScale");
     }

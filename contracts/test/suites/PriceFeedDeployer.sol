@@ -335,6 +335,133 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
+        // wstETH PRICE FEED
+        unchecked {
+            uint256 t = wstethPriceFeedByNetwork[chainId].token;
+            if (t != TOKEN_NO_TOKEN) {
+                address wsteth = tokenTestSuite.addressOf(t);
+
+                if (wsteth != address(0)) {
+                    address steth = IwstETH(wsteth).stETH();
+
+                    address pf = address(
+                        new WstETHPriceFeed(
+                            owner,
+                            IwstETH(wsteth).stEthPerToken() * 99 / 100,
+                            wsteth,
+                            _getDeployedFeed(steth, wstethPriceFeedByNetwork[chainId].reserve),
+                            _getDeployedStalenessPeriod(steth, wstethPriceFeedByNetwork[chainId].reserve)
+                        )
+                    );
+
+                    setPriceFeed(wsteth, pf, wstethPriceFeedByNetwork[chainId].reserve);
+
+                    string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                    vm.label(pf, description);
+                }
+            }
+        }
+
+        // ERC4626 PRICE FEEDS
+        GenericLPPriceFeedData[] memory erc4626PriceFeeds = erc4626PriceFeedsByNetwork[chainId];
+        len = erc4626PriceFeeds.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                uint256 t = erc4626PriceFeeds[i].lpToken;
+                address token = tokenTestSuite.addressOf(t);
+
+                if (token == address(0)) {
+                    continue;
+                }
+
+                address underlying = tokenTestSuite.addressOf(erc4626PriceFeeds[i].underlying);
+
+                address pf = address(
+                    new ERC4626PriceFeed(
+                        owner,
+                        ERC4626(token).convertToAssets(10 ** ERC4626(token).decimals()) * 99 / 100,
+                        token,
+                        _getDeployedFeed(underlying, erc4626PriceFeeds[i].reserve),
+                        _getDeployedStalenessPeriod(underlying, erc4626PriceFeeds[i].reserve)
+                    )
+                );
+
+                setPriceFeed(token, pf, erc4626PriceFeeds[i].reserve);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+        }
+
+        // MELLOW LRT PRICE FEEDS
+        GenericLPPriceFeedData[] memory mellowLRTPriceFeeds = mellowLRTPriceFeedsByNetwork[chainId];
+        len = mellowLRTPriceFeeds.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                uint256 t = mellowLRTPriceFeeds[i].lpToken;
+                address token = tokenTestSuite.addressOf(t);
+
+                if (token == address(0)) {
+                    continue;
+                }
+
+                address underlying = tokenTestSuite.addressOf(mellowLRTPriceFeeds[i].underlying);
+
+                uint256 lowerBound;
+                try IMellowVault(token).calculateStack() returns (IMellowVault.ProcessWithdrawalsStack memory stack) {
+                    lowerBound = stack.totalValue * WAD * 99 / (stack.totalSupply * 100);
+                } catch {
+                    continue;
+                }
+
+                address pf = address(
+                    new MellowLRTPriceFeed(
+                        owner,
+                        lowerBound,
+                        token,
+                        _getDeployedFeed(underlying, mellowLRTPriceFeeds[i].reserve),
+                        _getDeployedStalenessPeriod(underlying, mellowLRTPriceFeeds[i].reserve)
+                    )
+                );
+
+                setPriceFeed(token, pf, mellowLRTPriceFeeds[i].reserve);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+        }
+
+        // PENDLE PT PRICE FEEDS
+        PendlePriceFeedData[] memory pendlePTPriceFeeds = pendlePriceFeedsByNetwork[chainId];
+        len = pendlePTPriceFeeds.length;
+        unchecked {
+            for (uint256 i; i < len; ++i) {
+                uint256 t = pendlePTPriceFeeds[i].token;
+                address token = tokenTestSuite.addressOf(t);
+
+                if (token == address(0)) {
+                    continue;
+                }
+
+                address underlying = tokenTestSuite.addressOf(pendlePTPriceFeeds[i].underlying);
+
+                address pf = address(
+                    new PendleTWAPPTPriceFeed(
+                        pendlePTPriceFeeds[i].market,
+                        _getDeployedFeed(underlying, pendlePTPriceFeeds[i].reserve),
+                        _getDeployedStalenessPeriod(underlying, pendlePTPriceFeeds[i].reserve),
+                        pendlePTPriceFeeds[i].twapWindow,
+                        pendlePTPriceFeeds[i].priceToSy
+                    )
+                );
+
+                setPriceFeed(token, pf, pendlePTPriceFeeds[i].reserve);
+
+                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
+                vm.label(pf, description);
+            }
+        }
+
         // CURVE STABLE PRICE FEEDS
         {
             CurvePriceFeedData[] memory curvePriceFeeds = curvePriceFeedsByNetwork[chainId];
@@ -453,33 +580,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
-        // wstETH PRICE FEED
-        unchecked {
-            uint256 t = wstethPriceFeedByNetwork[chainId].token;
-            if (t != TOKEN_NO_TOKEN) {
-                address wsteth = tokenTestSuite.addressOf(t);
-
-                if (wsteth != address(0)) {
-                    address steth = IwstETH(wsteth).stETH();
-
-                    address pf = address(
-                        new WstETHPriceFeed(
-                            owner,
-                            IwstETH(wsteth).stEthPerToken() * 99 / 100,
-                            wsteth,
-                            _getDeployedFeed(steth, wstethPriceFeedByNetwork[chainId].reserve),
-                            _getDeployedStalenessPeriod(steth, wstethPriceFeedByNetwork[chainId].reserve)
-                        )
-                    );
-
-                    setPriceFeed(wsteth, pf, wstethPriceFeedByNetwork[chainId].reserve);
-
-                    string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                    vm.label(pf, description);
-                }
-            }
-        }
-
         // BALANCER STABLE PRICEFEEDS
         {
             BalancerLPPriceFeedData[] memory balancerStableLPPriceFeeds = balancerStableLPPriceFeedsByNetwork[chainId];
@@ -544,13 +644,10 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                         // console.log("BV", supportedContracts.addressOf(Contracts.BALANCER_VAULT));
 
+                        address vault = supportedContracts.addressOf(Contracts.BALANCER_VAULT);
                         pf = address(
                             new BPTWeightedPriceFeed(
-                                owner,
-                                IBalancerWeightedPool(lpToken).getRate() * 99 / 100,
-                                supportedContracts.addressOf(Contracts.BALANCER_VAULT),
-                                lpToken,
-                                pfParams
+                                owner, IBalancerWeightedPool(lpToken).getRate() * 99 / 100, vault, lpToken, pfParams
                             )
                         );
 
@@ -585,102 +682,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 );
 
                 setPriceFeed(yVault, pf, yearnPriceFeeds[i].reserve);
-
-                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                vm.label(pf, description);
-            }
-        }
-
-        // ERC4626 PRICE FEEDS
-        GenericLPPriceFeedData[] memory erc4626PriceFeeds = erc4626PriceFeedsByNetwork[chainId];
-        len = erc4626PriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                uint256 t = erc4626PriceFeeds[i].lpToken;
-                address token = tokenTestSuite.addressOf(t);
-
-                if (token == address(0)) {
-                    continue;
-                }
-
-                address underlying = tokenTestSuite.addressOf(erc4626PriceFeeds[i].underlying);
-
-                address pf = address(
-                    new ERC4626PriceFeed(
-                        owner,
-                        ERC4626(token).convertToAssets(10 ** ERC4626(token).decimals()) * 99 / 100,
-                        token,
-                        _getDeployedFeed(underlying, erc4626PriceFeeds[i].reserve),
-                        _getDeployedStalenessPeriod(underlying, erc4626PriceFeeds[i].reserve)
-                    )
-                );
-
-                setPriceFeed(token, pf, erc4626PriceFeeds[i].reserve);
-
-                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                vm.label(pf, description);
-            }
-        }
-
-        // MELLOW LRT PRICE FEEDS
-        GenericLPPriceFeedData[] memory mellowLRTPriceFeeds = mellowLRTPriceFeedsByNetwork[chainId];
-        len = mellowLRTPriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                uint256 t = mellowLRTPriceFeeds[i].lpToken;
-                address token = tokenTestSuite.addressOf(t);
-
-                if (token == address(0)) {
-                    continue;
-                }
-
-                address underlying = tokenTestSuite.addressOf(mellowLRTPriceFeeds[i].underlying);
-
-                IMellowVault.ProcessWithdrawalsStack memory stack = IMellowVault(token).calculateStack();
-                uint256 lowerBound = stack.totalValue * WAD * 99 / (stack.totalSupply * 100);
-
-                address pf = address(
-                    new MellowLRTPriceFeed(
-                        owner,
-                        lowerBound,
-                        token,
-                        _getDeployedFeed(underlying, mellowLRTPriceFeeds[i].reserve),
-                        _getDeployedStalenessPeriod(underlying, mellowLRTPriceFeeds[i].reserve)
-                    )
-                );
-
-                setPriceFeed(token, pf, mellowLRTPriceFeeds[i].reserve);
-
-                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                vm.label(pf, description);
-            }
-        }
-
-        // PENDLE PT PRICE FEEDS
-        PendlePriceFeedData[] memory pendlePTPriceFeeds = pendlePriceFeedsByNetwork[chainId];
-        len = pendlePTPriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                uint256 t = pendlePTPriceFeeds[i].token;
-                address token = tokenTestSuite.addressOf(t);
-
-                if (token == address(0)) {
-                    continue;
-                }
-
-                address underlying = tokenTestSuite.addressOf(pendlePTPriceFeeds[i].underlying);
-
-                address pf = address(
-                    new PendleTWAPPTPriceFeed(
-                        pendlePTPriceFeeds[i].market,
-                        _getDeployedFeed(underlying, pendlePTPriceFeeds[i].reserve),
-                        _getDeployedStalenessPeriod(underlying, pendlePTPriceFeeds[i].reserve),
-                        pendlePTPriceFeeds[i].twapWindow,
-                        pendlePTPriceFeeds[i].priceToSy
-                    )
-                );
-
-                setPriceFeed(token, pf, pendlePTPriceFeeds[i].reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
