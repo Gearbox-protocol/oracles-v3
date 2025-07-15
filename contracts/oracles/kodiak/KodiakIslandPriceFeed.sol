@@ -144,7 +144,7 @@ contract KodiakIslandPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
 
         uint256 totalSupply = IKodiakIsland(kodiakIsland).totalSupply();
 
-        answer = totalValue * int256(WAD) / int256(totalSupply);
+        answer = totalValue / int256(totalSupply);
 
         return (0, answer, 0, 0, 0);
     }
