@@ -2,9 +2,7 @@ name: Release
 
 on:
   push:
-    branches:
-      - "main"
-      - "pendle-pt-price-feed"
+    branches: ["main", "next"]
 
 env:
   HUSKY: 0

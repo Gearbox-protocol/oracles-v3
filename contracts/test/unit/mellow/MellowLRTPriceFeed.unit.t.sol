@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2024.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {IMellowVault} from "../../../interfaces/mellow/IMellowVault.sol";
 
@@ -13,6 +13,7 @@ import {MellowVaultConfiguratorMock} from "../../mocks/mellow/MellowVaultConfigu
 import {ERC20Mock} from "@gearbox-protocol/core-v3/contracts/test/mocks/token/ERC20Mock.sol";
 
 import {MellowLRTPriceFeed} from "../../../oracles/mellow/MellowLRTPriceFeed.sol";
+import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
 contract MellowLRTPriceFeedUnitTest is PriceFeedUnitTestHelper {
     MellowLRTPriceFeed priceFeed;
@@ -31,9 +32,7 @@ contract MellowLRTPriceFeedUnitTest is PriceFeedUnitTestHelper {
         vault.setStack(1.2e18, 1e18);
         chainlinkOracle.setBaseToken(address(vault), address(asset));
 
-        priceFeed = new MellowLRTPriceFeed(
-            address(addressProvider), 1.2e18, address(vault), address(underlyingPriceFeed), 1 days
-        );
+        priceFeed = new MellowLRTPriceFeed(owner, 1.2e18, address(vault), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[MEL-1]: Price feed works as expected

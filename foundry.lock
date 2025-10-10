@@ -1,0 +1,17 @@
+{
+  "lib/@gearbox-protocol/core-v3": {
+    "tag": {
+      "name": "v1.52.0",
+      "rev": "5144d61af7d117f86d3fa9b4e2aa05535e2e5433"
+    }
+  },
+  "lib/@gearbox-protocol/sdk-gov": {
+    "rev": "affbbe5cde72c6f7796d3a4dae9fed305477fa9e"
+  },
+  "lib/@solady": {
+    "tag": {
+      "name": "v0.0.218",
+      "rev": "8d726fb1499f7f1d7459d05379efddcd500dab1a"
+    }
+  }
+}

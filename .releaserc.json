@@ -4,9 +4,9 @@
       "name": "main"
     },
     {
-      "name": "pendle-pt-price-feed",
-      "channel": "pendle",
-      "prerelease": "pendle"
+      "name": "next",
+      "channel": "next",
+      "prerelease": "next"
     }
   ],
   "plugins": [

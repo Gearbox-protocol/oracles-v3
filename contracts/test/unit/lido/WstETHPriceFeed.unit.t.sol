@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {PriceFeedUnitTestHelper} from "../PriceFeedUnitTestHelper.sol";
 
@@ -20,13 +20,7 @@ contract WstETHPriceFeedUnitTest is PriceFeedUnitTestHelper {
         wstETH = new WstETHMock(makeAddr("stETH"));
         wstETH.hackStEthPerToken(1.03 ether);
 
-        priceFeed = new WstETHPriceFeed(
-            address(addressProvider),
-            1.02 ether,
-            address(wstETH),
-            address(underlyingPriceFeed),
-            1 days
-        );
+        priceFeed = new WstETHPriceFeed(owner, 1.02 ether, address(wstETH), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[LDO-1]: Price feed works as expected

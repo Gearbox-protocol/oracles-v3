@@ -5,9 +5,7 @@ pragma solidity ^0.8.17;
 
 interface IPendleYT {
     function doCacheIndexSameBlock() external view returns (bool);
-
     function pyIndexLastUpdatedBlock() external view returns (uint256);
-
     function pyIndexStored() external view returns (uint256);
 }
 

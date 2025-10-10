@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2023.
-pragma solidity ^0.8.17;
+// (c) Gearbox Foundation, 2024.
+pragma solidity ^0.8.23;
 
 import {PriceFeedUnitTestHelper} from "../PriceFeedUnitTestHelper.sol";
 
@@ -22,14 +22,8 @@ contract CurveUSDPriceFeedUnitTest is PriceFeedUnitTestHelper {
         curvePool = new CurvePoolMock();
         curvePool.hack_price_oracle(1.03 ether);
 
-        priceFeed = new CurveUSDPriceFeed(
-            address(addressProvider),
-            1.02 ether,
-            crvUSD,
-            address(curvePool),
-            address(underlyingPriceFeed),
-            1 days
-        );
+        priceFeed =
+            new CurveUSDPriceFeed(owner, 1.02 ether, crvUSD, address(curvePool), address(underlyingPriceFeed), 1 days);
     }
 
     /// @notice U:[CRV-D-1]: Price feed works as expected
@@ -40,7 +34,7 @@ contract CurveUSDPriceFeedUnitTest is PriceFeedUnitTestHelper {
         assertEq(priceFeed.lowerBound(), 1.02 ether, "Incorrect lower bound");
 
         // overriden functions
-        vm.expectCall(address(curvePool), abi.encodeCall(ICurvePool.price_oracle, ()));
+        vm.expectCall(address(curvePool), abi.encodeWithSignature("price_oracle()"));
         assertEq(priceFeed.getLPExchangeRate(), 1.03 ether, "Incorrect getLPExchangeRate");
         assertEq(priceFeed.getScale(), 1 ether, "Incorrect getScale");
     }

@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
 // (c) Gearbox Foundation, 2024.
-pragma solidity ^0.8.17;
+pragma solidity ^0.8.23;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {WAD, SECONDS_PER_YEAR} from "@gearbox-protocol/core-v2/contracts/libraries/Constants.sol";
-import {PriceFeedType} from "@gearbox-protocol/sdk-gov/contracts/PriceFeedType.sol";
+import {WAD, SECONDS_PER_YEAR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
-import {IPriceFeed} from "@gearbox-protocol/core-v2/contracts/interfaces/IPriceFeed.sol";
+import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IPendleMarket} from "../../interfaces/pendle/IPendleMarket.sol";
 import {IPendleYT, IPendleSY} from "../../interfaces/pendle/IPendleTokens.sol";
 import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
@@ -23,8 +22,8 @@ import {LogExpMath} from "../../libraries/LogExpMath.sol";
 ///         2) The PT to asset rate is computed as 1 / (e ^ (ln(IR)_avg * timeToExpiry / secondsPerYear));
 ///         3) The PT price is ptToAssetRate * assetPrice;
 contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheckTrait {
-    uint256 public constant override version = 3_00;
-    PriceFeedType public constant override priceFeedType = PriceFeedType.PENDLE_PT_TWAP_ORACLE;
+    uint256 public constant override version = 3_10;
+    bytes32 public constant override contractType = "PRICE_FEED::PENDLE_PT_TWAP";
     uint8 public constant override decimals = 8;
     string public description;
 
@@ -60,7 +59,7 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
         expiry = IPendleMarket(_market).expiry();
         priceFeed = _priceFeed;
         stalenessPeriod = _stalenessPeriod;
-        skipCheck = _validatePriceFeed(priceFeed, stalenessPeriod);
+        skipCheck = _validatePriceFeedMetadata(priceFeed, stalenessPeriod);
         twapWindow = _twapWindow;
         priceToSy = _priceToSY;
 
@@ -70,15 +69,14 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
 
         string memory ptName = IERC20Metadata(pt).name();
 
-        description = string(
-            abi.encodePacked(
-                ptName,
-                " Pendle Market TWAP ",
-                priceToSy ? "to SY" : "to asset",
-                " * ",
-                IPriceFeed(priceFeed).description()
-            )
+        description = string.concat(
+            ptName, " Pendle Market TWAP ", priceToSy ? "to SY" : "to asset", " * ", IPriceFeed(priceFeed).description()
         );
+    }
+
+    /// @notice Serialized price feed parameters
+    function serialize() external view override returns (bytes memory) {
+        return abi.encode(market, sy, yt, expiry, twapWindow, priceToSy);
     }
 
     /// @dev Gets the ln(impliedRate) from the market TWAP
