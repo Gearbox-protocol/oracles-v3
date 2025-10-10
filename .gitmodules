@@ -1,7 +1,6 @@
 [submodule "lib/@gearbox-protocol/core-v3"]
 	path = lib/@gearbox-protocol/core-v3
 	url = https://github.com/Gearbox-protocol/core-v3
-	branch = next
 [submodule "lib/@gearbox-protocol/sdk-gov"]
 	path = lib/@gearbox-protocol/sdk-gov
 	url = https://github.com/Gearbox-protocol/sdk-gov
