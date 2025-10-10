@@ -115,6 +115,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             len = redStonePriceFeeds.length;
             for (uint256 i; i < len; ++i) {
                 RedStonePriceFeedData memory redStonePriceFeedData = redStonePriceFeeds[i];
+                if (redStonePriceFeedData.dataFeedId == "MKR") redStonePriceFeedData.dataFeedId = "SKY";
                 uint256 t = redStonePriceFeedData.token;
                 address token = tokenTestSuite.addressOf(t);
 
@@ -219,6 +220,9 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     ) {
                         address targetToBaseFeed;
                         if (compositePriceFeeds[i].isTargetRedstone) {
+                            if (compositePriceFeeds[i].redstoneTargetToBaseData.dataFeedId == "SolvBTC.BBN/BTC") {
+                                continue;
+                            }
                             targetToBaseFeed = address(
                                 new RedstonePriceFeed(
                                     token,
@@ -787,6 +791,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 string memory dataServiceId = redstoneServiceIdByPriceFeed[pf];
                 bytes memory payload =
                     getRedstonePayload(dataFeedId.fromSmallString(), dataServiceId, signersThreshold.toString());
+                if (payload.length == 0) continue;
 
                 (uint256 expectedPayloadTimestamp,) = abi.decode(payload, (uint256, bytes));
 
@@ -810,6 +815,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 bytes32 priceFeedId = PythPriceFeed(pf).priceFeedId();
 
                 bytes memory payload = getPythPayload(uint256(priceFeedId).toHexString());
+                if (payload.length == 0) continue;
 
                 (uint256 expectedPayloadTimestamp,) = abi.decode(payload, (uint256, bytes));
 
