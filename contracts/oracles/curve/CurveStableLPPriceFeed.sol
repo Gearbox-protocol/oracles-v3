@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
@@ -12,7 +12,7 @@ import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 /// @dev For stableswap pools, aggregate is simply the minimum of underlying tokens prices
 /// @dev Older pools may be decoupled from their LP token, so constructor accepts both token and pool
 contract CurveStableLPPriceFeed is LPPriceFeed {
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::CURVE_STABLE";
 
     uint16 public immutable nCoins;
@@ -64,19 +64,19 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
         _setLimiter(_lowerBound); // U:[CRV-S-1]
     }
 
-    function getAggregatePrice() public view override returns (int256 answer) {
-        answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[CRV-S-2]
+    function getAggregatePriceAndTimestamp() public view override returns (int256 answer, uint256 updatedAt) {
+        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[CRV-S-2]
 
-        int256 answer2 = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
-        if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
+        (int256 answer2, uint256 updatedAt2) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
+        (answer, updatedAt) = _agg(answer, updatedAt, answer2, updatedAt2); // U:[CRV-S-2]
 
         if (nCoins > 2) {
-            answer2 = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
-            if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
+            (answer2, updatedAt2) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
+            (answer, updatedAt) = _agg(answer, updatedAt, answer2, updatedAt2); // U:[CRV-S-2]
 
             if (nCoins > 3) {
-                answer2 = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
-                if (answer2 < answer) answer = answer2; // U:[CRV-S-2]
+                (answer2, updatedAt2) = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
+                (answer, updatedAt) = _agg(answer, updatedAt, answer2, updatedAt2); // U:[CRV-S-2]
             }
         }
     }
@@ -87,5 +87,13 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
 
     function getScale() public pure override returns (uint256) {
         return WAD; // U:[CRV-S-1]
+    }
+
+    function _agg(int256 answer1, uint256 updatedAt1, int256 answer2, uint256 updatedAt2)
+        internal
+        view
+        returns (int256 answer, uint256 updatedAt)
+    {
+        return (answer1 < answer2 ? answer1 : answer2, updatedAt1 < updatedAt2 ? updatedAt1 : updatedAt2);
     }
 }

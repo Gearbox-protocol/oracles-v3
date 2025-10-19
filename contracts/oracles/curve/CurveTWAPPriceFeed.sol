@@ -7,7 +7,7 @@ import {LibString} from "@solady/utils/LibString.sol";
 import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
-import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+import {PriceFeedValidationTrait} from "../../traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 
 /// @title Curve TWAP price feed
@@ -27,7 +27,7 @@ contract CurveTWAPPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     error UnknownCurveOracleSignatureException();
 
     /// @notice Contract version
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
 
     /// @notice Contract type
     bytes32 public constant override contractType = "PRICE_FEED::CURVE_TWAP";
@@ -126,16 +126,16 @@ contract CurveTWAPPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     }
 
     /// @notice Returns USD price of the token token with 8 decimals
-    function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
+    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         uint256 exchangeRate = _getExchangeRate();
 
         if (exchangeRate < lowerBound) revert CurveOracleOutOfBoundsException();
         if (exchangeRate > upperBound) exchangeRate = upperBound;
 
-        int256 underlyingPrice = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
+        (int256 answer, uint256 updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
 
-        answer = int256((exchangeRate * uint256(underlyingPrice)) / WAD);
+        answer = int256((exchangeRate * uint256(answer)) / WAD);
 
-        return (0, answer, 0, 0, 0);
+        return (0, answer, 0, updatedAt, 0);
     }
 }

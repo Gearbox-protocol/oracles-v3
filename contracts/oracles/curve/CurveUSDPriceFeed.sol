@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
@@ -12,7 +12,7 @@ import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 ///         While crvUSD is not an LP token itself, the pricing logic is fairly similar, so existing infrastructure
 ///         is reused. Particularly, the same bounding mechanism is applied to the pool exchange rate.
 contract CurveUSDPriceFeed is SingleAssetLPPriceFeed {
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::CURVE_USD";
 
     constructor(

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
@@ -35,6 +35,7 @@ interface ILPPriceFeed is IPriceFeed {
     function lowerBound() external view returns (uint256);
     function upperBound() external view returns (uint256);
 
+    function getAggregatePriceAndTimestamp() external view returns (int256 answer, uint256 updatedAt);
     function getAggregatePrice() external view returns (int256 answer);
     function getLPExchangeRate() external view returns (uint256 exchangeRate);
     function getScale() external view returns (uint256 scale);

@@ -10,7 +10,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IKodiakIsland} from "../../interfaces/kodiak/IKodiakIsland.sol";
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
-import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+import {PriceFeedValidationTrait} from "../../traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 
 /// @title Kodiak Island price feed
@@ -24,7 +24,7 @@ contract KodiakIslandPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
     uint256 public constant SQRT_WAD = 10 ** 9;
 
     /// @notice Contract version
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
 
     /// @notice Contract type
     bytes32 public constant override contractType = "PRICE_FEED::KODIAK_ISLAND";
@@ -133,9 +133,9 @@ contract KodiakIslandPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
     }
 
     /// @notice Returns USD price of the token token with 8 decimals
-    function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
-        int256 price0 = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
-        int256 price1 = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
+    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
+        (int256 price0, uint256 updatedAt0) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
+        (int256 price1, uint256 updatedAt1) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
 
         uint160 sqrtPriceRatioX96 = _getSqrtPriceRatioX96(price0, price1);
         (uint256 balance0, uint256 balance1) = _getNormalizedBalances(sqrtPriceRatioX96);
@@ -144,8 +144,8 @@ contract KodiakIslandPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
 
         uint256 totalSupply = IKodiakIsland(kodiakIsland).totalSupply();
 
-        answer = totalValue / int256(totalSupply);
-
-        return (0, answer, 0, 0, 0);
+        int256 answer = totalValue / int256(totalSupply);
+        uint256 updatedAt = Math.min(updatedAt0, updatedAt1);
+        return (0, answer, 0, updatedAt, 0);
     }
 }

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {LibString} from "@solady/utils/LibString.sol";
 import {IncorrectParameterException} from "@gearbox-protocol/core-v3/contracts/interfaces/IExceptions.sol";
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
-import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+import {PriceFeedValidationTrait} from "../traits/PriceFeedValidationTrait.sol";
 
 /// @title Bounded price feed
 /// @notice Can be used to provide upper-bounded answers for assets that are
@@ -16,7 +16,7 @@ contract BoundedPriceFeed is IPriceFeed, SanityCheckTrait, PriceFeedValidationTr
     using LibString for string;
     using LibString for bytes32;
 
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::BOUNDED";
 
     uint8 public constant override decimals = 8; // U:[BPF-2]
@@ -60,9 +60,9 @@ contract BoundedPriceFeed is IPriceFeed, SanityCheckTrait, PriceFeedValidationTr
     }
 
     /// @notice Returns the upper-bounded USD price of the token
-    function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
-        answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[BPF-3]
-        return (0, _upperBoundValue(answer), 0, 0, 0); // U:[BPF-3]
+    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
+        (int256 answer, uint256 updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[BPF-3]
+        return (0, _upperBoundValue(answer), 0, updatedAt, 0); // U:[BPF-3]
     }
 
     /// @dev Upper-bounds given value

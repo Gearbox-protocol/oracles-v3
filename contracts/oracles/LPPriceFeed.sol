@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import {IUpdatablePriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {PERCENTAGE_FACTOR} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
-import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+import {PriceFeedValidationTrait} from "../traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 
 import {ILPPriceFeed} from "../interfaces/ILPPriceFeed.sol";
@@ -18,9 +17,6 @@ uint256 constant WINDOW_SIZE = 200;
 
 /// @dev Buffer size in bps, used to compute new lower bound given current exchange rate
 uint256 constant BUFFER_SIZE = 100;
-
-/// @dev Minimum interval between two permissionless bounds updates
-uint256 constant UPDATE_BOUNDS_COOLDOWN = 1 days;
 
 /// @title LP price feed
 /// @notice Abstract contract for LP token price feeds.
@@ -70,7 +66,7 @@ abstract contract LPPriceFeed is ILPPriceFeed, Ownable, SanityCheckTrait, PriceF
     }
 
     /// @notice Returns USD price of the LP token with 8 decimals
-    function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
+    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
         uint256 exchangeRate = getLPExchangeRate();
         uint256 lb = lowerBound;
         if (exchangeRate < lb) revert ExchangeRateOutOfBoundsException(); // U:[LPPF-3]
@@ -78,8 +74,15 @@ abstract contract LPPriceFeed is ILPPriceFeed, Ownable, SanityCheckTrait, PriceF
         uint256 ub = _calcUpperBound(lb);
         if (exchangeRate > ub) exchangeRate = ub; // U:[LPPF-3]
 
-        answer = int256((exchangeRate * uint256(getAggregatePrice())) / getScale()); // U:[LPPF-3]
-        return (0, answer, 0, 0, 0);
+        (int256 answer, uint256 updatedAt) = getAggregatePriceAndTimestamp(); // U:[LPPF-3]
+        answer = int256((exchangeRate * uint256(answer)) / getScale()); // U:[LPPF-3]
+        return (0, answer, 0, updatedAt, 0);
+    }
+
+    /// @notice Returns aggregate price of underlying tokens with 8 decimals
+    /// @dev Exists for backward compatability
+    function getAggregatePrice() external view override returns (int256 answer) {
+        (answer,) = getAggregatePriceAndTimestamp();
     }
 
     /// @notice Upper bound for the LP token exchange rate
@@ -89,7 +92,9 @@ abstract contract LPPriceFeed is ILPPriceFeed, Ownable, SanityCheckTrait, PriceF
 
     /// @notice Returns aggregate price of underlying tokens with 8 decimals
     /// @dev Must be implemented by derived price feeds
-    function getAggregatePrice() public view virtual override returns (int256 answer);
+    /// @dev `answer` must be positive
+    /// @dev `updatedAt` must be the earliest of update timestamps of underlying feeds
+    function getAggregatePriceAndTimestamp() public view virtual override returns (int256 answer, uint256 updatedAt);
 
     /// @notice Returns LP token exchange rate
     /// @dev Must be implemented by derived price feeds

@@ -19,8 +19,8 @@ contract LPPriceFeedHarness is LPPriceFeed {
         _answer = answer;
     }
 
-    function getAggregatePrice() public view override returns (int256 answer) {
-        return _answer;
+    function getAggregatePriceAndTimestamp() public view override returns (int256 answer, uint256 updatedAt) {
+        return (_answer, block.timestamp);
     }
 
     function hackLPExchangeRate(uint256 exchangeRate) external {

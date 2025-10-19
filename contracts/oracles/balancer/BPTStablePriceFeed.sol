@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
@@ -11,7 +11,7 @@ import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool
 /// @title Balancer stable pool token price feed
 /// @dev Similarly to Curve stableswap, aggregate function is minimum of underlying tokens prices
 contract BPTStablePriceFeed is LPPriceFeed {
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::BALANCER_STABLE";
 
     uint8 public immutable numAssets;
@@ -64,23 +64,23 @@ contract BPTStablePriceFeed is LPPriceFeed {
         _setLimiter(_lowerBound); // U:[BAL-S-1]
     }
 
-    function getAggregatePrice() public view override returns (int256 answer) {
-        answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[BAL-S-2]
+    function getAggregatePriceAndTimestamp() public view override returns (int256 answer, uint256 updatedAt) {
+        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[BAL-S-2]
 
-        int256 answerA = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
-        if (answerA < answer) answer = answerA; // U:[BAL-S-2]
+        (int256 answerA, uint256 updatedAtA) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
+        (answer, updatedAt) = _agg(answer, updatedAt, answerA, updatedAtA); // U:[BAL-S-2]
 
         if (numAssets > 2) {
-            answerA = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
-            if (answerA < answer) answer = answerA; // U:[BAL-S-2]
+            (answerA, updatedAtA) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
+            (answer, updatedAt) = _agg(answer, updatedAt, answerA, updatedAtA); // U:[BAL-S-2]
 
             if (numAssets > 3) {
-                answerA = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
-                if (answerA < answer) answer = answerA; // U:[BAL-S-2]
+                (answerA, updatedAtA) = _getValidatedPrice(priceFeed3, stalenessPeriod3, skipCheck3);
+                (answer, updatedAt) = _agg(answer, updatedAt, answerA, updatedAtA); // U:[BAL-S-2]
 
                 if (numAssets > 4) {
-                    answerA = _getValidatedPrice(priceFeed4, stalenessPeriod4, skipCheck4);
-                    if (answerA < answer) answer = answerA; // U:[BAL-S-2]
+                    (answerA, updatedAtA) = _getValidatedPrice(priceFeed4, stalenessPeriod4, skipCheck4);
+                    (answer, updatedAt) = _agg(answer, updatedAt, answerA, updatedAtA); // U:[BAL-S-2]
                 }
             }
         }
@@ -92,5 +92,13 @@ contract BPTStablePriceFeed is LPPriceFeed {
 
     function getScale() public pure override returns (uint256) {
         return WAD; // U:[BAL-S-1]
+    }
+
+    function _agg(int256 answer1, uint256 updatedAt1, int256 answer2, uint256 updatedAt2)
+        internal
+        view
+        returns (int256 answer, uint256 updatedAt)
+    {
+        return (answer1 < answer2 ? answer1 : answer2, updatedAt1 < updatedAt2 ? updatedAt1 : updatedAt2);
     }
 }

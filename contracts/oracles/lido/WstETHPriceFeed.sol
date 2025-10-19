@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
@@ -9,7 +9,7 @@ import {SingleAssetLPPriceFeed} from "../SingleAssetLPPriceFeed.sol";
 
 /// @title wstETH price feed
 contract WstETHPriceFeed is SingleAssetLPPriceFeed {
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::WSTETH";
 
     constructor(address _owner, uint256 _lowerBound, address _wstETH, address _priceFeed, uint32 _stalenessPeriod)
