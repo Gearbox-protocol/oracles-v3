@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: UNLICENSED
-// Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
 import {LPPriceFeed} from "../../oracles/LPPriceFeed.sol";
@@ -10,17 +8,19 @@ contract LPPriceFeedHarness is LPPriceFeed {
     uint256 public constant override version = 0;
 
     int256 _answer;
+    uint256 _updatedAt;
     uint256 _exchangeRate;
     uint256 _scale;
 
     constructor(address _owner, address _lpToken, address _lpContract) LPPriceFeed(_owner, _lpToken, _lpContract) {}
 
-    function hackAggregatePrice(int256 answer) external {
+    function hackAggregatePriceAndTimestamp(int256 answer, uint256 updatedAt) external {
         _answer = answer;
+        _updatedAt = updatedAt;
     }
 
     function getAggregatePriceAndTimestamp() public view override returns (int256 answer, uint256 updatedAt) {
-        return (_answer, block.timestamp);
+        return (_answer, _updatedAt);
     }
 
     function hackLPExchangeRate(uint256 exchangeRate) external {
