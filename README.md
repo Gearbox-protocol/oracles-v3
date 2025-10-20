@@ -16,7 +16,7 @@ This repository is subject to the Gearbox bug bounty program, per the terms defi
 
 ## Licensing
 
-The primary license for the Gearbox-protocol/integrations-v2 is the Business Source License 1.1 (BUSL-1.1), see [LICENSE](/LICENSE). The files which are NOT licensed under the BUSL-1.1 have appropriate SPDX headers.
+The primary license for the Gearbox-protocol/oracles-v3 is the GNU General Public License v2.0 or later (GPL-2.0-or-later), see [LICENSE](/LICENSE). The files which are NOT licensed under the GPL-2.0-or-later have appropriate SPDX headers.
 
 ## Disclaimer
 
