@@ -5,6 +5,12 @@
       "rev": "5144d61af7d117f86d3fa9b4e2aa05535e2e5433"
     }
   },
+  "lib/@gearbox-protocol/permissionless": {
+    "tag": {
+      "name": "v1.5.0",
+      "rev": "ef0b90dbcd41c13555117ea119ef14c413627612"
+    }
+  },
   "lib/@gearbox-protocol/sdk-gov": {
     "rev": "affbbe5cde72c6f7796d3a4dae9fed305477fa9e"
   },
