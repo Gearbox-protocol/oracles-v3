@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: UNLICENSED
-// Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
 import {PriceFeedUnitTestHelper} from "../PriceFeedUnitTestHelper.sol";
@@ -31,6 +29,7 @@ contract CurveStableLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
 
         for (uint256 i; i < 4; ++i) {
             underlyingPriceFeeds[i] = new PriceFeedMock(int256(1e6 * (100 - i)), 8);
+            underlyingPriceFeeds[i].setParams(0, 0, block.timestamp - (i + 1) * 1 days / 5, 0);
         }
     }
 
@@ -66,8 +65,9 @@ contract CurveStableLPPriceFeedUnitTest is PriceFeedUnitTestHelper {
             priceFeed = _newCurvePriceFeed(numFeeds, 1.02 ether);
             assertEq(priceFeed.nCoins(), numFeeds, "Incorrect nCoins");
 
-            int256 answer = priceFeed.getAggregatePrice();
+            (int256 answer, uint256 updatedAt) = priceFeed.getAggregatePriceAndTimestamp();
             assertEq(answer, int256(1e6 * (101 - numFeeds)), "Incorrect answer");
+            assertEq(updatedAt, block.timestamp - numFeeds * 1 days / 5, "Incorrect update timestamp");
         }
     }
 

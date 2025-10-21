@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: UNLICENSED
-// Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
@@ -16,6 +14,7 @@ contract PriceFeedUnitTestHelper is Test {
 
     function _setUp() internal {
         underlyingPriceFeed = new PriceFeedMock(2e8, 8);
+        underlyingPriceFeed.setParams(0, 0, block.timestamp - 0.5 days, 0);
         vm.mockCall(
             address(underlyingPriceFeed), abi.encodeCall(PriceFeedMock.description, ()), abi.encode("TEST / USD")
         );

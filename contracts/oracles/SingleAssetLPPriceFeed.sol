@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {LPPriceFeed} from "./LPPriceFeed.sol";
@@ -23,7 +23,7 @@ abstract contract SingleAssetLPPriceFeed is LPPriceFeed {
         skipCheck = _validatePriceFeedMetadata(_priceFeed, _stalenessPeriod); // U:[SAPF-1]
     }
 
-    function getAggregatePrice() public view override returns (int256 answer) {
-        answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[SAPF-2]
+    function getAggregatePriceAndTimestamp() public view override returns (int256 answer, uint256 updatedAt) {
+        (answer, updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck); // U:[SAPF-2]
     }
 }

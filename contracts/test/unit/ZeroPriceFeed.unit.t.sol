@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: UNLICENSED
-// Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
@@ -25,7 +23,8 @@ contract ZeroPriceFeedUnitTest is Test {
 
     /// @notice U:[ZPF-2]: `latestRoundData` works as expected
     function test_U_ZPF_02_latestRoundData_works_as_expected() public view {
-        (, int256 answer,,,) = priceFeed.latestRoundData();
+        (, int256 answer,, uint256 updatedAt,) = priceFeed.latestRoundData();
         assertEq(answer, 0, "Incorrect answer");
+        assertEq(updatedAt, block.timestamp, "Incorrect update timestamp");
     }
 }

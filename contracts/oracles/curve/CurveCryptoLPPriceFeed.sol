@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {LPPriceFeed} from "../LPPriceFeed.sol";
@@ -17,7 +17,7 @@ uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 contract CurveCryptoLPPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::CURVE_CRYPTO";
 
     uint16 public immutable nCoins;
@@ -62,16 +62,19 @@ contract CurveCryptoLPPriceFeed is LPPriceFeed {
         _setLimiter(_lowerBound); // U:[CRV-C-1]
     }
 
-    function getAggregatePrice() public view override returns (int256 answer) {
-        answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
+    function getAggregatePriceAndTimestamp() public view override returns (int256 answer, uint256 updatedAt) {
+        (answer, updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0);
         uint256 product = uint256(answer) * WAD_OVER_USD_FEED_SCALE; // U:[CRV-C-2]
 
-        answer = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
+        uint256 updatedAt2;
+        (answer, updatedAt2) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1);
         product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE); // U:[CRV-C-2]
+        if (updatedAt2 < updatedAt) updatedAt = updatedAt2; // U:[CRV-C-2]
 
         if (nCoins == 3) {
-            answer = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
+            (answer, updatedAt2) = _getValidatedPrice(priceFeed2, stalenessPeriod2, skipCheck2);
             product = product.mulDown(uint256(answer) * WAD_OVER_USD_FEED_SCALE); // U:[CRV-C-2]
+            if (updatedAt2 < updatedAt) updatedAt = updatedAt2; // U:[CRV-C-2]
         }
 
         answer = int256(nCoins * product.powDown(WAD / nCoins) / WAD_OVER_USD_FEED_SCALE); // U:[CRV-C-2]

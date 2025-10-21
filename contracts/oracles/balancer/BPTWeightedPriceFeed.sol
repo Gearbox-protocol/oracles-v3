@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -31,7 +31,7 @@ uint256 constant WAD_OVER_USD_FEED_SCALE = 10 ** 10;
 contract BPTWeightedPriceFeed is LPPriceFeed {
     using FixedPoint for uint256;
 
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::BALANCER_WEIGHTED";
 
     /// @notice Balancer vault address
@@ -177,15 +177,18 @@ contract BPTWeightedPriceFeed is LPPriceFeed {
     // PRICING //
     // ------- //
 
-    function getAggregatePrice() public view override returns (int256 answer) {
+    function getAggregatePriceAndTimestamp() public view override returns (int256 answer, uint256 updatedAt) {
         uint256[] memory weights = _getWeightsArray();
 
         uint256 weightedPrice = FixedPoint.ONE;
         uint256 currentBase = FixedPoint.ONE;
+        updatedAt = type(uint256).max;
+        uint256 updatedAtCurrent;
         for (uint256 i = 0; i < numAssets; ++i) {
             (address priceFeed, uint32 stalenessPeriod, bool skipCheck) = _getPriceFeedParams(i);
-            answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
+            (answer, updatedAtCurrent) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
             answer = answer * int256(WAD_OVER_USD_FEED_SCALE);
+            if (updatedAtCurrent < updatedAt) updatedAt = updatedAtCurrent;
 
             currentBase = currentBase.mulDown(uint256(answer).divDown(weights[i]));
             if (i == numAssets - 1 || weights[i] != weights[i + 1]) {

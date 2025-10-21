@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -10,7 +10,7 @@ import {WAD, SECONDS_PER_YEAR} from "@gearbox-protocol/core-v3/contracts/librari
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
 import {IPendleMarket} from "../../interfaces/pendle/IPendleMarket.sol";
 import {IPendleYT, IPendleSY} from "../../interfaces/pendle/IPendleTokens.sol";
-import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+import {PriceFeedValidationTrait} from "../../traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 import {PriceFeedParams} from "../PriceFeedParams.sol";
 import {FixedPoint} from "../../libraries/FixedPoint.sol";
@@ -22,7 +22,7 @@ import {LogExpMath} from "../../libraries/LogExpMath.sol";
 ///         2) The PT to asset rate is computed as 1 / (e ^ (ln(IR)_avg * timeToExpiry / secondsPerYear));
 ///         3) The PT price is ptToAssetRate * assetPrice;
 contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheckTrait {
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::PENDLE_PT_TWAP";
     uint8 public constant override decimals = 8;
     string public description;
@@ -111,7 +111,7 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
 
     /// @notice Returns the USD price of the PT token with 8 decimals
     function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
-        int256 answer = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
+        (int256 answer, uint256 updatedAt) = _getValidatedPrice(priceFeed, stalenessPeriod, skipCheck);
 
         if (expiry > block.timestamp) {
             answer = int256(FixedPoint.mulDown(uint256(answer), _getPTToAssetRate()));
@@ -127,6 +127,6 @@ contract PendleTWAPPTPriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCh
             answer = int256(FixedPoint.divDown(uint256(answer), syIndex));
         }
 
-        return (0, answer, 0, 0, 0);
+        return (0, answer, 0, updatedAt, 0);
     }
 }

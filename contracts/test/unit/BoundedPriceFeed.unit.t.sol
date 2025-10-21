@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: UNLICENSED
-// Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
@@ -25,6 +23,7 @@ contract BoundedPriceFeedUnitTest is Test {
 
     function setUp() public {
         underlyingPriceFeed = new PriceFeedMock(1e8, 8);
+        underlyingPriceFeed.setParams(0, 0, block.timestamp - 0.5 days, 0);
 
         priceFeed = new BoundedPriceFeed(address(underlyingPriceFeed), 1 days, 1.1e8, "TEST / USD");
     }
@@ -56,13 +55,15 @@ contract BoundedPriceFeedUnitTest is Test {
 
     /// @notice U:[BPF-3]: `latestRoundData` works as expected
     function test_U_BPF_03_latestRoundData_works_as_expected() public {
-        (, int256 answer,,,) = priceFeed.latestRoundData();
+        (, int256 answer,, uint256 updatedAt,) = priceFeed.latestRoundData();
         assertEq(answer, 1e8, "Incorrect answer");
+        assertEq(updatedAt, block.timestamp - 0.5 days, "Incorrect update timestamp");
 
         // upper-bounds answer
         underlyingPriceFeed.setPrice(1.2e8);
-        (, answer,,,) = priceFeed.latestRoundData();
+        (, answer,, updatedAt,) = priceFeed.latestRoundData();
         assertEq(answer, 1.1e8, "Incorrect upper bounded answer");
+        assertEq(updatedAt, block.timestamp - 0.5 days, "Incorrect update timestamp");
 
         // reverts on stale answer
         underlyingPriceFeed.setParams(0, 0, block.timestamp - 2 days, 0);

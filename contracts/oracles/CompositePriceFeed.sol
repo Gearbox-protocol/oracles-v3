@@ -1,12 +1,12 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-2.0-or-later
 // Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
+// (c) Gearbox Foundation, 2025.
 pragma solidity ^0.8.23;
 
 import {LibString} from "@solady/utils/LibString.sol";
 import {PriceFeedParams} from "./PriceFeedParams.sol";
 import {IPriceFeed} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IPriceFeed.sol";
-import {PriceFeedValidationTrait} from "@gearbox-protocol/core-v3/contracts/traits/PriceFeedValidationTrait.sol";
+import {PriceFeedValidationTrait} from "../traits/PriceFeedValidationTrait.sol";
 import {SanityCheckTrait} from "@gearbox-protocol/core-v3/contracts/traits/SanityCheckTrait.sol";
 
 /// @title Composite price feed
@@ -15,7 +15,7 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     using LibString for string;
     using LibString for bytes32;
 
-    uint256 public constant override version = 3_10;
+    uint256 public constant override version = 3_11;
     bytes32 public constant override contractType = "PRICE_FEED::COMPOSITE";
 
     uint8 public constant override decimals = 8; // U:[CPF-2]
@@ -68,10 +68,11 @@ contract CompositePriceFeed is IPriceFeed, PriceFeedValidationTrait, SanityCheck
     function serialize() external pure override returns (bytes memory) {}
 
     /// @notice Returns the USD price of the target asset, computed as target/base price times base/USD price
-    function latestRoundData() external view override returns (uint80, int256 answer, uint256, uint256, uint80) {
-        answer = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[CPF-3]
-        int256 answer2 = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1); // U:[CPF-3]
+    function latestRoundData() external view override returns (uint80, int256, uint256, uint256, uint80) {
+        (int256 answer, uint256 updatedAt) = _getValidatedPrice(priceFeed0, stalenessPeriod0, skipCheck0); // U:[CPF-3]
+        (int256 answer2, uint256 updatedAt2) = _getValidatedPrice(priceFeed1, stalenessPeriod1, skipCheck1); // U:[CPF-3]
         answer = (answer * answer2) / targetFeedScale; // U:[CPF-3]
-        return (0, answer, 0, 0, 0);
+        if (updatedAt2 < updatedAt) updatedAt = updatedAt2; // U:[CCF-3]
+        return (0, answer, 0, updatedAt, 0);
     }
 }

@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: UNLICENSED
-// Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
@@ -73,11 +71,21 @@ contract CompositePriceFeedUnitTest is Test {
 
     /// @notice U:[CPF-3]: `latestRoundData` works as expected
     function test_U_CPF_03_latestRoundData_works_as_expected() public {
-        (, int256 answer,,,) = priceFeed.latestRoundData();
+        targetPriceFeed.setParams(0, 0, block.timestamp - 0.3 days, 0);
+        basePriceFeed.setParams(0, 0, block.timestamp - 0.6 days, 0);
+        (, int256 answer,, uint256 updatedAt,) = priceFeed.latestRoundData();
         assertEq(answer, 1e8, "Incorrect answer");
+        assertEq(updatedAt, block.timestamp - 0.6 days, "Incorrect updatedAt");
+
+        targetPriceFeed.setParams(0, 0, block.timestamp - 0.4 days, 0);
+        basePriceFeed.setParams(0, 0, block.timestamp - 0.2 days, 0);
+        (, answer,, updatedAt,) = priceFeed.latestRoundData();
+        assertEq(answer, 1e8, "Incorrect answer");
+        assertEq(updatedAt, block.timestamp - 0.4 days, "Incorrect updatedAt");
 
         // reverts on stale target price feed answer
         targetPriceFeed.setParams(0, 0, block.timestamp - 2 days, 0);
+        basePriceFeed.setParams(0, 0, block.timestamp, 0);
         vm.expectRevert(StalePriceException.selector);
         priceFeed.latestRoundData();
 

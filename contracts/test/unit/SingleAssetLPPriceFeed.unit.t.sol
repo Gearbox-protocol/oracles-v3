@@ -1,6 +1,4 @@
 // SPDX-License-Identifier: UNLICENSED
-// Gearbox Protocol. Generalized leverage for DeFi protocols
-// (c) Gearbox Foundation, 2024.
 pragma solidity ^0.8.23;
 
 import {Test} from "forge-std/Test.sol";
@@ -62,8 +60,10 @@ contract SingleAssetLPPriceFeedUnitTest is Test {
     /// @notice U:[SAPF-2]: `getAggregatePrice` works as expected
     function test_U_SAPF_02_getAggregatePrice_works_as_expected() public {
         // returns same answer as underlying price feed
-        int256 answer = priceFeed.getAggregatePrice();
+        underlyingPriceFeed.setParams(0, 0, block.timestamp - 0.5 days, 0);
+        (int256 answer, uint256 updatedAt) = priceFeed.getAggregatePriceAndTimestamp();
         assertEq(answer, 1e8, "Incorrect answer");
+        assertEq(updatedAt, block.timestamp - 0.5 days, "Incorrect update timestamp");
 
         // reverts on stale answer
         underlyingPriceFeed.setParams(0, 0, block.timestamp - 2 days, 0);
