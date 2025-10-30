@@ -7,3 +7,6 @@
 [submodule "lib/@solady"]
 	path = lib/@solady
 	url = https://github.com/Vectorized/solady
+[submodule "lib/@gearbox-protocol/permissionless"]
+	path = lib/@gearbox-protocol/permissionless
+	url = https://github.com/Gearbox-protocol/permissionless
