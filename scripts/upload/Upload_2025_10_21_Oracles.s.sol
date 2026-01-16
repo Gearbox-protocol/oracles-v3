@@ -7,18 +7,18 @@ import {UploadBytecode} from "@gearbox-protocol/permissionless/script/UploadByte
 import {BoundedPriceFeed} from "../../contracts/oracles/BoundedPriceFeed.sol";
 import {CompositePriceFeed} from "../../contracts/oracles/CompositePriceFeed.sol";
 import {ZeroPriceFeed} from "../../contracts/oracles/ZeroPriceFeed.sol";
-import {BPTStablePriceFeed} from "../../contracts/oracles/balancer/BPTStablePriceFeed.sol";
-import {BPTWeightedPriceFeed} from "../../contracts/oracles/balancer/BPTWeightedPriceFeed.sol";
+// import {BPTStablePriceFeed} from "../../contracts/oracles/balancer/BPTStablePriceFeed.sol";
+// import {BPTWeightedPriceFeed} from "../../contracts/oracles/balancer/BPTWeightedPriceFeed.sol";
 import {CurveCryptoLPPriceFeed} from "../../contracts/oracles/curve/CurveCryptoLPPriceFeed.sol";
 import {CurveStableLPPriceFeed} from "../../contracts/oracles/curve/CurveStableLPPriceFeed.sol";
 import {CurveTWAPPriceFeed} from "../../contracts/oracles/curve/CurveTWAPPriceFeed.sol";
-import {CurveUSDPriceFeed} from "../../contracts/oracles/curve/CurveUSDPriceFeed.sol";
+// import {CurveUSDPriceFeed} from "../../contracts/oracles/curve/CurveUSDPriceFeed.sol";
 import {ERC4626PriceFeed} from "../../contracts/oracles/erc4626/ERC4626PriceFeed.sol";
-import {KodiakIslandPriceFeed} from "../../contracts/oracles/kodiak/KodiakIslandPriceFeed.sol";
+// import {KodiakIslandPriceFeed} from "../../contracts/oracles/kodiak/KodiakIslandPriceFeed.sol";
 import {WstETHPriceFeed} from "../../contracts/oracles/lido/WstETHPriceFeed.sol";
-import {MellowLRTPriceFeed} from "../../contracts/oracles/mellow/MellowLRTPriceFeed.sol";
+// import {MellowLRTPriceFeed} from "../../contracts/oracles/mellow/MellowLRTPriceFeed.sol";
 import {PendleTWAPPTPriceFeed} from "../../contracts/oracles/pendle/PendleTWAPPTPriceFeed.sol";
-import {YearnPriceFeed} from "../../contracts/oracles/yearn/YearnPriceFeed.sol";
+// import {YearnPriceFeed} from "../../contracts/oracles/yearn/YearnPriceFeed.sol";
 
 contract Upload_2025_10_21_Oracles is UploadBytecode {
     function _getContracts() internal pure override returns (Bytecode[] memory bytecodes) {
@@ -43,13 +43,13 @@ contract Upload_2025_10_21_Oracles is UploadBytecode {
 
         bytecodes[3].contractType = "PRICE_FEED::BALANCER_STABLE";
         bytecodes[3].version = 3_11;
-        bytecodes[3].initCode = type(BPTStablePriceFeed).creationCode;
+        // bytecodes[3].initCode = type(BPTStablePriceFeed).creationCode;
         bytecodes[3].source =
             "https://github.com/Gearbox-protocol/oracles-v3/blob/64a386a25d24ad5984926a3f624c93c7c32c92c9/contracts/oracles/balancer/BPTStablePriceFeed.sol";
 
         bytecodes[4].contractType = "PRICE_FEED::BALANCER_WEIGHTED";
         bytecodes[4].version = 3_11;
-        bytecodes[4].initCode = type(BPTWeightedPriceFeed).creationCode;
+        // bytecodes[4].initCode = type(BPTWeightedPriceFeed).creationCode;
         bytecodes[4].source =
             "https://github.com/Gearbox-protocol/oracles-v3/blob/64a386a25d24ad5984926a3f624c93c7c32c92c9/contracts/oracles/balancer/BPTWeightedPriceFeed.sol";
 
@@ -73,7 +73,7 @@ contract Upload_2025_10_21_Oracles is UploadBytecode {
 
         bytecodes[8].contractType = "PRICE_FEED::CURVE_USD";
         bytecodes[8].version = 3_11;
-        bytecodes[8].initCode = type(CurveUSDPriceFeed).creationCode;
+        // bytecodes[8].initCode = type(CurveUSDPriceFeed).creationCode;
         bytecodes[8].source =
             "https://github.com/Gearbox-protocol/oracles-v3/blob/64a386a25d24ad5984926a3f624c93c7c32c92c9/contracts/oracles/curve/CurveUSDPriceFeed.sol";
 
@@ -85,7 +85,7 @@ contract Upload_2025_10_21_Oracles is UploadBytecode {
 
         bytecodes[10].contractType = "PRICE_FEED::KODIAK_ISLAND";
         bytecodes[10].version = 3_11;
-        bytecodes[10].initCode = type(KodiakIslandPriceFeed).creationCode;
+        // bytecodes[10].initCode = type(KodiakIslandPriceFeed).creationCode;
         bytecodes[10].source =
             "https://github.com/Gearbox-protocol/oracles-v3/blob/64a386a25d24ad5984926a3f624c93c7c32c92c9/contracts/oracles/kodiak/KodiakIslandPriceFeed.sol";
 
@@ -97,7 +97,7 @@ contract Upload_2025_10_21_Oracles is UploadBytecode {
 
         bytecodes[12].contractType = "PRICE_FEED::MELLOW_LRT";
         bytecodes[12].version = 3_11;
-        bytecodes[12].initCode = type(MellowLRTPriceFeed).creationCode;
+        // bytecodes[12].initCode = type(MellowLRTPriceFeed).creationCode;
         bytecodes[12].source =
             "https://github.com/Gearbox-protocol/oracles-v3/blob/64a386a25d24ad5984926a3f624c93c7c32c92c9/contracts/oracles/mellow/MellowLRTPriceFeed.sol";
 
@@ -109,7 +109,7 @@ contract Upload_2025_10_21_Oracles is UploadBytecode {
 
         bytecodes[14].contractType = "PRICE_FEED::YEARN";
         bytecodes[14].version = 3_11;
-        bytecodes[14].initCode = type(YearnPriceFeed).creationCode;
+        // bytecodes[14].initCode = type(YearnPriceFeed).creationCode;
         bytecodes[14].source =
             "https://github.com/Gearbox-protocol/oracles-v3/blob/64a386a25d24ad5984926a3f624c93c7c32c92c9/contracts/oracles/yearn/YearnPriceFeed.sol";
     }
