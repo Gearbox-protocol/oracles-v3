@@ -32,30 +32,21 @@ import {IACL} from "@gearbox-protocol/core-v3/contracts/interfaces/base/IACL.sol
 
 import {TokensTestSuite} from "@gearbox-protocol/core-v3/contracts/test/suites/TokensTestSuite.sol";
 
-import {BPTStablePriceFeed} from "../../oracles/balancer/BPTStablePriceFeed.sol";
-import {BPTWeightedPriceFeed} from "../../oracles/balancer/BPTWeightedPriceFeed.sol";
 import {CurveCryptoLPPriceFeed} from "../../oracles/curve/CurveCryptoLPPriceFeed.sol";
 import {CurveStableLPPriceFeed} from "../../oracles/curve/CurveStableLPPriceFeed.sol";
-import {CurveUSDPriceFeed} from "../../oracles/curve/CurveUSDPriceFeed.sol";
 import {ERC4626PriceFeed} from "../../oracles/erc4626/ERC4626PriceFeed.sol";
 import {WstETHPriceFeed} from "../../oracles/lido/WstETHPriceFeed.sol";
 import {RedstonePriceFeed} from "../../oracles/updatable/RedstonePriceFeed.sol";
-import {YearnPriceFeed} from "../../oracles/yearn/YearnPriceFeed.sol";
 import {BoundedPriceFeed} from "../../oracles/BoundedPriceFeed.sol";
 import {CompositePriceFeed} from "../../oracles/CompositePriceFeed.sol";
 import {PriceFeedParams} from "../../oracles/PriceFeedParams.sol";
 import {ZeroPriceFeed} from "../../oracles/ZeroPriceFeed.sol";
 import {PythPriceFeed} from "../../oracles/updatable/PythPriceFeed.sol";
-import {MellowLRTPriceFeed} from "../../oracles/mellow/MellowLRTPriceFeed.sol";
 import {PendleTWAPPTPriceFeed} from "../../oracles/pendle/PendleTWAPPTPriceFeed.sol";
 
-import {IBalancerStablePool} from "../../interfaces/balancer/IBalancerStablePool.sol";
-import {IBalancerWeightedPool} from "../../interfaces/balancer/IBalancerWeightedPool.sol";
 import {ICurvePool} from "../../interfaces/curve/ICurvePool.sol";
 import {IstETHPoolGateway} from "../../interfaces/curve/IstETHPoolGateway.sol";
 import {IwstETH} from "../../interfaces/lido/IwstETH.sol";
-import {IYVault} from "../../interfaces/yearn/IYVault.sol";
-import {IMellowVault} from "../../interfaces/mellow/IMellowVault.sol";
 
 import {WAD} from "@gearbox-protocol/core-v3/contracts/libraries/Constants.sol";
 
@@ -208,13 +199,10 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
 
                     if (
                         token != address(0)
-                            && (
-                                compositePriceFeeds[i].targetToBaseFeed != address(0)
-                                    || compositePriceFeeds[i].isTargetRedstone
-                            )
-                            && (
-                                compositePriceFeeds[i].baseToUSDFeed != address(0) || compositePriceFeeds[i].isBaseComposite
-                            )
+                            && (compositePriceFeeds[i].targetToBaseFeed != address(0)
+                                || compositePriceFeeds[i].isTargetRedstone)
+                            && (compositePriceFeeds[i].baseToUSDFeed != address(0)
+                                || compositePriceFeeds[i].isBaseComposite)
                     ) {
                         address targetToBaseFeed;
                         if (compositePriceFeeds[i].isTargetRedstone) {
@@ -233,7 +221,7 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                                 )
                             );
                             redstoneServiceIdByPriceFeed[targetToBaseFeed] =
-                                compositePriceFeeds[i].redstoneTargetToBaseData.dataServiceId;
+                            compositePriceFeeds[i].redstoneTargetToBaseData.dataServiceId;
                             redStoneOracles.push(targetToBaseFeed);
                         } else {
                             targetToBaseFeed = compositePriceFeeds[i].targetToBaseFeed;
@@ -246,11 +234,13 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                                     [
                                         PriceFeedParams({
                                             priceFeed: compositePriceFeeds[i].compositeBaseToUSDData.targetToBaseFeed,
-                                            stalenessPeriod: compositePriceFeeds[i].compositeBaseToUSDData.targetStalenessPeriod
+                                            stalenessPeriod: compositePriceFeeds[i].compositeBaseToUSDData
+                                            .targetStalenessPeriod
                                         }),
                                         PriceFeedParams({
                                             priceFeed: compositePriceFeeds[i].compositeBaseToUSDData.baseToUSDFeed,
-                                            stalenessPeriod: compositePriceFeeds[i].compositeBaseToUSDData.baseStalenessPeriod
+                                            stalenessPeriod: compositePriceFeeds[i].compositeBaseToUSDData
+                                            .baseStalenessPeriod
                                         })
                                     ],
                                     // TODO: add ticker for composite price feeds in sdk-gov
@@ -306,37 +296,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
             }
         }
 
-        // crvUSD PRICE FEEDS
-        {
-            CrvUsdPriceFeedData[] memory crvUSDPriceFeeds = crvUSDPriceFeedsByNetwork[chainId];
-            len = crvUSDPriceFeeds.length;
-            unchecked {
-                for (uint256 i; i < len; ++i) {
-                    uint256 t = crvUSDPriceFeeds[i].token;
-                    address token = tokenTestSuite.addressOf(t);
-                    if (token == address(0)) continue;
-
-                    address pool = supportedContracts.addressOf(crvUSDPriceFeeds[i].pool);
-                    address underlying = tokenTestSuite.addressOf(crvUSDPriceFeeds[i].underlying);
-                    address pf = address(
-                        new CurveUSDPriceFeed(
-                            owner,
-                            ICurvePool(pool).get_virtual_price() * 99 / 100,
-                            token,
-                            pool,
-                            _getDeployedFeed(underlying, crvUSDPriceFeeds[i].reserve),
-                            _getDeployedStalenessPeriod(underlying, crvUSDPriceFeeds[i].reserve)
-                        )
-                    );
-
-                    setPriceFeed(token, pf, crvUSDPriceFeeds[i].reserve);
-
-                    string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                    vm.label(pf, description);
-                }
-            }
-        }
-
         // wstETH PRICE FEED
         unchecked {
             uint256 t = wstethPriceFeedByNetwork[chainId].token;
@@ -389,44 +348,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                 );
 
                 setPriceFeed(token, pf, erc4626PriceFeeds[i].reserve);
-
-                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                vm.label(pf, description);
-            }
-        }
-
-        // MELLOW LRT PRICE FEEDS
-        GenericLPPriceFeedData[] memory mellowLRTPriceFeeds = mellowLRTPriceFeedsByNetwork[chainId];
-        len = mellowLRTPriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                uint256 t = mellowLRTPriceFeeds[i].lpToken;
-                address token = tokenTestSuite.addressOf(t);
-
-                if (token == address(0)) {
-                    continue;
-                }
-
-                address underlying = tokenTestSuite.addressOf(mellowLRTPriceFeeds[i].underlying);
-
-                uint256 lowerBound;
-                try IMellowVault(token).calculateStack() returns (IMellowVault.ProcessWithdrawalsStack memory stack) {
-                    lowerBound = stack.totalValue * WAD * 99 / (stack.totalSupply * 100);
-                } catch {
-                    continue;
-                }
-
-                address pf = address(
-                    new MellowLRTPriceFeed(
-                        owner,
-                        lowerBound,
-                        token,
-                        _getDeployedFeed(underlying, mellowLRTPriceFeeds[i].reserve),
-                        _getDeployedStalenessPeriod(underlying, mellowLRTPriceFeeds[i].reserve)
-                    )
-                );
-
-                setPriceFeed(token, pf, mellowLRTPriceFeeds[i].reserve);
 
                 string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
                 vm.label(pf, description);
@@ -579,114 +500,6 @@ contract PriceFeedDeployer is Test, PriceFeedDataLive {
                     setPriceFeed(tokenTestSuite.addressOf(lpToken), pf, curveCryptoPriceFeeds[i].reserve);
                     vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(lpToken))));
                 }
-            }
-        }
-
-        // BALANCER STABLE PRICEFEEDS
-        {
-            BalancerLPPriceFeedData[] memory balancerStableLPPriceFeeds = balancerStableLPPriceFeedsByNetwork[chainId];
-            len = balancerStableLPPriceFeeds.length;
-
-            unchecked {
-                for (uint256 i; i < len; ++i) {
-                    uint256 t = balancerStableLPPriceFeeds[i].lpToken;
-
-                    address pf;
-                    address lpToken = tokenTestSuite.addressOf(t);
-
-                    if (lpToken != address(0)) {
-                        PriceFeedParams[5] memory pfParams;
-
-                        uint256 nAssets = balancerStableLPPriceFeeds[i].assets.length;
-                        for (uint256 j; j < nAssets; ++j) {
-                            address asset = tokenTestSuite.addressOf(balancerStableLPPriceFeeds[i].assets[j]);
-                            pfParams[j] = PriceFeedParams({
-                                priceFeed: _getDeployedFeed(asset, balancerStableLPPriceFeeds[i].reserve),
-                                stalenessPeriod: _getDeployedStalenessPeriod(asset, balancerStableLPPriceFeeds[i].reserve)
-                            });
-                        }
-
-                        pf = address(
-                            new BPTStablePriceFeed(
-                                owner, IBalancerStablePool(lpToken).getRate() * 99 / 100, lpToken, pfParams
-                            )
-                        );
-
-                        setPriceFeed(lpToken, pf, balancerStableLPPriceFeeds[i].reserve);
-                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t))));
-                    }
-                }
-            }
-        }
-
-        // BALANCER WEIGHTED PRICEFEEDS
-        {
-            BalancerLPPriceFeedData[] memory balancerWeightedLPPriceFeeds =
-                balancerWeightedLPPriceFeedsByNetwork[chainId];
-            len = balancerWeightedLPPriceFeeds.length;
-
-            unchecked {
-                for (uint256 i; i < len; ++i) {
-                    uint256 t = balancerWeightedLPPriceFeeds[i].lpToken;
-
-                    address pf;
-                    address lpToken = tokenTestSuite.addressOf(t);
-
-                    if (lpToken != address(0)) {
-                        uint256 nAssets = balancerWeightedLPPriceFeeds[i].assets.length;
-
-                        PriceFeedParams[] memory pfParams = new PriceFeedParams[](nAssets);
-                        for (uint256 j; j < nAssets; ++j) {
-                            address asset = tokenTestSuite.addressOf(balancerWeightedLPPriceFeeds[i].assets[j]);
-                            pfParams[j] = PriceFeedParams({
-                                priceFeed: _getDeployedFeed(asset, balancerWeightedLPPriceFeeds[i].reserve),
-                                stalenessPeriod: _getDeployedStalenessPeriod(asset, balancerWeightedLPPriceFeeds[i].reserve)
-                            });
-                        }
-
-                        // console.log("BV", supportedContracts.addressOf(Contracts.BALANCER_VAULT));
-
-                        address vault = supportedContracts.addressOf(Contracts.BALANCER_VAULT);
-                        pf = address(
-                            new BPTWeightedPriceFeed(
-                                owner, IBalancerWeightedPool(lpToken).getRate() * 99 / 100, vault, lpToken, pfParams
-                            )
-                        );
-
-                        setPriceFeed(lpToken, pf, balancerWeightedLPPriceFeeds[i].reserve);
-                        vm.label(pf, string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t))));
-                    }
-                }
-            }
-        }
-
-        // YEARN PRICE FEEDS
-        SingeTokenPriceFeedData[] memory yearnPriceFeeds = yearnPriceFeedsByNetwork[chainId];
-        len = yearnPriceFeeds.length;
-        unchecked {
-            for (uint256 i; i < len; ++i) {
-                uint256 t = yearnPriceFeeds[i].token;
-                address yVault = tokenTestSuite.addressOf(t);
-
-                if (yVault == address(0)) {
-                    continue;
-                }
-                address underlying = IYVault(yVault).token();
-
-                address pf = address(
-                    new YearnPriceFeed(
-                        owner,
-                        IYVault(yVault).pricePerShare() * 99 / 100,
-                        yVault,
-                        _getDeployedFeed(underlying, yearnPriceFeeds[i].reserve),
-                        _getDeployedStalenessPeriod(underlying, yearnPriceFeeds[i].reserve)
-                    )
-                );
-
-                setPriceFeed(yVault, pf, yearnPriceFeeds[i].reserve);
-
-                string memory description = string(abi.encodePacked("PRICEFEED_", tokenTestSuite.symbols(t)));
-                vm.label(pf, description);
             }
         }
 

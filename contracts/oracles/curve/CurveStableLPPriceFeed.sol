@@ -43,6 +43,7 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
         LPPriceFeed(_owner, _token, _pool) // U:[CRV-S-1]
         nonZeroAddress(priceFeeds[0].priceFeed) // U:[CRV-S-2]
         nonZeroAddress(priceFeeds[1].priceFeed) // U:[CRV-S-2]
+
     {
         priceFeed0 = priceFeeds[0].priceFeed;
         priceFeed1 = priceFeeds[1].priceFeed;
@@ -91,7 +92,7 @@ contract CurveStableLPPriceFeed is LPPriceFeed {
 
     function _agg(int256 answer1, uint256 updatedAt1, int256 answer2, uint256 updatedAt2)
         internal
-        view
+        pure
         returns (int256 answer, uint256 updatedAt)
     {
         return (answer1 < answer2 ? answer1 : answer2, updatedAt1 < updatedAt2 ? updatedAt1 : updatedAt2);
