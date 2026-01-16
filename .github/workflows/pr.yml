@@ -36,11 +36,6 @@ jobs:
       - name: Run unit tests
         run: forge test --match-test test_U -vvv
 
-      - name: Print mainnet prices
-        env:
-          FOUNDRY_PROFILE: attach-test
-        run: forge test --match-test print_all_prices -vvv --fork-url ${{ secrets.MAINNET_TESTS_FORK }}
-
       - name: Perform checks
         run: |
           yarn prettier:ci
