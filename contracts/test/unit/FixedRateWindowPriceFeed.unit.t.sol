@@ -21,39 +21,49 @@ contract FixedRateWindowPriceFeedUnitTest is Test {
 
     PriceFeedMock underlyingPriceFeed;
 
+    address owner;
+
     uint16 constant GROWTH_RATE = 1000; // 10% per year
     uint16 constant MAX_GROWTH_RATE = 2000; // 20% per year
     uint256 constant LOWER_BOUND = 1e8;
 
     function setUp() public {
+        owner = makeAddr("OWNER");
         underlyingPriceFeed = new PriceFeedMock(1e8, 8);
         underlyingPriceFeed.setParams(0, 0, block.timestamp - 0.5 days, 0);
 
         priceFeed = new FixedRateWindowPriceFeed(
-            address(underlyingPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, "TEST / USD"
+            owner, address(underlyingPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, "TEST / USD"
         );
     }
 
     /// @notice U:[FRWPF-1]: Constructor works as expected
     function test_U_FRWPF_01_constructor_works_as_expected() public {
+        vm.expectRevert("Ownable: new owner is the zero address");
+        new FixedRateWindowPriceFeed(
+            address(0), address(underlyingPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, ""
+        );
+
         vm.expectRevert(ZeroAddressException.selector);
-        new FixedRateWindowPriceFeed(address(0), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, "");
+        new FixedRateWindowPriceFeed(owner, address(0), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, "");
 
         PriceFeedMock invalidPriceFeed = new PriceFeedMock(1 ether, 18);
         vm.expectRevert(IncorrectPriceFeedException.selector);
-        new FixedRateWindowPriceFeed(address(invalidPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, "");
+        new FixedRateWindowPriceFeed(
+            owner, address(invalidPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, ""
+        );
 
         underlyingPriceFeed.setPrice(1e8);
         vm.expectRevert(FixedRateWindowPriceFeed.InvalidGrowthRateException.selector);
         new FixedRateWindowPriceFeed(
-            address(underlyingPriceFeed), 1 days, MAX_GROWTH_RATE + 1, LOWER_BOUND, MAX_GROWTH_RATE, ""
+            owner, address(underlyingPriceFeed), 1 days, MAX_GROWTH_RATE + 1, LOWER_BOUND, MAX_GROWTH_RATE, ""
         );
 
         // current price below lower bound
         underlyingPriceFeed.setPrice(int256(LOWER_BOUND) - 1);
         vm.expectRevert(FixedRateWindowPriceFeed.ValueOutOfBoundsException.selector);
         new FixedRateWindowPriceFeed(
-            address(underlyingPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, ""
+            owner, address(underlyingPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, ""
         );
 
         // current price above upper bound
@@ -61,9 +71,10 @@ contract FixedRateWindowPriceFeedUnitTest is Test {
         underlyingPriceFeed.setPrice(int256(upperBound) + 1);
         vm.expectRevert(FixedRateWindowPriceFeed.ValueOutOfBoundsException.selector);
         new FixedRateWindowPriceFeed(
-            address(underlyingPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, ""
+            owner, address(underlyingPriceFeed), 1 days, GROWTH_RATE, LOWER_BOUND, MAX_GROWTH_RATE, ""
         );
 
+        assertEq(priceFeed.owner(), owner, "Incorrect owner");
         assertEq(priceFeed.priceFeed(), address(underlyingPriceFeed), "Incorrect priceFeed");
         assertEq(priceFeed.stalenessPeriod(), 1 days, "Incorrect stalenessPeriod");
         assertFalse(priceFeed.skipCheck(), "Incorrect skipCheck");
@@ -130,7 +141,6 @@ contract FixedRateWindowPriceFeedUnitTest is Test {
 
     /// @notice U:[FRWPF-4]: `setRateAndBounds` works as expected
     function test_U_FRWPF_04_setRateAndBounds_works_as_expected() public {
-        address owner = priceFeed.owner();
         address stranger = makeAddr("STRANGER");
 
         vm.expectRevert("Ownable: caller is not the owner");

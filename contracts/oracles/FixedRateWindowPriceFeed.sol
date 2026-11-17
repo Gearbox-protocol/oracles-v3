@@ -59,6 +59,7 @@ contract FixedRateWindowPriceFeed is IPriceFeed, Ownable, PriceFeedValidationTra
     bytes32 internal _descriptionTicker;
 
     /// @notice Constructor
+    /// @param _owner Owner of the price feed
     /// @param _priceFeed Underlying price feed
     /// @param _stalenessPeriod Underlying price feed staleness period
     /// @param growthRateInitial Initial annual growth rate of the lower bound, in bps
@@ -67,6 +68,7 @@ contract FixedRateWindowPriceFeed is IPriceFeed, Ownable, PriceFeedValidationTra
     /// @param _maxGrowthRate Maximum allowed growth rate
     /// @param descriptionTicker Ticker to use in price feed description
     constructor(
+        address _owner,
         address _priceFeed,
         uint32 _stalenessPeriod,
         uint16 growthRateInitial,
@@ -74,11 +76,11 @@ contract FixedRateWindowPriceFeed is IPriceFeed, Ownable, PriceFeedValidationTra
         uint16 _maxGrowthRate,
         string memory descriptionTicker
     ) nonZeroAddress(_priceFeed) {
-        // U:[FRWPF-1]
-        priceFeed = _priceFeed;
-        stalenessPeriod = _stalenessPeriod;
-        maxGrowthRate = _maxGrowthRate;
-        skipCheck = _validatePriceFeedMetadata(priceFeed, stalenessPeriod);
+        transferOwnership(_owner); // U:[FRWPF-1]
+        priceFeed = _priceFeed; // U:[FRWPF-1]
+        stalenessPeriod = _stalenessPeriod; // U:[FRWPF-1]
+        maxGrowthRate = _maxGrowthRate; // U:[FRWPF-1]
+        skipCheck = _validatePriceFeedMetadata(priceFeed, stalenessPeriod); // U:[FRWPF-1]
 
         _setRateAndBounds(growthRateInitial, lowerBoundInitial);
 
