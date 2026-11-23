@@ -16,3 +16,5 @@ docs/
 
 # Logs
 *.log
+
+.vscode/mise-tools/
